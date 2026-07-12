@@ -1,0 +1,411 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ------------------------------------------------------------------ *
+ * Axonill theme tokens
+ * Brand palette (source of truth — see CLAUDE.md):
+ *   primary   #0F172A   secondary #2563EB   accent  #06B6D4
+ *   success   #10B981   bg        #F8FAFC   dark bg #020617
+ * Fonts: Poppins (headings), Inter (body)
+ * ------------------------------------------------------------------ */
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  /* Fonts */
+  --font-sans: var(--font-inter);
+  --font-heading: var(--font-poppins);
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* Explicit brand utilities: bg-brand, text-brand-secondary, bg-accent-cyan, text-success ... */
+  --color-brand: var(--brand-primary);
+  --color-brand-secondary: var(--brand-secondary);
+  --color-accent-cyan: var(--brand-accent);
+  --color-success: var(--brand-success);
+
+  /* shadcn semantic tokens */
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/* Marquee animation for the "Trusted By" strip (track holds 2 copies → -50% loops) */
+@theme {
+  --animate-marquee: marquee 32s linear infinite;
+  @keyframes marquee {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+}
+
+:root {
+  --radius: 0.75rem;
+
+  /* Brand constants — identical across light/dark */
+  --brand-primary: #0f172a;
+  --brand-secondary: #2563eb;
+  --brand-accent: #06b6d4;
+  --brand-success: #10b981;
+
+  /* Light theme */
+  --background: #f8fafc; /* brand background */
+  --foreground: #0f172a; /* brand primary as ink */
+
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+
+  --primary: #0f172a; /* premium dark buttons */
+  --primary-foreground: #f8fafc;
+
+  --secondary: #f1f5f9; /* slate-100 surface */
+  --secondary-foreground: #0f172a;
+
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b; /* slate-500 */
+
+  --accent: #e0f2fe; /* soft cyan-tinted hover surface */
+  --accent-foreground: #0f172a;
+
+  --destructive: #ef4444;
+
+  --border: #e2e8f0; /* slate-200 */
+  --input: #e2e8f0;
+  --ring: #2563eb; /* brand secondary as focus ring */
+
+  --chart-1: #2563eb;
+  --chart-2: #06b6d4;
+  --chart-3: #10b981;
+  --chart-4: #0f172a;
+  --chart-5: #64748b;
+
+  --sidebar: #ffffff;
+  --sidebar-foreground: #0f172a;
+  --sidebar-primary: #0f172a;
+  --sidebar-primary-foreground: #f8fafc;
+  --sidebar-accent: #f1f5f9;
+  --sidebar-accent-foreground: #0f172a;
+  --sidebar-border: #e2e8f0;
+  --sidebar-ring: #2563eb;
+}
+
+.dark {
+  /* Dark theme */
+  --background: #020617; /* brand dark background */
+  --foreground: #f8fafc;
+
+  --card: #0f172a; /* brand primary as elevated surface */
+  --card-foreground: #f8fafc;
+  --popover: #0f172a;
+  --popover-foreground: #f8fafc;
+
+  --primary: #2563eb; /* brand blue pops on dark */
+  --primary-foreground: #f8fafc;
+
+  --secondary: #1e293b; /* slate-800 */
+  --secondary-foreground: #f8fafc;
+
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8; /* slate-400 */
+
+  --accent: #1e293b;
+  --accent-foreground: #f8fafc;
+
+  --destructive: #f87171;
+
+  --border: #1e293b;
+  --input: #1e293b;
+  --ring: #2563eb;
+
+  --chart-1: #60a5fa;
+  --chart-2: #22d3ee;
+  --chart-3: #34d399;
+  --chart-4: #f8fafc;
+  --chart-5: #94a3b8;
+
+  --sidebar: #0f172a;
+  --sidebar-foreground: #f8fafc;
+  --sidebar-primary: #2563eb;
+  --sidebar-primary-foreground: #f8fafc;
+  --sidebar-accent: #1e293b;
+  --sidebar-accent-foreground: #f8fafc;
+  --sidebar-border: #1e293b;
+  --sidebar-ring: #2563eb;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans antialiased;
+    scroll-behavior: smooth;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading tracking-tight;
+  }
+  /* Offset anchored sections so the sticky navbar doesn't cover them */
+  section[id],
+  [data-anchor] {
+    scroll-margin-top: 5rem;
+  }
+  /* Respect users who prefer reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+}
+
+/* ================================================================== *
+ * ADMIN DESIGN SYSTEM
+ *
+ * The marketing site is hero-scale: huge type, generous vertical air,
+ * full-bleed sections. The admin is a *work surface* — dense, calm,
+ * readable for hours. It therefore gets its own scale and rhythm.
+ * Documented in CLAUDE.md → "Admin Design System".
+ *
+ * Only the brand palette is shared. Do not reach for marketing type
+ * sizes (text-5xl, tracking-tighter) inside /admin.
+ * ================================================================== */
+
+:root {
+  /* Layout */
+  --admin-content-max: 1200px; /* tables/forms stop stretching here */
+  --admin-pad-x: 1rem; /* 16px — mobile gutter */
+  --admin-pad-y: 1.5rem;
+
+  /* Table density */
+  --admin-row-h: 56px; /* was ~36px: the cramped-row complaint */
+  --admin-cell-x: 1.25rem; /* 20px, inside the 16–24px band */
+  --admin-head-h: 44px;
+
+  /* Elevation: the canvas sits BEHIND the chrome, never level with it. */
+  --admin-canvas: var(--muted); /* page background */
+  --admin-chrome: var(--card); /* sidebar, topbar, cards */
+  --admin-hover: color-mix(in oklch, var(--brand-secondary) 6%, transparent);
+}
+
+@media (min-width: 640px) {
+  :root {
+    --admin-pad-x: 2rem; /* 32px — desktop gutter */
+    --admin-pad-y: 2rem;
+  }
+}
+
+/* On dark, the canvas is the deep brand background and the chrome lifts
+   above it — this is what separates sidebar from content. */
+.dark {
+  --admin-canvas: var(--background); /* #020617 */
+  --admin-chrome: var(--card); /* #0F172A — one step up */
+  --admin-hover: color-mix(in oklch, var(--brand-secondary) 12%, transparent);
+}
+
+/* ------------------------------- layout ------------------------------- */
+
+/** Page shell: centred, capped, consistent gutters. */
+@utility admin-page {
+  margin-inline: auto;
+  width: 100%;
+  max-width: var(--admin-content-max);
+  padding-inline: var(--admin-pad-x);
+  padding-block: var(--admin-pad-y);
+}
+
+/** Page header block — eyebrow / title / description, action aligned right. */
+@utility admin-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-block-end: 1.5rem;
+  margin-block-end: 1.5rem;
+  border-block-end: 1px solid
+    color-mix(in oklch, var(--border) 60%, transparent);
+}
+
+/* ----------------------------- typography ----------------------------- */
+
+@utility admin-eyebrow {
+  font-size: 0.75rem; /* 12px — labels only, never body copy */
+  line-height: 1rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted-foreground);
+}
+
+@utility admin-title {
+  font-family: var(--font-heading);
+  font-size: 1.5rem; /* text-2xl — the admin ceiling */
+  line-height: 2rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+@utility admin-description {
+  font-size: 0.875rem; /* 14px floor for primary content */
+  line-height: 1.25rem;
+  color: var(--muted-foreground);
+}
+
+/* ----------------------------- elevation ------------------------------ */
+
+/** Glass card. Sidebar, topbar and every container use THIS, consistently. */
+@utility admin-surface {
+  border-radius: var(--radius-2xl);
+  border: 1px solid color-mix(in oklch, var(--border) 60%, transparent);
+  background: color-mix(in oklch, var(--admin-chrome) 70%, transparent);
+  backdrop-filter: blur(12px);
+  box-shadow:
+    0 1px 2px 0 rgb(2 6 23 / 0.04),
+    0 8px 24px -16px rgb(2 6 23 / 0.35);
+}
+
+/* -------------------------------- table -------------------------------- */
+
+/**
+ * Density rules for admin tables. Applied to the <table>; the row/cell
+ * rules cascade, so screens don't repeat padding classes on every cell.
+ *
+ * Zebra-free by design — hover carries the row, stripes add noise.
+ */
+@utility admin-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+
+  & thead th {
+    height: var(--admin-head-h);
+    padding-inline: var(--admin-cell-x);
+    text-align: left;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    color: var(--muted-foreground);
+    white-space: nowrap;
+    border-block-end: 1px solid
+      color-mix(in oklch, var(--border) 70%, transparent);
+  }
+
+  & tbody td {
+    height: var(--admin-row-h);
+    padding-inline: var(--admin-cell-x);
+    padding-block: 0.75rem;
+    font-size: 0.875rem; /* 14px floor */
+    vertical-align: middle;
+    border-block-end: 1px solid
+      color-mix(in oklch, var(--border) 45%, transparent);
+  }
+
+  /* Last row sits flush against the card edge. */
+  & tbody tr:last-child td {
+    border-block-end: 0;
+  }
+
+  & tbody tr {
+    transition: background-color 150ms ease;
+  }
+
+  & tbody tr:hover {
+    background-color: var(--admin-hover);
+  }
+}
+
+/* --------------------------------- forms -------------------------------- */
+
+/**
+ * Admin form controls. The shadcn defaults are h-8 (32px) with 10px padding —
+ * fine inline, cramped in a form. Scoped to the shared FormDialog body so the
+ * marketing site and inline table controls are untouched.
+ */
+form#admin-form {
+  & input:not([type="checkbox"]):not([type="radio"]),
+  & [data-slot="select-trigger"] {
+    height: 2.5rem; /* 40px */
+    padding-inline: 0.75rem;
+    font-size: 0.875rem;
+  }
+
+  & textarea {
+    padding: 0.625rem 0.75rem;
+    font-size: 0.875rem;
+  }
+}
+
+/* -------------------------------- motion ------------------------------- */
+
+@theme {
+  --animate-admin-in: admin-in 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  @keyframes admin-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}
+
+/** Entrance for a page/panel. Stagger children with --admin-delay. */
+@utility admin-enter {
+  animation: var(--animate-admin-in);
+  animation-delay: var(--admin-delay, 0ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-enter {
+    animation: none;
+  }
+  .admin-table tbody tr {
+    transition: none;
+  }
+}
