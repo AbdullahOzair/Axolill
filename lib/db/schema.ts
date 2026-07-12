@@ -245,28 +245,64 @@ export const invoice = sqliteTable(
   (t) => [index("invoice_projectId_idx").on(t.projectId)]
 );
 
-/** Lead — inbound prospect; one Lead has many Meetings. */
-export const lead = sqliteTable("lead", {
-  id: text("id").primaryKey(),
-  name: text("name").notNull(),
-  email: text("email").notNull(),
-  company: text("company"),
-  service: text("service"),
-  budgetRange: text("budgetRange"),
-  message: text("message"),
-  status: text("status", {
-    enum: ["new", "contacted", "qualified", "won", "lost"],
-  })
-    .notNull()
-    .default("new"),
-  source: text("source"),
-  createdAt: integer("createdAt", { mode: "timestamp" })
-    .notNull()
-    .default(sql`(unixepoch())`),
-  updatedAt: integer("updatedAt", { mode: "timestamp" })
-    .notNull()
-    .default(sql`(unixepoch())`),
-});
+/** Lead — inbound prospect; one Lead has many Meetings and LeadAttachments. */
+export const lead = sqliteTable(
+  "lead",
+  {
+    id: text("id").primaryKey(),
+    /** Set when the lead is submitted from the client portal by a signed-in user. */
+    clientId: text("clientId").references(() => user.id, {
+      onDelete: "set null",
+    }),
+    name: text("name").notNull(),
+    email: text("email").notNull(),
+    company: text("company"),
+    service: text("service"),
+    /** Pricing tier selected in the portal, e.g. "Growth". */
+    packageName: text("packageName"),
+    budgetRange: text("budgetRange"),
+    message: text("message"),
+    /** True when the client asked for a call as part of the submission. */
+    wantsCall: integer("wantsCall", { mode: "boolean" })
+      .notNull()
+      .default(false),
+    status: text("status", {
+      enum: ["new", "contacted", "qualified", "won", "lost"],
+    })
+      .notNull()
+      .default("new"),
+    source: text("source"),
+    createdAt: integer("createdAt", { mode: "timestamp" })
+      .notNull()
+      .default(sql`(unixepoch())`),
+    updatedAt: integer("updatedAt", { mode: "timestamp" })
+      .notNull()
+      .default(sql`(unixepoch())`),
+  },
+  (t) => [index("lead_clientId_idx").on(t.clientId)]
+);
+
+/**
+ * LeadAttachment — a file uploaded with a lead (portal inquiry).
+ * `r2Key` holds the R2 object key (same convention as ProjectFile.fileUrl).
+ */
+export const leadAttachment = sqliteTable(
+  "lead_attachment",
+  {
+    id: text("id").primaryKey(),
+    leadId: text("leadId")
+      .notNull()
+      .references(() => lead.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    r2Key: text("r2Key").notNull(),
+    sizeBytes: integer("sizeBytes").notNull(),
+    contentType: text("contentType").notNull(),
+    createdAt: integer("createdAt", { mode: "timestamp" })
+      .notNull()
+      .default(sql`(unixepoch())`),
+  },
+  (t) => [index("lead_attachment_leadId_idx").on(t.leadId)]
+);
 
 /** Meeting — optionally tied to a Lead, a client User, and/or a Project. */
 export const meeting = sqliteTable(
@@ -493,6 +529,7 @@ export type Milestone = typeof milestone.$inferSelect;
 export type ProjectFile = typeof projectFile.$inferSelect;
 export type Invoice = typeof invoice.$inferSelect;
 export type Lead = typeof lead.$inferSelect;
+export type LeadAttachment = typeof leadAttachment.$inferSelect;
 export type Meeting = typeof meeting.$inferSelect;
 export type Testimonial = typeof testimonial.$inferSelect;
 export type Service = typeof service.$inferSelect;

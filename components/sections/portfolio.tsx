@@ -14,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Reveal } from "@/components/reveal";
+import { TiltCard } from "@/components/tilt-card";
 
 /** Canonical tab order; any extra category from the CMS is appended. */
 const KNOWN_CATEGORIES = [
@@ -158,58 +159,60 @@ function ProjectCard({
       exit={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.92 }}
       transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
     >
-      <Card className="group h-full gap-0 overflow-hidden border-border/60 bg-background/60 pt-0 backdrop-blur transition-all duration-300 hover:-translate-y-1.5 hover:border-brand-secondary/40 hover:shadow-xl hover:shadow-brand-secondary/10">
-        {/* Cover image if one was uploaded; otherwise the gradient band. */}
-        <div className="relative h-32 overflow-hidden bg-gradient-to-br from-brand-secondary/15 via-accent-cyan/10 to-brand-success/10">
-          {coverImage ? (
-            <Image
-              src={`/api/media/${coverImage}`}
-              alt=""
-              fill
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-              className="object-cover transition-transform duration-500 group-hover:scale-105"
-              unoptimized
-            />
-          ) : (
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,color-mix(in_oklch,var(--color-brand-secondary)_25%,transparent),transparent_55%)]" />
-          )}
+      <TiltCard maxTilt={6}>
+        <Card className="group h-full gap-0 overflow-hidden border-border/60 bg-background/60 pt-0 backdrop-blur transition-all duration-300 hover:-translate-y-1.5 hover:border-brand-secondary/40 hover:shadow-xl hover:shadow-brand-secondary/10">
+          {/* Cover image if one was uploaded; otherwise the gradient band. */}
+          <div className="relative h-32 overflow-hidden bg-gradient-to-br from-brand-secondary/15 via-accent-cyan/10 to-brand-success/10">
+            {coverImage ? (
+              <Image
+                src={`/api/media/${coverImage}`}
+                alt=""
+                fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                className="object-cover transition-transform duration-500 group-hover:scale-105"
+                unoptimized
+              />
+            ) : (
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,color-mix(in_oklch,var(--color-brand-secondary)_25%,transparent),transparent_55%)]" />
+            )}
 
-          <span className="absolute top-3 left-3">
-            <Badge className="rounded-full bg-background/80 text-foreground backdrop-blur">
-              {category}
-            </Badge>
-          </span>
-          <ArrowUpRight className="absolute right-3 bottom-3 size-5 text-foreground/40 transition-all duration-300 group-hover:right-2.5 group-hover:bottom-2.5 group-hover:text-brand-secondary" />
-        </div>
+            <span className="absolute top-3 left-3">
+              <Badge className="rounded-full bg-background/80 text-foreground backdrop-blur">
+                {category}
+              </Badge>
+            </span>
+            <ArrowUpRight className="absolute right-3 bottom-3 size-5 text-foreground/40 transition-all duration-300 group-hover:right-2.5 group-hover:bottom-2.5 group-hover:text-brand-secondary" />
+          </div>
 
-        <CardHeader className="pt-5">
-          <CardTitle className="font-heading text-lg">{title}</CardTitle>
-        </CardHeader>
+          <CardHeader className="pt-5">
+            <CardTitle className="font-heading text-lg">{title}</CardTitle>
+          </CardHeader>
 
-        <CardContent className="flex flex-1 flex-col">
-          {description && (
-            <p className="text-sm text-pretty text-muted-foreground">
-              {description}
-            </p>
-          )}
-          {tags.length > 0 && (
-            <div className="mt-4 flex flex-wrap gap-1.5">
-              {tags.map((tag) => (
-                <Badge
-                  key={tag}
-                  variant="secondary"
-                  className={cn(
-                    "rounded-full border border-border/60 bg-secondary/60 px-2.5 py-0.5 text-xs font-medium",
-                    "text-muted-foreground"
-                  )}
-                >
-                  {tag}
-                </Badge>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+          <CardContent className="flex flex-1 flex-col">
+            {description && (
+              <p className="text-sm text-pretty text-muted-foreground">
+                {description}
+              </p>
+            )}
+            {tags.length > 0 && (
+              <div className="mt-4 flex flex-wrap gap-1.5">
+                {tags.map((tag) => (
+                  <Badge
+                    key={tag}
+                    variant="secondary"
+                    className={cn(
+                      "rounded-full border border-border/60 bg-secondary/60 px-2.5 py-0.5 text-xs font-medium",
+                      "text-muted-foreground"
+                    )}
+                  >
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </TiltCard>
     </motion.div>
   );
 }

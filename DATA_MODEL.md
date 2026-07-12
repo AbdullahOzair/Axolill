@@ -34,6 +34,7 @@ A person who can sign in. Either a `client` (customer) or an `admin` (Axonill st
 **Relationships**
 - One **User** (as client) has many **Projects** (`Project.clientId → User.id`).
 - One **User** (as client) has many **Meetings** (`Meeting.clientId → User.id`).
+- One **User** (as client) has many **Leads** (`Lead.clientId → User.id`).
 
 ---
 
@@ -118,22 +119,47 @@ A billing document issued against a project.
 ---
 
 ### Lead
-An inbound sales prospect captured before becoming a client/project.
+An inbound sales prospect captured before becoming a client/project. May be submitted
+anonymously from the marketing site or by a signed-in client from the portal.
 
-| Field       | Type                                                        | Notes                    |
-|-------------|-------------------------------------------------------------|--------------------------|
-| id          | string (PK)                                                |                          |
-| name        | string                                                     |                          |
-| email       | string                                                     |                          |
-| company     | string                                                     |                          |
-| service     | string                                                     | service of interest      |
-| budgetRange | string                                                     | e.g. `$5k–$10k`          |
-| message     | string                                                     | free-text inquiry        |
-| status      | `new` \| `contacted` \| `qualified` \| `won` \| `lost`     | sales pipeline stage     |
-| source      | string                                                     | where the lead came from |
+| Field       | Type                                                        | Notes                                      |
+|-------------|-------------------------------------------------------------|--------------------------------------------|
+| id          | string (PK)                                                |                                            |
+| clientId    | string (FK → User.id) _(nullable)_                         | set when submitted from the client portal  |
+| name        | string                                                     |                                            |
+| email       | string                                                     |                                            |
+| company     | string                                                     |                                            |
+| service     | string                                                     | service of interest                        |
+| packageName | string _(nullable)_                                        | pricing tier selected in the portal        |
+| budgetRange | string                                                     | e.g. `$5k–$10k`                            |
+| message     | string                                                     | free-text inquiry                          |
+| wantsCall   | boolean                                                    | default `false`; client requested a call   |
+| status      | `new` \| `contacted` \| `qualified` \| `won` \| `lost`     | sales pipeline stage                       |
+| source      | string                                                     | where the lead came from                   |
 
 **Relationships**
+- Each **Lead** optionally belongs to one **User** (client) via `clientId`.
 - One **Lead** has many **Meetings** (`Meeting.leadId → Lead.id`).
+- One **Lead** has many **LeadAttachments** (`LeadAttachment.leadId → Lead.id`).
+
+---
+
+### LeadAttachment
+A file uploaded with a lead inquiry (typically from the client portal).
+
+| Field       | Type                     | Notes                                       |
+|-------------|--------------------------|---------------------------------------------|
+| id          | string (PK)              |                                             |
+| leadId      | string (FK → Lead.id)    | cascade delete with the parent lead         |
+| name        | string                   | display / file name                         |
+| r2Key       | string                   | **R2 object key** (same convention as `ProjectFile.fileUrl`) |
+| sizeBytes   | number                   | file size in bytes                          |
+| contentType | string                   | MIME type, e.g. `application/pdf`           |
+
+> **Timestamps:** `LeadAttachment` carries `createdAt` only — no `updatedAt`.
+
+**Relationships**
+- Each **LeadAttachment** belongs to one **Lead** via `leadId`.
 
 ---
 
@@ -283,6 +309,7 @@ OAuth tokens for an admin's connected Google Calendar. **One connection per admi
 ```
 User (client) 1 ──── * Project
 User (client) 1 ──── * Meeting
+User (client) 1 ──── * Lead
 User (uploader) 1 ─── * ProjectFile
 User (admin)  1 ──── 1 GoogleCalendarConnection   (unique)
 
@@ -294,6 +321,7 @@ Project 1 ──── * Meeting
 Milestone 1 ──── * ProjectFile
 
 Lead 1 ──── * Meeting
+Lead 1 ──── * LeadAttachment
 ```
 
 **Standalone (no foreign keys):** Testimonial · Service · Technology · PortfolioItem ·

@@ -73,6 +73,17 @@ export async function requireAdmin(): Promise<
   return result;
 }
 
+export async function requireClient(): Promise<
+  { user: SessionUser } | Response
+> {
+  const result = await requireSession();
+  if (result instanceof Response) return result;
+  if (result.user.role !== "client") {
+    return forbidden("Clients only");
+  }
+  return result;
+}
+
 /**
  * Load a project, enforcing ownership: admins can reach any project, clients
  * only their own. Returns a Response (404/403) if they can't.

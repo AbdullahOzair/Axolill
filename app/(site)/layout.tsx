@@ -2,6 +2,7 @@ import { PageLoader } from "@/components/page-loader";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { BackToTop } from "@/components/back-to-top";
+import { CursorSpotlightProvider } from "@/components/cursor-spotlight";
 
 /**
  * Marketing + client chrome: navbar, footer, page loader, back-to-top.
@@ -16,6 +17,7 @@ export default function SiteLayout({
 }>) {
   return (
     <>
+      <CursorSpotlightProvider />
       <PageLoader />
       <Navbar />
       <main className="min-h-screen">{children}</main>

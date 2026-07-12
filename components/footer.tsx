@@ -38,12 +38,12 @@ const RESOURCES = [
 ];
 
 const SOCIALS = [
-  { label: "GitHub", href: "#", icon: GithubIcon },
-  { label: "LinkedIn", href: "#", icon: LinkedinIcon },
-  { label: "Facebook", href: "#", icon: FacebookIcon },
-  { label: "Instagram", href: "#", icon: InstagramIcon },
-  { label: "Twitter", href: "#", icon: TwitterIcon },
-  { label: "Email", href: "mailto:hello@axonill.com", icon: Mail },
+  { label: "GitHub", href: "https://github.com/Axonill", icon: GithubIcon },
+  { label: "LinkedIn", href: "https://linkedin.com/company/YOUR_HANDLE", icon: LinkedinIcon },
+  { label: "Facebook", href: "https://www.facebook.com/profile.php?id=61591623881782", icon: FacebookIcon },
+  { label: "Instagram", href: "https://www.instagram.com/info.axonill/?hl=en", icon: InstagramIcon },
+  { label: "Twitter", href: "https://twitter.com/YOUR_HANDLE", icon: TwitterIcon },
+  { label: "Email", href: "mailto:info@axonill.com", icon: Mail },
 ];
 
 function FooterLink({ href, label }: { href: string; label: string }) {

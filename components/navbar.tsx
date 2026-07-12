@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { ArrowRight, Menu } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -9,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { BrandMark } from "@/components/brand-mark";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { MobileAuth, UserMenu } from "@/components/user-menu";
+import { MagneticButton } from "@/components/magnetic-button";
 import {
   Sheet,
   SheetClose,
@@ -28,6 +30,48 @@ const NAV_LINKS = [
   { label: "FAQ", href: "#faq" },
 ] as const;
 
+/**
+ * After a cross-route navigation to "/#section" the browser fires its native
+ * hash scroll, but Next.js can race it during hydration. This hook re-fires
+ * the scroll one animation frame after mount so the target is always reached.
+ * Only active while the current pathname is "/".
+ */
+function useHashScroll() {
+  const pathname = usePathname();
+  React.useEffect(() => {
+    if (pathname !== "/") return;
+    const hash = window.location.hash;
+    if (!hash) return;
+    const id = hash.slice(1); // strip the leading "#"
+    const raf = requestAnimationFrame(() => {
+      document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [pathname]);
+}
+
+/**
+ * Returns a click-handler for a hash anchor.
+ *   - On "/": smooth-scrolls in-place and cancels the navigation event.
+ *   - Elsewhere: no-op — the <Link href="/#section"> handles navigation.
+ */
+function useSectionClick(hash: string, afterClick?: () => void) {
+  const pathname = usePathname();
+  return React.useCallback(
+    (e: React.MouseEvent) => {
+      if (pathname === "/") {
+        e.preventDefault();
+        const id = hash.replace(/^#/, "");
+        document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+      }
+      afterClick?.();
+    },
+    [pathname, hash, afterClick]
+  );
+}
+
+/* ─────────────────────────── sub-components ────────────────────── */
+
 function Logo({ onClick }: { onClick?: () => void }) {
   return (
     <Link
@@ -44,18 +88,69 @@ function Logo({ onClick }: { onClick?: () => void }) {
   );
 }
 
-/** "Book a Call" CTA — solid base with a gradient that fades in on hover. */
-function BookCallButton({
-  className,
-  onClick,
-}: {
-  className?: string;
-  onClick?: () => void;
-}) {
+function DesktopNavLink({ label, href }: { label: string; href: string }) {
+  const pathname = usePathname();
+  const handleClick = useSectionClick(href);
+  // Off-homepage: navigate to /#section; on-homepage: stay on "#section" (click handler intercepts).
+  const resolvedHref = pathname === "/" ? href : `/${href}`;
+
   return (
     <Link
-      href="#contact"
-      onClick={onClick}
+      href={resolvedHref}
+      onClick={handleClick}
+      className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+    >
+      {label}
+    </Link>
+  );
+}
+
+
+
+function MobileNavLink({
+  label,
+  href,
+  onClose,
+}: {
+  label: string;
+  href: string;
+  onClose: () => void;
+}) {
+  const pathname = usePathname();
+  const handleClick = useSectionClick(href, onClose);
+  const resolvedHref = pathname === "/" ? href : `/${href}`;
+
+  return (
+    <SheetClose
+      render={
+        <Link
+          href={resolvedHref}
+          onClick={handleClick}
+          className="rounded-lg px-3 py-2.5 text-base font-medium text-foreground/80 transition-colors outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        >
+          {label}
+        </Link>
+      }
+    />
+  );
+}
+
+/** "Book a Call" CTA — same smart-scroll logic for #contact. */
+function BookCallButton({
+  className,
+  onClose,
+}: {
+  className?: string;
+  onClose?: () => void;
+}) {
+  const pathname = usePathname();
+  const handleClick = useSectionClick("#contact", onClose);
+  const resolvedHref = pathname === "/" ? "#contact" : "/#contact";
+
+  return (
+    <Link
+      href={resolvedHref}
+      onClick={handleClick}
       className={cn(
         "group relative inline-flex h-10 items-center justify-center gap-2 overflow-hidden rounded-lg bg-primary px-5 text-sm font-medium text-primary-foreground shadow-sm transition-all duration-300 hover:shadow-md hover:shadow-brand-secondary/25 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
         className
@@ -70,9 +165,14 @@ function BookCallButton({
   );
 }
 
+/* ───────────────────────────── Navbar ──────────────────────────── */
+
 export function Navbar() {
   const [scrolled, setScrolled] = React.useState(false);
   const [open, setOpen] = React.useState(false);
+
+  // Re-fires hash scroll after cross-route navigation + hydration race.
+  useHashScroll();
 
   React.useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -98,22 +198,20 @@ export function Navbar() {
         {/* Desktop links */}
         <div className="hidden items-center gap-1 md:flex">
           {NAV_LINKS.map((link) => (
-            <Link
+            <DesktopNavLink
               key={link.href}
+              label={link.label}
               href={link.href}
-              className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-            >
-              {link.label}
-            </Link>
+            />
           ))}
         </div>
 
         {/* Desktop actions */}
         <div className="hidden items-center gap-2 md:flex">
           <ThemeToggle />
-          {/* Book a Call stays as the marketing CTA, but only where there's room
-              — the auth controls take priority in the navbar. */}
-          <BookCallButton className="hidden lg:inline-flex" />
+          <MagneticButton strength={6} className="hidden lg:block">
+            <BookCallButton />
+          </MagneticButton>
           <UserMenu />
         </div>
 
@@ -137,16 +235,11 @@ export function Navbar() {
 
               <div className="flex flex-col gap-1 p-4">
                 {NAV_LINKS.map((link) => (
-                  <SheetClose
+                  <MobileNavLink
                     key={link.href}
-                    render={
-                      <Link
-                        href={link.href}
-                        className="rounded-lg px-3 py-2.5 text-base font-medium text-foreground/80 transition-colors outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                      >
-                        {link.label}
-                      </Link>
-                    }
+                    label={link.label}
+                    href={link.href}
+                    onClose={() => setOpen(false)}
                   />
                 ))}
               </div>
@@ -154,7 +247,7 @@ export function Navbar() {
               <div className="mt-auto flex flex-col gap-3 border-t p-4">
                 <BookCallButton
                   className="w-full"
-                  onClick={() => setOpen(false)}
+                  onClose={() => setOpen(false)}
                 />
                 <MobileAuth onNavigate={() => setOpen(false)} />
               </div>

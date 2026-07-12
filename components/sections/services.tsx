@@ -7,6 +7,7 @@ import { motion, useReducedMotion, type Variants } from "framer-motion";
 import { fetchJson, useLoader } from "@/lib/use-api";
 import type { Service } from "@/lib/data-model";
 import { iconFor } from "@/components/icon-map";
+import { TiltCard } from "@/components/tilt-card";
 import {
   Card,
   CardContent,
@@ -85,46 +86,48 @@ export function Services() {
             {services.map((service) => {
               const Icon = iconFor(service.icon);
               return (
-                <motion.div key={service.id} variants={item}>
-                  <Card className="group relative h-full overflow-hidden border-border/60 bg-background/60 backdrop-blur transition-all duration-300 hover:-translate-y-1.5 hover:border-brand-secondary/40 hover:shadow-xl hover:shadow-brand-secondary/10">
-                    {/* Glow */}
-                    <div
-                      aria-hidden
-                      className="pointer-events-none absolute -inset-px -z-10 rounded-xl bg-gradient-to-br from-brand-secondary/0 via-brand-secondary/0 to-accent-cyan/0 opacity-0 transition-opacity duration-300 group-hover:from-brand-secondary/10 group-hover:to-accent-cyan/10 group-hover:opacity-100"
-                    />
-                    <div
-                      aria-hidden
-                      className="pointer-events-none absolute -top-16 left-1/2 -z-10 size-40 -translate-x-1/2 rounded-full bg-brand-secondary/20 opacity-0 blur-3xl transition-opacity duration-300 group-hover:opacity-100"
-                    />
+              <motion.div key={service.id} variants={item}>
+                  <TiltCard>
+                    <Card className="group relative h-full overflow-hidden border-border/60 bg-background/60 backdrop-blur transition-all duration-300 hover:-translate-y-1.5 hover:border-brand-secondary/40 hover:shadow-xl hover:shadow-brand-secondary/10">
+                      {/* Glow */}
+                      <div
+                        aria-hidden
+                        className="pointer-events-none absolute -inset-px -z-10 rounded-xl bg-gradient-to-br from-brand-secondary/0 via-brand-secondary/0 to-accent-cyan/0 opacity-0 transition-opacity duration-300 group-hover:from-brand-secondary/10 group-hover:to-accent-cyan/10 group-hover:opacity-100"
+                      />
+                      <div
+                        aria-hidden
+                        className="pointer-events-none absolute -top-16 left-1/2 -z-10 size-40 -translate-x-1/2 rounded-full bg-brand-secondary/20 opacity-0 blur-3xl transition-opacity duration-300 group-hover:opacity-100"
+                      />
 
-                    <CardHeader>
-                      <span className="grid size-11 place-items-center rounded-xl bg-gradient-to-br from-brand-secondary/10 to-accent-cyan/10 text-brand-secondary ring-1 ring-brand-secondary/15 transition-transform duration-300 group-hover:scale-105">
-                        <Icon className="size-5.5" />
-                      </span>
-                      <CardTitle className="mt-4 font-heading text-xl">
-                        {service.title}
-                      </CardTitle>
-                      {service.summary && (
-                        <CardDescription className="mt-1.5 text-sm">
-                          {service.summary}
-                        </CardDescription>
-                      )}
-                    </CardHeader>
+                      <CardHeader>
+                        <span className="grid size-11 place-items-center rounded-xl bg-gradient-to-br from-brand-secondary/10 to-accent-cyan/10 text-brand-secondary ring-1 ring-brand-secondary/15 transition-transform duration-300 group-hover:scale-105">
+                          <Icon className="size-5.5" />
+                        </span>
+                        <CardTitle className="mt-4 font-heading text-xl">
+                          {service.title}
+                        </CardTitle>
+                        {service.summary && (
+                          <CardDescription className="mt-1.5 text-sm">
+                            {service.summary}
+                          </CardDescription>
+                        )}
+                      </CardHeader>
 
-                    <CardContent>
-                      <ul className="space-y-2.5">
-                        {service.items.map((sub) => (
-                          <li
-                            key={sub}
-                            className="flex items-center gap-2.5 text-sm text-muted-foreground"
-                          >
-                            <Check className="size-4 shrink-0 text-brand-success" />
-                            {sub}
-                          </li>
-                        ))}
-                      </ul>
-                    </CardContent>
-                  </Card>
+                      <CardContent>
+                        <ul className="space-y-2.5">
+                          {service.items.map((sub) => (
+                            <li
+                              key={sub}
+                              className="flex items-center gap-2.5 text-sm text-muted-foreground"
+                            >
+                              <Check className="size-4 shrink-0 text-brand-success" />
+                              {sub}
+                            </li>
+                          ))}
+                        </ul>
+                      </CardContent>
+                    </Card>
+                  </TiltCard>
                 </motion.div>
               );
             })}

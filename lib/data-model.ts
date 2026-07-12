@@ -99,14 +99,28 @@ export type LeadStatus = "new" | "contacted" | "qualified" | "won" | "lost";
 
 export interface Lead {
   id: string;
+  clientId: string | null; // FK → User.id (nullable)
   name: string;
   email: string;
   company: string | null;
   service: string | null;
+  packageName: string | null;
   budgetRange: string | null;
   message: string | null;
+  wantsCall: boolean;
   status: LeadStatus;
   source: string | null;
+}
+
+export interface LeadAttachment {
+  id: string;
+  leadId: string; // FK → Lead.id
+  name: string;
+  /** R2 object key — serve via /api/media/<key>. */
+  r2Key: string;
+  sizeBytes: number;
+  contentType: string;
+  createdAt: string; // ISO datetime — no updatedAt on this entity
 }
 
 /**

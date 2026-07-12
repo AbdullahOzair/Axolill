@@ -31,6 +31,7 @@ import {
   type Project,
   type ProjectFile,
 } from "@/lib/data-model";
+import { GetStarted } from "@/components/portal/get-started";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -235,10 +236,7 @@ export function PortalDashboard({ user }: { user: PortalUser }) {
             <ErrorState message={error} onRetry={reload} />
           ) : !data?.project ? (
             <>
-              <EmptyState
-                title="No active project yet"
-                description="Once we kick off your project it'll show up here, with milestones, files, and invoices."
-              />
+              <GetStarted />
               {/* A meeting can be booked before the project starts. */}
               {data && (
                 <MeetingList

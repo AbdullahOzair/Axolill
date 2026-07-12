@@ -17,6 +17,7 @@ import {
   PythonIcon,
   ReactIcon,
 } from "@/components/brand-icons";
+import { MagneticButton } from "@/components/magnetic-button";
 
 const HEADLINE_LEAD = "Turning ideas into";
 const HEADLINE_ACCENT = "scalable digital products";
@@ -62,6 +63,44 @@ const FLOATING_ICONS: FloatingIcon[] = [
 
 export function Hero() {
   const reduce = useReducedMotion();
+  const sectionRef = React.useRef<HTMLElement>(null);
+
+  // Parallax: update CSS vars on mousemove via rAF — no state updates.
+  React.useEffect(() => {
+    if (reduce) return;
+    const coarse = window.matchMedia("(pointer: coarse)").matches;
+    if (coarse) return;
+
+    let rafId: number;
+    const el = sectionRef.current;
+    if (!el) return;
+
+    const onMove = (e: MouseEvent) => {
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {
+        const rect = el.getBoundingClientRect();
+        // Normalised offset from center: -1 → +1
+        const nx = (e.clientX - rect.left) / rect.width - 0.5;
+        const ny = (e.clientY - rect.top) / rect.height - 0.5;
+
+        // Drive each parallax blob wrapper
+        el.querySelectorAll<HTMLElement>("[data-parallax-x]").forEach((node) => {
+          const fx = parseFloat(node.dataset.parallaxX ?? "0");
+          const fy = parseFloat(node.dataset.parallaxY ?? "0");
+          const tx = nx * window.innerWidth * fx;
+          const ty = ny * window.innerHeight * fy;
+          node.style.transform = `translate3d(${tx}px,${ty}px,0)`;
+        });
+      });
+    };
+
+    el.addEventListener("mousemove", onMove, { passive: true });
+    return () => {
+      el.removeEventListener("mousemove", onMove);
+      cancelAnimationFrame(rafId);
+    };
+  }, [reduce]);
+
 
   // Entrance variants — collapse to a plain fade (no travel) when reduced motion.
   const container: Variants = {
@@ -85,6 +124,7 @@ export function Hero() {
 
   return (
     <section
+      ref={sectionRef}
       id="hero"
       className="relative isolate overflow-hidden"
       aria-labelledby="hero-heading"
@@ -136,26 +176,30 @@ export function Hero() {
             variants={item}
             className="mt-9 flex flex-col items-center gap-3 sm:flex-row"
           >
-            {/* Primary — gradient reveal on hover */}
-            <Link
-              href="#contact"
-              className="group relative inline-flex h-11 items-center justify-center gap-2 overflow-hidden rounded-lg bg-primary px-6 text-sm font-medium text-primary-foreground shadow-sm transition-all duration-300 hover:shadow-md hover:shadow-brand-secondary/25 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
-            >
-              <span className="absolute inset-0 bg-gradient-to-r from-brand-secondary to-accent-cyan opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-              <span className="relative z-10 flex items-center gap-2">
-                Book a Free Call
-                <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5" />
-              </span>
-            </Link>
+            {/* Primary — gradient reveal on hover + magnetic pull */}
+            <MagneticButton strength={8}>
+              <Link
+                href="#contact"
+                className="group relative inline-flex h-11 items-center justify-center gap-2 overflow-hidden rounded-lg bg-primary px-6 text-sm font-medium text-primary-foreground shadow-sm transition-all duration-300 hover:shadow-md hover:shadow-brand-secondary/25 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+              >
+                <span className="absolute inset-0 bg-gradient-to-r from-brand-secondary to-accent-cyan opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                <span className="relative z-10 flex items-center gap-2">
+                  Book a Free Call
+                  <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5" />
+                </span>
+              </Link>
+            </MagneticButton>
 
-            {/* Secondary — outline */}
-            <Link
-              href="#work"
-              className="group inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-border bg-background/60 px-6 text-sm font-medium text-foreground shadow-sm backdrop-blur transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
-            >
-              <Play className="size-4 text-brand-secondary transition-transform duration-300 group-hover:scale-110" />
-              See Our Work
-            </Link>
+            {/* Secondary — outline + magnetic pull */}
+            <MagneticButton strength={8}>
+              <Link
+                href="#work"
+                className="group inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-border bg-background/60 px-6 text-sm font-medium text-foreground shadow-sm backdrop-blur transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+              >
+                <Play className="size-4 text-brand-secondary transition-transform duration-300 group-hover:scale-110" />
+                See Our Work
+              </Link>
+            </MagneticButton>
           </motion.div>
         </motion.div>
       </div>
@@ -163,7 +207,7 @@ export function Hero() {
   );
 }
 
-/** Grid + slowly morphing gradient-mesh blobs. */
+/** Grid + slowly morphing gradient-mesh blobs with mouse-parallax. */
 function HeroBackground({ reduce }: { reduce: boolean }) {
   const blobTransition = (duration: number): Transition => ({
     duration,
@@ -177,31 +221,65 @@ function HeroBackground({ reduce }: { reduce: boolean }) {
       {/* Grid */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,var(--color-border)_1px,transparent_1px),linear-gradient(to_bottom,var(--color-border)_1px,transparent_1px)] bg-[size:56px_56px] opacity-40 [mask-image:radial-gradient(ellipse_60%_60%_at_50%_40%,black,transparent)] dark:opacity-30" />
 
-      {/* Gradient-mesh blobs */}
-      <motion.div
-        className="absolute -top-24 left-1/4 size-[36rem] rounded-full bg-brand-secondary/25 blur-3xl dark:bg-brand-secondary/20"
-        animate={
-          reduce ? undefined : { x: [0, 40, -20, 0], y: [0, -30, 20, 0], scale: [1, 1.1, 0.95, 1] }
-        }
-        transition={reduce ? undefined : blobTransition(18)}
-      />
-      <motion.div
-        className="absolute top-10 right-1/4 size-[30rem] rounded-full bg-accent-cyan/25 blur-3xl dark:bg-accent-cyan/15"
-        animate={
-          reduce ? undefined : { x: [0, -30, 25, 0], y: [0, 25, -15, 0], scale: [1, 0.95, 1.1, 1] }
-        }
-        transition={reduce ? undefined : blobTransition(22)}
-      />
-      <motion.div
-        className="absolute bottom-0 left-1/3 size-[26rem] rounded-full bg-brand-success/15 blur-3xl"
-        animate={
-          reduce ? undefined : { x: [0, 20, -25, 0], y: [0, -20, 15, 0], scale: [1, 1.08, 0.9, 1] }
-        }
-        transition={reduce ? undefined : blobTransition(20)}
-      />
+      {/*
+        Parallax wrapper pattern:
+        - Each blob lives inside a <div data-parallax-x data-parallax-y>.
+        - The Hero mousemove listener queries [data-parallax-x] and updates
+          their translateX/Y directly, no React state, no re-render.
+        - Framer Motion handles the slow organic drift on the inner blob div.
+      */}
+
+      {/* Blob 1 — blue/secondary, top-left */}
+      <div
+        data-parallax-x="-0.04"
+        data-parallax-y="-0.03"
+        className="absolute -top-24 left-1/4 will-change-transform"
+        style={{ transition: reduce ? undefined : "transform 0.15s linear" }}
+      >
+        <motion.div
+          className="size-[36rem] rounded-full bg-brand-secondary/25 blur-3xl dark:bg-brand-secondary/20"
+          animate={
+            reduce ? undefined : { x: [0, 40, -20, 0], y: [0, -30, 20, 0], scale: [1, 1.1, 0.95, 1] }
+          }
+          transition={reduce ? undefined : blobTransition(18)}
+        />
+      </div>
+
+      {/* Blob 2 — cyan, top-right */}
+      <div
+        data-parallax-x="0.035"
+        data-parallax-y="0.025"
+        className="absolute top-10 right-1/4 will-change-transform"
+        style={{ transition: reduce ? undefined : "transform 0.15s linear" }}
+      >
+        <motion.div
+          className="size-[30rem] rounded-full bg-accent-cyan/25 blur-3xl dark:bg-accent-cyan/15"
+          animate={
+            reduce ? undefined : { x: [0, -30, 25, 0], y: [0, 25, -15, 0], scale: [1, 0.95, 1.1, 1] }
+          }
+          transition={reduce ? undefined : blobTransition(22)}
+        />
+      </div>
+
+      {/* Blob 3 — green/success, bottom */}
+      <div
+        data-parallax-x="0.02"
+        data-parallax-y="-0.025"
+        className="absolute bottom-0 left-1/3 will-change-transform"
+        style={{ transition: reduce ? undefined : "transform 0.15s linear" }}
+      >
+        <motion.div
+          className="size-[26rem] rounded-full bg-brand-success/15 blur-3xl"
+          animate={
+            reduce ? undefined : { x: [0, 20, -25, 0], y: [0, -20, 15, 0], scale: [1, 1.08, 0.9, 1] }
+          }
+          transition={reduce ? undefined : blobTransition(20)}
+        />
+      </div>
     </div>
   );
 }
+
 
 /** Glassy floating tech-icon cards drifting slowly. */
 function FloatingIcons({ reduce }: { reduce: boolean }) {

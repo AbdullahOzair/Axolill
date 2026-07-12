@@ -117,18 +117,18 @@ export function Contact() {
 
   const update =
     (field: keyof FormValues) =>
-    (
-      e:
-        | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-        | string
-    ) => {
-      const value = typeof e === "string" ? e : e.target.value;
-      setValues((prev) => ({ ...prev, [field]: value }));
-      // Clear a field's error as the user corrects it.
-      setErrors((prev) =>
-        prev[field] ? { ...prev, [field]: undefined } : prev
-      );
-    };
+      (
+        e:
+          | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+          | string
+      ) => {
+        const value = typeof e === "string" ? e : e.target.value;
+        setValues((prev) => ({ ...prev, [field]: value }));
+        // Clear a field's error as the user corrects it.
+        setErrors((prev) =>
+          prev[field] ? { ...prev, [field]: undefined } : prev
+        );
+      };
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -355,13 +355,13 @@ export function Contact() {
           <div className="flex flex-col gap-6">
             <div className="grid gap-4 sm:grid-cols-2">
               <ContactLink
-                href={`mailto:${EMAIL}`}
+                href="mailto:info.axonill@gmail.com"
                 icon={Mail}
                 label="Email us"
-                value={EMAIL}
+                value="info.axonill@gmail.com"
               />
               <ContactLink
-                href={`https://wa.me/${WHATSAPP_NUMBER}`}
+                href={`https://wa.me/${+923288811677}`}
                 icon={MessageCircle}
                 label="WhatsApp"
                 value="Chat with us"
