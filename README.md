@@ -1,5 +1,7 @@
 # Axonill
 
+npm run create-admin -- info.axonill@gmail.com --name "Abdullah Ozair" --password "Q1W2E3R4a!" --remote
+
 _Innovating Digital Experiences._ — marketing site + client portal, deployed to Cloudflare Workers.
 
 - **Next.js 15** (App Router) · React 19 · TypeScript · **Tailwind v4** · shadcn/ui · framer-motion
