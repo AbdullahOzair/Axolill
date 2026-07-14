@@ -3,6 +3,8 @@
   "name": "axonill",
   // Pinned so wrangler can't target the other Cloudflare account on this machine.
   "account_id": "1a14c367c4e8ad130544b018e0722490",
+  // Keep the .workers.dev subdomain active alongside the custom domain.
+  "workers_dev": true,
   // Built by `opennextjs-cloudflare build` — does not exist until you run it.
   "main": ".open-next/worker.js",
   // Max date supported by the installed workerd (1.20260708.x).
@@ -13,6 +15,14 @@
     "directory": ".open-next/assets",
     "binding": "ASSETS"
   },
+
+  "routes": [
+    {
+      "pattern": "axonill.com",
+      "zone_name": "axonill.com",
+      "custom_domain": true
+    }
+  ],
 
   "observability": {
     "enabled": true
