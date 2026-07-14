@@ -43,6 +43,16 @@ export const getAuth = cache(() => {
       },
     },
 
+    // Allow a user who registered with email+password to also sign in with
+    // Google (same email address). Without this, better-auth rejects the
+    // Google sign-in with "account_not_linked".
+    account: {
+      accountLinking: {
+        enabled: true,
+        trustedProviders: ["google"],
+      },
+    },
+
     // Extra columns we added to the `user` table (from DATA_MODEL.md).
     // `input: false` on role stops clients from self-assigning admin.
     user: {

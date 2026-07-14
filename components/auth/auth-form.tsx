@@ -92,6 +92,26 @@ export function AuthForm({ mode }: { mode: Mode }) {
   const [showPassword, setShowPassword] = React.useState(false);
   const [showConfirm, setShowConfirm] = React.useState(false);
 
+  // Catch better-auth error redirects like ?error=account_not_linked so the
+  // user sees a readable message instead of a broken crash page.
+  React.useEffect(() => {
+    const errorCode = searchParams.get("error");
+    if (!errorCode) return;
+    const messages: Record<string, string> = {
+      account_not_linked:
+        "This email is already registered with a password. Please sign in with your email and password instead.",
+      oauth_account_not_linked:
+        "This email is already registered with a password. Please sign in with your email and password instead.",
+      access_denied: "Google sign-in was cancelled.",
+    };
+    setFormError(messages[errorCode] ?? `Sign-in error: ${errorCode}`);
+    // Clean the URL so refreshing doesn't re-show the error.
+    const clean = new URL(window.location.href);
+    clean.searchParams.delete("error");
+    window.history.replaceState({}, "", clean.toString());
+  }, [searchParams]);
+
+
   const update =
     (field: keyof Values) => (e: React.ChangeEvent<HTMLInputElement>) => {
       const value = e.target.value;
