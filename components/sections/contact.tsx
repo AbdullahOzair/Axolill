@@ -43,8 +43,8 @@ const BUDGETS = [
   "$50k+",
 ];
 
-const EMAIL = "hello@axonill.com";
-const WHATSAPP_NUMBER = "1234567890"; // placeholder
+const EMAIL = "info@axonill.com";
+const WHATSAPP_NUMBER = "+923288811677"; // placeholder
 
 type FormValues = {
   name: string;
@@ -355,10 +355,10 @@ export function Contact() {
           <div className="flex flex-col gap-6">
             <div className="grid gap-4 sm:grid-cols-2">
               <ContactLink
-                href="mailto:info.axonill@gmail.com"
+                href="mailto:info@axonill.com"
                 icon={Mail}
                 label="Email us"
-                value="info.axonill@gmail.com"
+                value="info@axonill.com"
               />
               <ContactLink
                 href={`https://wa.me/${+923288811677}`}
