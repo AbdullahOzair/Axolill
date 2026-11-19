@@ -110,12 +110,12 @@ export async function verifyState(
 
 export function buildConsentUrl(opts: {
   clientId: string;
-  baseUrl: string;
+  redirectUri: string;
   state: string;
 }) {
   const params = new URLSearchParams({
     client_id: opts.clientId,
-    redirect_uri: callbackUrl(opts.baseUrl),
+    redirect_uri: opts.redirectUri,
     response_type: "code",
     scope: CALENDAR_SCOPE,
     // Both are required to be handed a refresh token. Without `prompt=consent`
@@ -136,10 +136,21 @@ export type TokenResponse = {
   token_type: string;
 };
 
+export class GoogleTokenError extends Error {
+  constructor(
+    readonly status: number,
+    readonly code: string | null,
+    message: string
+  ) {
+    super(message);
+    this.name = "GoogleTokenError";
+  }
+}
+
 export async function exchangeCode(opts: {
   clientId: string;
   clientSecret: string;
-  baseUrl: string;
+  redirectUri: string;
   code: string;
 }): Promise<TokenResponse> {
   const res = await fetch(TOKEN_ENDPOINT, {
@@ -148,15 +159,27 @@ export async function exchangeCode(opts: {
     body: new URLSearchParams({
       client_id: opts.clientId,
       client_secret: opts.clientSecret,
-      redirect_uri: callbackUrl(opts.baseUrl),
+      redirect_uri: opts.redirectUri,
       grant_type: "authorization_code",
       code: opts.code,
     }),
   });
 
   if (!res.ok) {
-    const detail = await res.text();
-    throw new Error(`Google token exchange failed (${res.status}): ${detail}`);
+    const raw = await res.text();
+    let code: string | null = null;
+    let message = raw;
+    try {
+      const body = JSON.parse(raw) as {
+        error?: string;
+        error_description?: string;
+      };
+      code = body.error ?? null;
+      message = body.error_description ?? body.error ?? raw;
+    } catch {
+      // Google may return a non-JSON error body.
+    }
+    throw new GoogleTokenError(res.status, code, message);
   }
   return (await res.json()) as TokenResponse;
 }

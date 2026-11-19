@@ -126,11 +126,11 @@ export function About() {
               variants={item}
               className="mt-4 max-w-xl font-heading text-3xl font-bold tracking-tight text-balance sm:text-4xl md:text-5xl"
             >
-              A modern software agency, built by three{" "}
+              Behind every great product is a team that {" "}
               <span className="bg-gradient-to-r from-brand-secondary to-accent-cyan bg-clip-text text-transparent">
-                Air University
+                refused to settle
               </span>{" "}
-              graduates.
+              .
             </motion.h2>
 
             <motion.div
@@ -138,21 +138,52 @@ export function About() {
               className="mt-6 space-y-4 text-base text-pretty text-muted-foreground"
             >
               <p>
-                Axonill began with three friends and a shared conviction: that
-                great software should feel effortless. Fresh out of Air
-                University, we&apos;d spent late nights shipping side projects,
-                entering hackathons, and obsessing over the details most teams
-                skip — and we wanted to do it for a living.
+                Before Axonill was a company, it was three friends who couldn&apos;t 
+                stop building.
               </p>
               <p>
-                So we built the studio we always wanted to work with. No bloated
-                process, no hand-offs that lose the plot — just a tight team that
-                takes an idea from first sketch to production scale, with
-                strategy, design, and engineering working as one.
+                Weekends turned into side projects. Hackathons turned into 
+                late-night launches. Every project taught us the same lesson: 
+                great software isn&apos;t about adding more features. It&apos;s about 
+                getting the details right and never settling for good enough.
+              </p>
+              <p>
+                Today, we bring that same passion to every client. You work directly
+                with the people designing and building your product, with strategy,
+                design and engineering moving as one. Your idea gets the same 
+                care we once gave our own.
               </p>
             </motion.div>
 
-            {/* Mission callout */}
+            <motion.p
+              variants={item}
+              className="text-xs font-medium tracking-wider text-brand-secondary uppercase dark:text-blue-400"
+            >
+              We never stopped building. Now we build for you.
+            </motion.p>
+
+            {/* Vision callout */}
+            <motion.div
+              variants={item}
+              className="mt-8 flex gap-4 rounded-xl border border-border/60 bg-secondary/50 p-5"
+            >
+              <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-lg bg-gradient-to-br from-brand-secondary to-accent-cyan text-white shadow-sm">
+                <Target className="size-5" />
+              </span>
+              <div>
+                <p className="text-sm font-semibold text-foreground">
+                  Our Vision
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  To shape a digital future where every brand has the 
+                  opportunity to stand out through unique, meaningful 
+                  and purpose-built digital experiences.
+                </p>
+              </div>
+            </motion.div>
+          </motion.div>
+
+           {/* Mission callout */}
             <motion.div
               variants={item}
               className="mt-8 flex gap-4 rounded-xl border border-border/60 bg-secondary/50 p-5"
@@ -165,9 +196,13 @@ export function About() {
                   Our mission
                 </p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  To turn ambitious ideas into scalable digital products — and to
-                  make world-class software design and engineering accessible to
-                  the teams building what&apos;s next.
+                  To transform the unique identity and vision of every brand 
+                  into tailored digital experiences by combining creative
+                  thinking, thoughtful design and innovative technology. 
+                  We build purpose-driven websites, applications and 
+                  interactive solutions that help businesses express 
+                  their individuality, engage their customers and create 
+                  meaningful digital value.
                 </p>
               </div>
             </motion.div>

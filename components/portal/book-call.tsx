@@ -4,7 +4,8 @@ import * as React from "react";
 import Link from "next/link";
 import Cal, { getCalApi } from "@calcom/embed-react";
 import { ArrowLeft, CalendarDays, Clock, Video } from "lucide-react";
-import { useTheme } from "next-themes";
+
+import { useTheme } from "@/components/theme-provider";
 
 const CAL_NAMESPACE = "discovery-call";
 /** Point this at your real Cal.com event: e.g. "axonill/discovery-call". */

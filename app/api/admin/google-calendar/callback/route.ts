@@ -6,6 +6,7 @@ import { googleCalendarConnection } from "@/lib/db/schema";
 import {
   CALENDAR_SCOPE,
   exchangeCode,
+  GoogleTokenError,
   verifyState,
 } from "@/lib/google-calendar";
 
@@ -14,9 +15,9 @@ export const dynamic = "force-dynamic";
 const SETTINGS = "/admin/settings/calendar";
 
 /** Send the admin back to the settings page with a human-readable outcome. */
-const back = (baseUrl: string, params: Record<string, string>) =>
+const back = (origin: string, params: Record<string, string>) =>
   Response.redirect(
-    `${baseUrl.replace(/\/$/, "")}${SETTINGS}?${new URLSearchParams(params)}`,
+    `${origin}${SETTINGS}?${new URLSearchParams(params)}`,
     302
   );
 
@@ -26,13 +27,14 @@ export async function GET(request: Request) {
   if (auth instanceof Response) return auth;
 
   const { env } = getCloudflareContext();
-  const baseUrl = env.BETTER_AUTH_URL;
   const url = new URL(request.url);
+  const origin = url.origin;
+  const redirectUri = `${origin}/api/admin/google-calendar/callback`;
 
   // The user can decline on Google's screen.
   const denied = url.searchParams.get("error");
   if (denied) {
-    return back(baseUrl, {
+    return back(origin, {
       error:
         denied === "access_denied"
           ? "Consent was declined — Google Calendar is not connected."
@@ -41,7 +43,7 @@ export async function GET(request: Request) {
   }
 
   const code = url.searchParams.get("code");
-  if (!code) return back(baseUrl, { error: "Google didn't return a code." });
+  if (!code) return back(origin, { error: "Google didn't return a code." });
 
   /**
    * CSRF: `state` is signed with BETTER_AUTH_SECRET and carries the admin id
@@ -54,12 +56,12 @@ export async function GET(request: Request) {
     url.searchParams.get("state")
   );
   if (!state) {
-    return back(baseUrl, {
+    return back(origin, {
       error: "This authorisation link is invalid or has expired. Try again.",
     });
   }
   if (state.uid !== auth.user.id) {
-    return back(baseUrl, {
+    return back(origin, {
       error: "That authorisation was started by a different account.",
     });
   }
@@ -69,12 +71,28 @@ export async function GET(request: Request) {
     tokens = await exchangeCode({
       clientId: env.GOOGLE_CLIENT_ID,
       clientSecret: env.GOOGLE_CLIENT_SECRET,
-      baseUrl,
+      redirectUri,
       code,
     });
   } catch (error) {
-    console.error("[google-calendar] token exchange failed", error);
-    return back(baseUrl, {
+    if (error instanceof GoogleTokenError) {
+      console.error("[google-calendar] token exchange failed", {
+        status: error.status,
+        code: error.code,
+        message: error.message,
+        redirectUri,
+      });
+      const message =
+        error.code === "invalid_client"
+          ? "Google OAuth client credentials are invalid. Check the production Client ID and Client Secret."
+          : error.code === "invalid_grant"
+            ? "Google rejected this authorization code. Start the connection again."
+            : "Google rejected the token exchange. Check the OAuth client and redirect URI, then try again.";
+      return back(origin, { error: message });
+    }
+
+    console.error("[google-calendar] unexpected token exchange failure", error);
+    return back(origin, {
       error: "Couldn't exchange the code with Google. Try connecting again.",
     });
   }
@@ -82,7 +100,7 @@ export async function GET(request: Request) {
   // Without a refresh token the connection is useless the moment the access
   // token expires — treat it as a failure rather than storing a dud row.
   if (!tokens.refresh_token) {
-    return back(baseUrl, {
+    return back(origin, {
       error:
         "Google didn't return a refresh token. Remove Axonill from your Google account's third-party access, then connect again.",
     });
@@ -90,7 +108,7 @@ export async function GET(request: Request) {
 
   const granted = tokens.scope?.split(" ") ?? [];
   if (!granted.includes(CALENDAR_SCOPE)) {
-    return back(baseUrl, {
+    return back(origin, {
       error:
         "The calendar permission wasn't granted. Connect again and leave the calendar checkbox ticked.",
     });
@@ -131,5 +149,5 @@ export async function GET(request: Request) {
     });
   }
 
-  return back(baseUrl, { connected: "1" });
+  return back(origin, { connected: "1" });
 }

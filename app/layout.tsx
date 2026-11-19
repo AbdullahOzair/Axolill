@@ -71,10 +71,8 @@ export default function RootLayout({
           so the dashboard isn't stacked under the marketing navbar.
         */}
         <ThemeProvider
-          attribute="class"
           defaultTheme="system"
           enableSystem
-          disableTransitionOnChange
         >
           {children}
           <Toaster position="bottom-right" richColors closeButton />
