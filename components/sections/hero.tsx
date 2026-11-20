@@ -19,7 +19,7 @@ import {
 } from "@/components/brand-icons";
 import { MagneticButton } from "@/components/magnetic-button";
 
-const HEADLINE_LEAD = "Turning ideas into";
+const HEADLINE_LEAD = "We Turn ideas into";
 const HEADLINE_ACCENT = "scalable digital products";
 
 type FloatingIcon = {
@@ -167,9 +167,9 @@ export function Hero() {
             variants={item}
             className="mt-6 max-w-2xl text-base text-pretty text-muted-foreground sm:text-lg"
           >
-            Axonill partners with founders and teams to design, build, and ship
-            premium software — from first sketch to production scale — with
-            strategy, design, and engineering under one roof.
+            We design and build web apps, mobile apps and AI features for founders 
+            and growing teams. You work directly with the people building your 
+            product, from the first call to launch and beyond 
           </motion.p>
 
           <motion.div
