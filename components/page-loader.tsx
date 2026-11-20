@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { usePathname } from "next/navigation";
 
 import { BrandMark, MARK_SRC } from "@/components/brand-mark";
 
@@ -9,18 +10,19 @@ const SESSION_KEY = "axonill:loaded";
 
 export function PageLoader() {
   const reduce = useReducedMotion();
+  const isHome = usePathname() === "/";
   const [loading, setLoading] = React.useState(true);
   const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
     setMounted(true);
 
-    // Skip if we've already shown it this session, or if reduced motion.
+    // The homepage has its own entrance. Other routes keep the session loader.
     const alreadyShown =
       typeof window !== "undefined" &&
       window.sessionStorage.getItem(SESSION_KEY) === "1";
 
-    if (alreadyShown || reduce) {
+    if (isHome || alreadyShown || reduce) {
       setLoading(false);
       return;
     }
@@ -33,7 +35,7 @@ export function PageLoader() {
       window.clearTimeout(t);
       document.body.style.overflow = "";
     };
-  }, [reduce]);
+  }, [isHome, reduce]);
 
   React.useEffect(() => {
     if (!loading && mounted) {
@@ -47,7 +49,7 @@ export function PageLoader() {
   }, [loading, mounted]);
 
   // Avoid SSR/hydration flash: render nothing until mounted decides.
-  if (!mounted) return null;
+  if (!mounted || isHome) return null;
 
   return (
     <AnimatePresence>

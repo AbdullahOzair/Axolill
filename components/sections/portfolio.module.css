@@ -1,0 +1,337 @@
+.section,
+.detail {
+  --work-blue: color-mix(in srgb, var(--chart-1) 87%, var(--foreground));
+  color: var(--foreground);
+}
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--work-blue);
+  font-size: 0.6875rem;
+  font-weight: 650;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.eyebrow::before {
+  width: 1.5rem;
+  height: 1px;
+  background: currentColor;
+  content: "";
+}
+
+.accent {
+  color: var(--work-blue);
+}
+
+.gallery {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.galleryItem {
+  min-width: 0;
+}
+
+.card {
+  position: relative;
+  display: grid;
+  height: 100%;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) * 1.65);
+  color: var(--card-foreground);
+  background: var(--card);
+  box-shadow: 0 15px 36px -30px var(--brand-primary);
+}
+
+.card:hover,
+.card:focus-within {
+  border-color: color-mix(in srgb, var(--chart-1) 38%, var(--border));
+}
+
+.cover,
+.expandedCover {
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+  background: var(--secondary);
+}
+
+.cover {
+  min-height: 10rem;
+  aspect-ratio: 16 / 9;
+}
+
+.cover img {
+  object-fit: cover;
+}
+
+.coverFallback {
+  display: grid;
+  height: 100%;
+  place-items: center;
+  background:
+    radial-gradient(circle at 38% 33%, color-mix(in srgb, var(--chart-1) 19%, transparent), transparent 58%),
+    radial-gradient(circle at 86% 83%, color-mix(in srgb, var(--chart-2) 16%, transparent), transparent 59%),
+    var(--secondary);
+}
+
+.coverFallback span {
+  display: grid;
+  width: 4.5rem;
+  aspect-ratio: 1;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--chart-1) 35%, var(--border));
+  border-radius: 28%;
+  color: var(--work-blue);
+  background: color-mix(in srgb, var(--card) 74%, transparent);
+}
+
+.cardCopy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: clamp(0.9rem, 2.5vw, 1.4rem);
+}
+
+.category,
+.detailLabel {
+  color: var(--work-blue);
+  font-size: 0.6875rem;
+  font-weight: 650;
+  letter-spacing: 0.09em;
+  overflow-wrap: anywhere;
+  text-transform: uppercase;
+}
+
+.cardTitle,
+.detailTitle {
+  color: var(--foreground);
+  font-family: var(--font-poppins), sans-serif;
+  font-size: clamp(1.125rem, 2.8vw, 1.5rem);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.035em;
+  overflow-wrap: anywhere;
+}
+
+.preview,
+.fullDescription {
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.preview {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.tags {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.tags li {
+  max-width: 100%;
+  padding: 0.25rem 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--card-foreground);
+  background: color-mix(in srgb, var(--card) 66%, var(--secondary));
+  font-size: 0.6875rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.viewProject {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-block-start: auto;
+  padding-block-start: 0.25rem;
+  color: var(--work-blue);
+  font-size: 0.8125rem;
+  font-weight: 650;
+}
+
+.viewProject svg {
+  flex: none;
+}
+
+.trigger {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  width: 100%;
+  border-radius: inherit;
+  cursor: zoom-in;
+}
+
+.trigger:focus-visible,
+.close:focus-visible {
+  outline: 2px solid var(--work-blue);
+  outline-offset: -3px;
+}
+
+.detail {
+  border: 1px solid var(--border);
+  font-family: var(--font-inter), sans-serif;
+}
+
+.detailHeader {
+  display: flex;
+  flex: none;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.8rem;
+  padding: 0.85rem clamp(0.9rem, 4vw, 1.5rem);
+  border-bottom: 1px solid var(--border);
+}
+
+.detailTitle {
+  margin-block-start: 0.25rem;
+}
+
+.close {
+  display: grid;
+  width: 2.45rem;
+  height: 2.45rem;
+  flex: none;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) * 0.8);
+  color: var(--foreground);
+  background: var(--card);
+  cursor: pointer;
+}
+
+.close:hover {
+  border-color: var(--work-blue);
+  color: var(--work-blue);
+}
+
+.detailBody {
+  display: grid;
+  min-height: 0;
+  gap: 1.1rem;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: clamp(0.9rem, 4vw, 1.5rem);
+}
+
+.expandedCover {
+  max-height: min(48dvh, 26rem);
+  min-height: 8rem;
+  aspect-ratio: 16 / 10;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.expandedCover img {
+  object-fit: contain;
+}
+
+.detailSection {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.fullDescription {
+  max-width: 72ch;
+  white-space: pre-wrap;
+}
+
+@media (min-width: 680px) {
+  .gallery {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .galleryItem[data-lead] {
+    grid-column: 1 / -1;
+  }
+
+  .galleryItem[data-lead] .card {
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  }
+
+  .galleryItem[data-lead] .cover {
+    height: 100%;
+    min-height: 15.5rem;
+    aspect-ratio: auto;
+  }
+
+  .galleryItem[data-lead] .cardCopy {
+    padding: clamp(1rem, 3vw, 1.9rem);
+  }
+
+  .galleryItem[data-lead] .cardTitle {
+    font-size: clamp(1.5rem, 3.4vw, 2.1rem);
+  }
+}
+
+@media (min-width: 900px) {
+  .gallery {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 679px) {
+  .galleryItem:not([data-lead]) .card {
+    grid-template-columns: minmax(0, 0.78fr) minmax(0, 1.22fr);
+  }
+
+  .galleryItem:not([data-lead]) .cover {
+    min-height: 0;
+    aspect-ratio: auto;
+  }
+
+  .galleryItem:not([data-lead]) .cardCopy {
+    gap: 0.35rem;
+    padding: 0.65rem 0.75rem;
+  }
+
+  .galleryItem:not([data-lead]) .cardTitle {
+    font-size: 1rem;
+  }
+
+  .galleryItem:not([data-lead]) .cardCopy .tags {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .galleryItem {
+    animation: work-reveal 250ms ease-out both;
+  }
+
+  .card,
+  .viewProject svg,
+  .cover img {
+    transition: transform 260ms ease, color 180ms ease, border-color 180ms ease, background-color 180ms ease;
+  }
+
+  .card:hover .cover img {
+    transform: scale(1.04);
+  }
+
+  .card:hover .viewProject svg {
+    transform: translate(2px, -2px);
+  }
+}
+
+@keyframes work-reveal {
+  from { opacity: 0.62; }
+  to { opacity: 1; }
+}

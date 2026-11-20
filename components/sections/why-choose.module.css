@@ -1,0 +1,144 @@
+.section {
+  --reason-blue: color-mix(in srgb, var(--chart-1) 87%, var(--foreground));
+  color: var(--foreground);
+}
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--reason-blue);
+  font-size: 0.6875rem;
+  font-weight: 650;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.eyebrow::before {
+  width: 1.5rem;
+  height: 1px;
+  background: currentColor;
+  content: "";
+}
+
+.accent {
+  color: var(--reason-blue);
+}
+
+.groups {
+  display: grid;
+  gap: 0.875rem;
+  margin-block-start: 1.75rem;
+}
+
+.group {
+  --group-tone: var(--chart-1);
+  --group-ink: color-mix(in srgb, var(--group-tone) 62%, var(--foreground));
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--group-tone) 20%, var(--border));
+  border-radius: calc(var(--radius) * 1.65);
+  color: var(--card-foreground);
+  background: var(--card);
+  box-shadow: 0 16px 36px -31px var(--brand-primary);
+}
+
+.group[data-group="partner"] {
+  --group-tone: var(--chart-2);
+}
+
+.groupHeader {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  overflow: hidden;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--border);
+  background:
+    repeating-radial-gradient(circle at 100% 12%, transparent 0 16px, color-mix(in srgb, var(--group-tone) 12%, transparent) 17px 18px, transparent 19px 27px) right / 8rem 100% no-repeat,
+    linear-gradient(104deg, color-mix(in srgb, var(--group-tone) 13%, var(--card)), var(--card) 78%);
+}
+
+.groupHeader::before {
+  width: 3px;
+  height: 1.1rem;
+  flex: none;
+  border-radius: 99px;
+  background: var(--group-tone);
+  content: "";
+}
+
+.list {
+  padding: 0.25rem 0.5rem;
+}
+
+.reason {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 0.65rem;
+  padding: 0.7rem 0.5rem;
+}
+
+.reason + .reason {
+  border-top: 1px solid var(--border);
+}
+
+.reason:hover {
+  background: color-mix(in srgb, var(--group-tone) 5%, var(--card));
+}
+
+.icon {
+  display: grid;
+  width: 2.15rem;
+  height: 2.15rem;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--group-tone) 24%, var(--border));
+  border-radius: calc(var(--radius) * 0.74);
+  color: var(--group-ink);
+  background: color-mix(in srgb, var(--group-tone) 9%, var(--card));
+}
+
+.reasonTitle {
+  font-family: var(--font-poppins), sans-serif;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.description {
+  margin-block-start: 0.15rem;
+  color: var(--muted-foreground);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 720px) {
+  .groups {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .groupHeader {
+    padding-inline: 1.15rem;
+  }
+
+  .list {
+    padding-inline: 0.65rem;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .reason,
+  .icon {
+    transition: background-color 180ms ease, border-color 180ms ease;
+  }
+
+  .reason:hover .icon {
+    border-color: color-mix(in srgb, var(--group-tone) 46%, var(--border));
+    background: color-mix(in srgb, var(--group-tone) 15%, var(--card));
+  }
+}

@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 
 import { cn } from "@/lib/utils";
 import { BrandMark } from "@/components/brand-mark";
+import { BookingLink } from "@/components/booking-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { MobileAuth, UserMenu } from "@/components/user-menu";
 import { MagneticButton } from "@/components/magnetic-button";
@@ -135,7 +136,6 @@ function MobileNavLink({
   );
 }
 
-/** "Book a Call" CTA — same smart-scroll logic for #contact. */
 function BookCallButton({
   className,
   onClose,
@@ -143,14 +143,9 @@ function BookCallButton({
   className?: string;
   onClose?: () => void;
 }) {
-  const pathname = usePathname();
-  const handleClick = useSectionClick("#contact", onClose);
-  const resolvedHref = pathname === "/" ? "#contact" : "/#contact";
-
   return (
-    <Link
-      href={resolvedHref}
-      onClick={handleClick}
+    <BookingLink
+      onNavigate={onClose}
       className={cn(
         "group relative inline-flex h-10 items-center justify-center gap-2 overflow-hidden rounded-lg bg-primary px-5 text-sm font-medium text-primary-foreground shadow-sm transition-all duration-300 hover:shadow-md hover:shadow-brand-secondary/25 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
         className
@@ -161,7 +156,7 @@ function BookCallButton({
         Book a Call
         <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5" />
       </span>
-    </Link>
+    </BookingLink>
   );
 }
 

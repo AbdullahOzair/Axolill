@@ -34,17 +34,7 @@ import {
 import { GetStarted } from "@/components/portal/get-started";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { BookingDialog } from "@/components/portal/booking-dialog";
 import { Separator } from "@/components/ui/separator";
 import {
   CardSkeleton,
@@ -703,14 +693,6 @@ const fmtWhen = (iso: string) =>
     minute: "2-digit",
   });
 
-/** Now + 1 day at the next half hour, as a datetime-local value. */
-function defaultPreferred() {
-  const d = new Date(Date.now() + 24 * 60 * 60 * 1000);
-  d.setMinutes(d.getMinutes() > 30 ? 60 : 30, 0, 0);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
 function MeetingList({
   meetings,
   projectId,
@@ -723,10 +705,6 @@ function MeetingList({
   const now = Date.now();
 
   const [open, setOpen] = React.useState(false);
-  const [title, setTitle] = React.useState("");
-  const [preferredAt, setPreferredAt] = React.useState("");
-  const [saving, setSaving] = React.useState(false);
-  const [formError, setFormError] = React.useState<string | null>(null);
   const [ackId, setAckId] = React.useState<string | null>(null);
 
   const pending = meetings.filter((m) => m.status === "requested");
@@ -752,40 +730,6 @@ function MeetingList({
   );
 
   const ordered = [...pending, ...upcoming, ...past];
-
-  function openRequest() {
-    setTitle("");
-    setPreferredAt(defaultPreferred());
-    setFormError(null);
-    setOpen(true);
-  }
-
-  async function submit() {
-    if (!title.trim()) return setFormError("What's the call about?");
-    if (!preferredAt) return setFormError("Pick a preferred time.");
-
-    setSaving(true);
-    setFormError(null);
-    try {
-      await fetchJson("/api/meetings/request", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: title.trim(),
-          preferredAt,
-          projectId,
-        }),
-      });
-      setOpen(false);
-      onChanged();
-    } catch (err) {
-      setFormError(
-        err instanceof Error ? err.message : "Could not send the request."
-      );
-    } finally {
-      setSaving(false);
-    }
-  }
 
   async function acknowledge(id: string) {
     setAckId(id);
@@ -855,7 +799,7 @@ function MeetingList({
         icon={CalendarDays}
       >
         <div className="mb-4">
-          <Button onClick={openRequest} size="sm" className="gap-2">
+          <Button onClick={() => setOpen(true)} size="sm" className="gap-2">
             <Video className="size-4" />
             Book a Google Meet
           </Button>
@@ -931,58 +875,7 @@ function MeetingList({
         )}
       </Panel>
 
-      {/* Request a call */}
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Book a Google Meet</DialogTitle>
-            <DialogDescription>
-              Tell us what you&apos;d like to talk about and when suits you.
-              We&apos;ll confirm a time and send the Meet link here.
-            </DialogDescription>
-          </DialogHeader>
-
-          {formError && (
-            <p
-              role="alert"
-              className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
-            >
-              {formError}
-            </p>
-          )}
-
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label htmlFor="req-title">What&apos;s it about?</Label>
-              <Input
-                id="req-title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Design review"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="req-when">Preferred date &amp; time</Label>
-              <Input
-                id="req-when"
-                type="datetime-local"
-                value={preferredAt}
-                onChange={(e) => setPreferredAt(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <DialogFooter>
-            <DialogClose render={<Button variant="outline" disabled={saving} />}>
-              Cancel
-            </DialogClose>
-            <Button onClick={submit} disabled={saving} className="gap-2">
-              {saving && <RotateCcw className="size-4 animate-spin" />}
-              {saving ? "Sending…" : "Send request"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <BookingDialog open={open} onOpenChange={setOpen} projectId={projectId} onSent={onChanged} />
     </>
   );
 }

@@ -1,287 +1,131 @@
 "use client";
 
 import * as React from "react";
-import { ChevronLeft, ChevronRight, Quote, Star } from "lucide-react";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { ChevronLeft, ChevronRight, Pause, Play, Quote, Star } from "lucide-react";
 
-import { cn } from "@/lib/utils";
-import { fetchJson, useLoader } from "@/lib/use-api";
-import type { Testimonial } from "@/lib/data-model";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState, ErrorState } from "@/components/ui/states";
-import { Reveal } from "@/components/reveal";
+import type { Testimonial } from "@/lib/data-model";
+import { fetchJson, useLoader } from "@/lib/use-api";
+import { mountTestimonialRail } from "./testimonial-rail";
+import styles from "./testimonials.module.css";
 
-const AUTO_ADVANCE_MS = 6000;
-
-function initials(name: string) {
-  return name
-    .split(" ")
-    .map((part) => part[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
-}
-
-/**
- * The API already hides drafts from anonymous callers, but an *admin* browsing
- * the marketing site gets every row back — so filter here too. The homepage must
- * never surface an unpublished testimonial.
- */
 async function loadTestimonials(): Promise<Testimonial[]> {
-  const { testimonials } = await fetchJson<{ testimonials: Testimonial[] }>(
-    "/api/testimonials"
-  );
-  return testimonials.filter((t) => t.published);
+  const { testimonials } = await fetchJson<{ testimonials: Testimonial[] }>("/api/testimonials");
+  return testimonials.filter((testimonial) => testimonial.published);
 }
 
 export function Testimonials() {
-  const reduce = useReducedMotion();
-  const { data, error, loading, reload } =
-    useLoader<Testimonial[]>(loadTestimonials);
-
-  const [[index, direction], setState] = React.useState<[number, number]>([
-    0, 0,
-  ]);
-  const [paused, setPaused] = React.useState(false);
-
-  const testimonials = React.useMemo(() => data ?? [], [data]);
-  const count = testimonials.length;
-
-  const paginate = React.useCallback(
-    (dir: number) => {
-      if (count === 0) return; // guard: modulo by zero -> NaN index
-      setState(([current]) => [(current + dir + count) % count, dir]);
-    },
-    [count]
-  );
-
-  const goTo = React.useCallback((target: number) => {
-    setState(([current]) => [target, target > current ? 1 : -1]);
-  }, []);
-
-  // Data can arrive (or shrink) after mount — keep the index in range.
-  React.useEffect(() => {
-    setState(([current, dir]) =>
-      current >= count ? [0, dir] : [current, dir]
-    );
-  }, [count]);
-
-  // Auto-advance, paused on hover/focus. Disabled entirely under reduced motion.
-  React.useEffect(() => {
-    if (paused || reduce || count < 2) return;
-    const id = window.setInterval(() => paginate(1), AUTO_ADVANCE_MS);
-    return () => window.clearInterval(id);
-  }, [paused, reduce, paginate, index, count]);
-
-  const active = testimonials[index];
-
-  const slideVariants = {
-    enter: (dir: number) =>
-      reduce ? { opacity: 0 } : { opacity: 0, x: dir > 0 ? 64 : -64 },
-    center: { opacity: 1, x: 0 },
-    exit: (dir: number) =>
-      reduce ? { opacity: 0 } : { opacity: 0, x: dir > 0 ? -64 : 64 },
-  };
+  const { data, error, loading, reload } = useLoader<Testimonial[]>(loadTestimonials);
 
   return (
-    <section id="testimonials" className="relative py-24 sm:py-32">
-      <div className="mx-auto w-full max-w-4xl px-4 sm:px-6">
-        {/* Header */}
-        <Reveal className="mx-auto max-w-2xl text-center">
-          <p className="text-xs font-medium tracking-wider text-brand-secondary uppercase dark:text-blue-400">
-            Testimonials
-          </p>
-          <h2 className="mt-4 font-heading text-3xl font-bold tracking-tight text-balance sm:text-4xl md:text-5xl">
-            What our clients say
+    <section id="testimonials" aria-labelledby="testimonials-heading" aria-busy={loading} className={`${styles.section} scroll-mt-16 py-14 font-sans sm:py-18`}>
+      <div className="mx-auto w-full max-w-5xl px-4 sm:px-6 lg:px-8">
+        <header>
+          <p className={styles.eyebrow}>Testimonials</p>
+          <h2 id="testimonials-heading" className="mt-3 font-heading text-3xl leading-[1.1] font-semibold tracking-tight text-balance sm:text-4xl lg:text-5xl">
+            What our <span className={styles.accent}>clients say</span>
           </h2>
-        </Reveal>
+        </header>
 
-        {loading ? (
-          <CarouselSkeleton />
-        ) : error ? (
-          <ErrorState message={error} onRetry={reload} className="mt-14" />
-        ) : count === 0 || !active ? (
-          <EmptyState
-            title="No testimonials yet"
-            description="Client stories will appear here once they're published."
-            className="mt-14"
-          />
-        ) : (
-          /* Carousel — unchanged below this point, only the data source moved. */
-          <div
-            className="relative mt-14"
-            onMouseEnter={() => setPaused(true)}
-            onMouseLeave={() => setPaused(false)}
-            onFocusCapture={() => setPaused(true)}
-            onBlurCapture={() => setPaused(false)}
-            role="group"
-            aria-roledescription="carousel"
-            aria-label="Client testimonials"
-          >
-            <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-background/60 px-6 py-10 shadow-sm backdrop-blur sm:px-12 sm:py-14">
-              <Quote
-                aria-hidden
-                className="mx-auto mb-6 size-9 text-brand-secondary/30"
-              />
-
-              {/* min-height keeps layout stable across varying quote lengths */}
-              <div className="relative min-h-[13rem] sm:min-h-[11rem]">
-                <AnimatePresence custom={direction} mode="wait" initial={false}>
-                  <motion.figure
-                    key={active.id}
-                    custom={direction}
-                    variants={slideVariants}
-                    initial="enter"
-                    animate="center"
-                    exit="exit"
-                    transition={{
-                      duration: reduce ? 0.25 : 0.4,
-                      ease: [0.22, 1, 0.36, 1],
-                    }}
-                    className="absolute inset-0 flex flex-col items-center text-center"
-                    aria-roledescription="slide"
-                    aria-label={`${index + 1} of ${count}`}
-                  >
-                    <div
-                      className="mb-5 flex gap-0.5"
-                      role="img"
-                      aria-label={`Rated ${active.rating} out of 5 stars`}
-                    >
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <Star
-                          key={i}
-                          aria-hidden
-                          className={cn(
-                            "size-4",
-                            i < active.rating
-                              ? "fill-amber-400 text-amber-400"
-                              : "text-muted-foreground/30"
-                          )}
-                        />
-                      ))}
-                    </div>
-
-                    <blockquote className="max-w-2xl font-heading text-lg font-medium text-balance sm:text-xl">
-                      &ldquo;{active.quote}&rdquo;
-                    </blockquote>
-
-                    <figcaption className="mt-6 flex items-center gap-3">
-                      <Avatar size="lg">
-                        <AvatarFallback className="bg-gradient-to-br from-brand-secondary to-accent-cyan font-semibold text-white">
-                          {initials(active.name)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="text-left">
-                        <div className="text-sm font-semibold text-foreground">
-                          {active.name}
-                        </div>
-                        {active.role && (
-                          <div className="text-xs text-muted-foreground">
-                            {active.role}
-                          </div>
-                        )}
-                      </div>
-                    </figcaption>
-                  </motion.figure>
-                </AnimatePresence>
-              </div>
+        <div className="mt-6">
+          {loading && !data ? (
+            <div role="status" className={styles.skeleton}>
+              <span className="sr-only">Loading testimonials…</span>
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-5 w-full" />
+              <Skeleton className="h-5 w-4/5" />
+              <Skeleton className="mt-2 h-10 w-48" />
             </div>
-
-            {/* Controls — hidden for a single testimonial, there's nowhere to go. */}
-            {count > 1 && (
-              <div className="mt-8 flex items-center justify-center gap-4">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="rounded-full"
-                  aria-label="Previous testimonial"
-                  onClick={() => paginate(-1)}
-                >
-                  <ChevronLeft className="size-4" />
-                </Button>
-
-                {/* Dots */}
-                <div className="flex items-center gap-2">
-                  {testimonials.map((t, i) => (
-                    <button
-                      key={t.id}
-                      type="button"
-                      onClick={() => goTo(i)}
-                      aria-label={`Go to testimonial ${i + 1}`}
-                      aria-current={i === index}
-                      className={cn(
-                        "h-2 rounded-full outline-none transition-all duration-300 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-                        i === index
-                          ? "w-6 bg-brand-secondary"
-                          : "w-2 bg-border hover:bg-muted-foreground/50"
-                      )}
-                    />
-                  ))}
-                </div>
-
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="rounded-full"
-                  aria-label="Next testimonial"
-                  onClick={() => paginate(1)}
-                >
-                  <ChevronRight className="size-4" />
-                </Button>
-              </div>
-            )}
-          </div>
-        )}
+          ) : error ? (
+            <ErrorState message={error} onRetry={reload} />
+          ) : !data?.length ? (
+            <EmptyState title="No testimonials yet" description="Client stories will appear here once they're published." />
+          ) : data.length === 1 ? (
+            <div className={styles.single}><TestimonialCard testimonial={data[0]} /></div>
+          ) : (
+            <TestimonialCarousel testimonials={data} />
+          )}
+        </div>
       </div>
     </section>
   );
 }
 
-/** Mirrors the carousel card's shape so the layout doesn't jump when data lands. */
-function CarouselSkeleton() {
+function TestimonialCarousel({ testimonials }: { testimonials: Testimonial[] }) {
+  const carousel = React.useRef<HTMLDivElement>(null);
+  const viewport = React.useRef<HTMLDivElement>(null);
+  const player = React.useRef<ReturnType<typeof mountTestimonialRail>>(undefined);
+  const [paused, setPaused] = React.useState(false);
+  const viewportId = React.useId();
+
+  React.useLayoutEffect(() => {
+    if (!carousel.current || !viewport.current) return;
+    const controls = mountTestimonialRail(carousel.current, viewport.current);
+    player.current = controls;
+    return () => {
+      player.current = undefined;
+      controls?.dispose();
+    };
+  }, [testimonials]);
+
+  React.useEffect(() => { player.current?.setPaused(paused); }, [paused, testimonials]);
+
   return (
-    <div className="relative mt-14">
-      <div className="rounded-2xl border border-border/60 bg-background/60 px-6 py-10 shadow-sm backdrop-blur sm:px-12 sm:py-14">
-        <Skeleton className="mx-auto mb-6 size-9 rounded-md" />
-
-        <div className="flex min-h-[13rem] flex-col items-center sm:min-h-[11rem]">
-          {/* stars */}
-          <div className="mb-5 flex gap-0.5">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Skeleton key={i} className="size-4 rounded-sm" />
-            ))}
-          </div>
-
-          {/* quote */}
-          <div className="w-full max-w-2xl space-y-3">
-            <Skeleton className="mx-auto h-6 w-11/12" />
-            <Skeleton className="mx-auto h-6 w-10/12" />
-            <Skeleton className="mx-auto h-6 w-7/12" />
-          </div>
-
-          {/* attribution */}
-          <div className="mt-8 flex items-center gap-3">
-            <Skeleton className="size-10 rounded-full" />
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-32" />
-              <Skeleton className="h-3 w-40" />
-            </div>
-          </div>
-        </div>
+    <div ref={carousel} role="group" aria-roledescription="carousel" aria-label="Client testimonials" className={styles.carousel}>
+      <div className={styles.controls}>
+        <button type="button" aria-label="Previous testimonial" aria-controls={viewportId} onClick={() => player.current?.move(-1)}>
+          <ChevronLeft aria-hidden size={18} />
+        </button>
+        <button type="button" aria-label="Next testimonial" aria-controls={viewportId} onClick={() => player.current?.move(1)}>
+          <ChevronRight aria-hidden size={18} />
+        </button>
+        <button
+          type="button"
+          aria-label={paused ? "Resume automatic scrolling" : "Pause automatic scrolling"}
+          aria-controls={viewportId}
+          className={styles.playback}
+          onClick={() => setPaused((value) => !value)}
+        >
+          {paused ? <Play aria-hidden size={15} /> : <Pause aria-hidden size={15} />}
+        </button>
       </div>
-
-      {/* controls */}
-      <div className="mt-8 flex items-center justify-center gap-4">
-        <Skeleton className="size-8 rounded-full" />
-        <div className="flex items-center gap-2">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton key={i} className="h-2 w-2 rounded-full" />
+      <div id={viewportId} ref={viewport} className={styles.viewport} data-testimonial-viewport>
+        <div className={styles.track}>
+          {[0, 1, 2, 3].map((copy) => (
+            <ul key={copy} aria-hidden={copy !== 1 || undefined} data-testimonial-group className={styles.group}>
+              {testimonials.map((testimonial) => <li key={testimonial.id}><TestimonialCard testimonial={testimonial} /></li>)}
+            </ul>
           ))}
         </div>
-        <Skeleton className="size-8 rounded-full" />
       </div>
     </div>
+  );
+}
+
+function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
+  const { name, role, quote, rating } = testimonial;
+  const initials = name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
+
+  return (
+    <figure className={styles.card}>
+      <div className={styles.cardTop}>
+        <Quote aria-hidden size={21} className={styles.quoteIcon} />
+        <div role="img" aria-label={`Rated ${rating} out of 5 stars`} className={styles.rating}>
+          {Array.from({ length: 5 }, (_, index) => <Star key={index} aria-hidden size={14} data-filled={index < rating} />)}
+        </div>
+      </div>
+      <blockquote className={styles.quote}>&ldquo;{quote}&rdquo;</blockquote>
+      <figcaption className={styles.author}>
+        <Avatar size="sm">
+          <AvatarFallback className={styles.initials}>{initials}</AvatarFallback>
+        </Avatar>
+        <div className="min-w-0">
+          <div className={styles.name}>{name}</div>
+          {role && <div className={styles.role}>{role}</div>}
+        </div>
+      </figcaption>
+    </figure>
   );
 }

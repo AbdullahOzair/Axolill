@@ -1,0 +1,292 @@
+.section {
+  --process-blue: color-mix(in srgb, var(--chart-1) 88%, var(--foreground));
+  color: var(--foreground);
+}
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--process-blue);
+  font-size: 0.6875rem;
+  font-weight: 650;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.eyebrow::before {
+  width: 1.5rem;
+  height: 1px;
+  background: currentColor;
+  content: "";
+}
+
+.accent {
+  color: var(--process-blue);
+}
+
+.workbench {
+  display: grid;
+  gap: 0.875rem;
+  margin-block-start: 1.75rem;
+}
+
+.tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.25rem;
+  padding: 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) * 1.5);
+  background: color-mix(in srgb, var(--card) 77%, var(--secondary));
+}
+
+.tab {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  min-height: 2.5rem;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.3rem 0.65rem;
+  border: 1px solid transparent;
+  border-radius: calc(var(--radius) * 0.8);
+  color: var(--muted-foreground);
+  font-size: 0.8125rem;
+  font-weight: 550;
+  text-align: start;
+  cursor: pointer;
+}
+
+.tabIcon {
+  width: 1rem;
+  height: 1rem;
+  flex: none;
+  color: var(--process-blue);
+  opacity: 0.78;
+}
+
+.tab:hover,
+.tab[aria-selected="true"] {
+  color: var(--card-foreground);
+}
+
+.tab:hover {
+  background: color-mix(in srgb, var(--chart-1) 6%, var(--card));
+}
+
+.tab[aria-selected="true"] {
+  border-color: color-mix(in srgb, var(--chart-1) 24%, var(--border));
+  background: color-mix(in srgb, var(--chart-1) 10%, var(--card));
+}
+
+.tab[aria-selected="true"] .tabIcon {
+  opacity: 1;
+}
+
+.tab:focus-visible,
+.panel:focus-visible,
+.actions button:focus-visible {
+  outline: 2px solid var(--process-blue);
+  outline-offset: -2px;
+}
+
+.frame {
+  display: grid;
+  min-width: 0;
+  grid-template-rows: 1fr auto;
+  border: 1px solid color-mix(in srgb, var(--chart-1) 17%, var(--border));
+  border-radius: calc(var(--radius) * 1.7);
+  color: var(--card-foreground);
+  background:
+    radial-gradient(ellipse at 95% 19%, color-mix(in srgb, var(--chart-1) 15%, transparent), transparent 59%),
+    var(--card);
+  box-shadow: 0 18px 40px -33px var(--brand-primary);
+}
+
+.panel {
+  display: grid;
+  min-height: 12rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: clamp(0.65rem, 2.8vw, 1.5rem);
+  padding: clamp(1rem, 4vw, 2.3rem);
+  border-radius: calc(var(--radius) * 1.7) calc(var(--radius) * 1.7) 0 0;
+}
+
+.panel[hidden] {
+  display: none;
+}
+
+.stageCount {
+  color: var(--process-blue);
+  font-size: 0.6875rem;
+  font-weight: 650;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.description {
+  max-width: 29ch;
+  margin-block-start: 0.65rem;
+  color: var(--muted-foreground);
+  font-size: clamp(0.8125rem, 2vw, 1rem);
+  line-height: 1.58;
+  text-wrap: pretty;
+}
+
+.artwork {
+  display: grid;
+  width: clamp(3.8rem, 19vw, 6.75rem);
+  aspect-ratio: 1;
+  place-items: center;
+}
+
+.orbit {
+  position: relative;
+  display: grid;
+  width: 91%;
+  aspect-ratio: 1;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--chart-1) 28%, var(--border));
+  border-radius: 50%;
+}
+
+.orbit::before,
+.orbit::after {
+  position: absolute;
+  border: 1px solid var(--border);
+  border-radius: inherit;
+  content: "";
+}
+
+.orbit::before {
+  inset: 12%;
+}
+
+.orbit::after {
+  inset: -10%;
+  border-style: dashed;
+}
+
+.orbitNode {
+  position: absolute;
+  z-index: 1;
+  top: 14%;
+  right: 13%;
+  width: clamp(5px, 1vw, 8px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--process-blue);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--chart-1) 56%, transparent);
+}
+
+.orbitCore {
+  display: grid;
+  width: 48%;
+  aspect-ratio: 1;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--chart-1) 31%, var(--border));
+  border-radius: 35%;
+  color: var(--process-blue);
+  background: linear-gradient(145deg, color-mix(in srgb, var(--chart-1) 15%, var(--card)), var(--card));
+}
+
+.orbitIcon {
+  width: 59%;
+  height: 59%;
+  stroke-width: 1.45;
+}
+
+.controls {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  padding: 0.5rem clamp(0.85rem, 4vw, 2.3rem);
+  border-top: 1px solid var(--border);
+}
+
+.progress {
+  display: flex;
+  width: min(100%, 12.5rem);
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.progress span {
+  height: 3px;
+  flex: 1;
+  border-radius: 99px;
+  background: var(--border);
+}
+
+.progress span[data-reached="true"] {
+  background: var(--chart-1);
+}
+
+.actions {
+  display: flex;
+  flex: none;
+  gap: 0.4rem;
+}
+
+.actions button {
+  display: grid;
+  width: 2.35rem;
+  height: 2.35rem;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) * 0.75);
+  color: var(--process-blue);
+  background: var(--card);
+  cursor: pointer;
+}
+
+.actions button:hover:enabled {
+  border-color: var(--chart-1);
+  background: var(--secondary);
+}
+
+.actions button:disabled {
+  color: var(--muted-foreground);
+  cursor: default;
+  opacity: 0.5;
+}
+
+@media (min-width: 680px) {
+  .workbench {
+    grid-template-columns: clamp(10.75rem, 24vw, 14rem) minmax(0, 1fr);
+  }
+
+  .tabs {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .tab {
+    padding-inline: 0.85rem;
+  }
+
+  .artwork {
+    width: clamp(7.5rem, 16vw, 11.75rem);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .tab,
+  .actions button,
+  .progress span {
+    transition: color 180ms ease, background-color 180ms ease, border-color 180ms ease;
+  }
+
+  .panel:not([hidden]) .panelCopy,
+  .panel:not([hidden]) .orbitCore {
+    animation: reveal 260ms cubic-bezier(.22, 1, .36, 1) both;
+  }
+}
+
+@keyframes reveal {
+  from { opacity: 0.5; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}

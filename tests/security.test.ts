@@ -12,9 +12,12 @@ test("post-login destinations stay within the signed-in area", () => {
   assert.equal(authRedirect("/admin/settings/security?tab=mfa#setup", "/admin"),
     "/admin/settings/security?tab=mfa#setup");
   assert.equal(authRedirect("/portal/book", "/portal"), "/portal/book");
+  assert.equal(authRedirect("/?book=1", "/portal"), "/?book=1");
+  assert.equal(authRedirect("/?book=1", "/admin"), "/admin");
   for (const path of [
     null, "/admin", "/portal/../admin", "/portal-extra", "https://example.invalid/",
     "//example.invalid/portal", "//[", "/\\example.invalid/portal", "data:text/plain,example",
+    "/?book=1&next=https://example.invalid", "//example.invalid/?book=1",
   ]) {
     assert.equal(authRedirect(path, "/portal"), "/portal");
   }

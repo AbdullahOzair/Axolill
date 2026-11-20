@@ -6,27 +6,25 @@ import {
   BrainCircuit,
   Cloud,
   Database,
+  type LucideIcon,
   Server,
   Smartphone,
   Wrench,
 } from "lucide-react";
-import { motion, useReducedMotion, type Variants } from "framer-motion";
 
-import { fetchJson, useLoader } from "@/lib/use-api";
+import { EmptyState, ErrorState } from "@/components/ui/states";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   TECHNOLOGY_CATEGORIES,
   type Technology,
   type TechnologyCategory,
 } from "@/lib/data-model";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { EmptyState, ErrorState } from "@/components/ui/states";
+import { fetchJson, useLoader } from "@/lib/use-api";
+import { CatalogControls } from "./catalog-controls";
+import styles from "./technologies.module.css";
 
-/** Presentation only — the category icon isn't stored in the DB. */
-const CATEGORY_ICONS: Record<
-  TechnologyCategory,
-  React.ComponentType<{ className?: string }>
-> = {
+/** The category icons are a presentation choice, independent of CMS records. */
+const CATEGORY_ICONS = {
   Frontend: AppWindow,
   Backend: Server,
   Databases: Database,
@@ -34,137 +32,132 @@ const CATEGORY_ICONS: Record<
   AI: BrainCircuit,
   Cloud: Cloud,
   Tools: Wrench,
-};
+} satisfies Record<TechnologyCategory, LucideIcon>;
+
+const TECHNOLOGIES_PER_PAGE = 8;
 
 async function loadTechnologies(): Promise<Technology[]> {
-  const { technologies } = await fetchJson<{ technologies: Technology[] }>(
-    "/api/technologies"
-  );
-  return technologies.filter((t) => t.published);
+  const { technologies } = await fetchJson<{ technologies: Technology[] }>("/api/technologies");
+  return technologies.filter((technology) => technology.published);
 }
 
 export function Technologies() {
-  const reduce = useReducedMotion();
-  const { data, error, loading, reload } =
-    useLoader<Technology[]>(loadTechnologies);
+  const { data, error, loading, reload } = useLoader<Technology[]>(loadTechnologies);
+  const [selected, setSelected] = React.useState<TechnologyCategory | null>(null);
+  const [page, setPage] = React.useState(0);
 
-  /**
-   * The API returns a flat list; the section renders one card per category.
-   * Categories with nothing published are dropped entirely.
-   */
-  const groups = React.useMemo(() => {
-    const rows = data ?? [];
-    return TECHNOLOGY_CATEGORIES.map((category) => ({
+  const groups = React.useMemo(() => TECHNOLOGY_CATEGORIES.map((category) => ({
+    category,
+    items: (data ?? []).filter((technology) => technology.category === category),
+  })).filter(({ items }) => items.length > 0), [data]);
+  const active = groups.length > 1 && groups.some(({ category }) => category === selected) ? selected : null;
+  const matching = active ? groups.filter(({ category }) => category === active) : groups;
+  const pages = matching.flatMap(({ category, items }) =>
+    Array.from({ length: Math.ceil(items.length / TECHNOLOGIES_PER_PAGE) }, (_, index) => ({
       category,
-      items: rows.filter((t) => t.category === category),
-    })).filter((g) => g.items.length > 0);
-  }, [data]);
-
-  const container: Variants = {
-    hidden: {},
-    show: { transition: { staggerChildren: reduce ? 0 : 0.08 } },
-  };
-  const item: Variants = {
-    hidden: reduce ? { opacity: 0 } : { opacity: 0, y: 20 },
-    show: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] },
-    },
-  };
+      items: items.slice(index * TECHNOLOGIES_PER_PAGE, (index + 1) * TECHNOLOGIES_PER_PAGE),
+    })),
+  );
+  const currentPage = Math.min(page, Math.max(0, pages.length - 1));
+  const visible = pages[currentPage];
 
   return (
-    <section id="technologies" className="relative py-24 sm:py-32">
-      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
-        {/* Header */}
-        <div className="mx-auto max-w-2xl text-center">
-          <p className="text-xs font-medium tracking-wider text-brand-secondary uppercase dark:text-blue-400">
-            Our stack
-          </p>
-          <h2 className="mt-4 font-heading text-3xl font-bold tracking-tight text-balance sm:text-4xl md:text-5xl">
-            Technologies we build with
+    <section
+      id="technologies"
+      aria-labelledby="technologies-heading"
+      aria-busy={loading}
+      className={`${styles.section} scroll-mt-16 py-14 font-sans sm:py-18`}
+    >
+      <div className="mx-auto w-full max-w-5xl px-4 sm:px-6 lg:px-8">
+        <header className="max-w-2xl">
+          <p className={styles.eyebrow}>Our stack</p>
+          <h2 id="technologies-heading" className="mt-3 font-heading text-3xl leading-[1.1] font-semibold tracking-tight text-balance sm:text-4xl lg:text-5xl">
+            Technologies <span className={styles.accent}>we build with</span>
           </h2>
-          <p className="mt-4 text-base text-pretty text-muted-foreground sm:text-lg">
+          <p className="mt-3 max-w-xl text-sm leading-relaxed text-pretty text-muted-foreground sm:text-base">
             A modern, battle-tested toolkit across the whole stack — chosen for
             speed, reliability, and long-term maintainability.
           </p>
+        </header>
+
+        <div className="mt-7">
+          {loading && !data ? (
+            <StackSkeleton />
+          ) : error ? (
+            <ErrorState message={error} onRetry={reload} />
+          ) : !visible ? (
+            <EmptyState
+              title="No technologies published yet"
+              description="Technologies added in the admin will appear here once published."
+            />
+          ) : (
+            <div className={styles.catalog}>
+              {(groups.length > 1 || pages.length > 1) && (
+                <div className={styles.toolbar}>
+                  <CatalogControls
+                    filter={groups.length > 1 ? {
+                      label: "Filter technologies by category",
+                      allLabel: "All technologies",
+                      categories: groups.map(({ category }) => category),
+                      selected: active,
+                      onChange: (category) => {
+                        setSelected(groups.find((group) => group.category === category)?.category ?? null);
+                        setPage(0);
+                      },
+                    } : undefined}
+                    label="Technology pages"
+                    page={currentPage}
+                    pageCount={pages.length}
+                    onPageChange={setPage}
+                  />
+                </div>
+              )}
+              <div className={styles.rows}>
+                <StackRow key={visible.category} category={visible.category} items={visible.items} />
+              </div>
+            </div>
+          )}
         </div>
-
-        {loading ? (
-          <GridSkeleton />
-        ) : error ? (
-          <ErrorState message={error} onRetry={reload} className="mt-16" />
-        ) : groups.length === 0 ? (
-          <EmptyState
-            title="No technologies published yet"
-            description="Technologies added in the admin will appear here once published."
-            className="mt-16"
-          />
-        ) : (
-          <motion.div
-            variants={container}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, margin: "-80px" }}
-            className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
-          >
-            {groups.map(({ category, items }) => {
-              const Icon = CATEGORY_ICONS[category];
-              return (
-                <motion.div
-                  key={category}
-                  variants={item}
-                  className="rounded-xl border border-border/60 bg-background/60 p-6 backdrop-blur transition-colors hover:border-brand-secondary/40"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="grid size-9 place-items-center rounded-lg bg-gradient-to-br from-brand-secondary/10 to-accent-cyan/10 text-brand-secondary ring-1 ring-brand-secondary/15">
-                      <Icon className="size-4.5" />
-                    </span>
-                    <h3 className="font-heading text-lg font-semibold">
-                      {category}
-                    </h3>
-                  </div>
-
-                  <div className="mt-5 flex flex-wrap gap-2">
-                    {items.map((tech) => (
-                      <Badge
-                        key={tech.id}
-                        variant="secondary"
-                        className="cursor-default rounded-full border border-border/60 bg-secondary/60 px-3 py-1 text-sm font-medium text-secondary-foreground transition-transform duration-200 hover:scale-110 hover:border-brand-secondary/40 hover:text-foreground"
-                      >
-                        {tech.name}
-                      </Badge>
-                    ))}
-                  </div>
-                </motion.div>
-              );
-            })}
-          </motion.div>
-        )}
       </div>
     </section>
   );
 }
 
-function GridSkeleton() {
+function StackRow({ category, items }: { category: TechnologyCategory; items: Technology[] }) {
+  const Icon = CATEGORY_ICONS[category];
+  const id = React.useId();
   return (
-    <div className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      {Array.from({ length: 6 }).map((_, i) => (
-        <div
-          key={i}
-          className="rounded-xl border border-border/60 bg-background/60 p-6"
-        >
-          <div className="flex items-center gap-3">
-            <Skeleton className="size-9 rounded-lg" />
-            <Skeleton className="h-5 w-28" />
-          </div>
-          <div className="mt-5 flex flex-wrap gap-2">
-            {Array.from({ length: 5 }).map((_, j) => (
-              <Skeleton key={j} className="h-7 w-20 rounded-full" />
-            ))}
-          </div>
+    <div className={styles.row} data-stack-category={category}>
+      <div className={styles.category}>
+        <span className={styles.categoryIcon}><Icon aria-hidden size={19} strokeWidth={1.7} /></span>
+        <h3 id={id} className="min-w-0 font-heading text-base font-semibold tracking-tight">{category}</h3>
+      </div>
+      <ul aria-labelledby={id} className={styles.tools}>
+        {items.map(({ id, name }) => (
+          <li key={id} className={styles.tool}>
+            <span aria-hidden className={styles.toolMark} />
+            <span className={styles.toolName}>{name}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function StackSkeleton() {
+  return (
+    <div role="status" className={styles.catalog}>
+      <span className="sr-only">Loading technologies…</span>
+      <div aria-hidden className={styles.row}>
+        <div className={styles.category}>
+          <Skeleton className={styles.categoryIcon} />
+          <Skeleton className="h-4 w-20" />
         </div>
-      ))}
+        <div className={styles.tools}>
+          <Skeleton className="h-9 rounded-lg" />
+          <Skeleton className="h-9 rounded-lg" />
+        </div>
+      </div>
     </div>
   );
 }

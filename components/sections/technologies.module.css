@@ -1,0 +1,141 @@
+.section {
+  --stack-blue: color-mix(in srgb, var(--chart-1) 88%, var(--foreground));
+  color: var(--foreground);
+}
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--stack-blue);
+  font-size: 0.6875rem;
+  font-weight: 650;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.eyebrow::before {
+  width: 1.5rem;
+  height: 1px;
+  background: currentColor;
+  content: "";
+}
+
+.accent {
+  color: var(--stack-blue);
+}
+
+.catalog {
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--chart-1) 18%, var(--border));
+  border-radius: calc(var(--radius) * 1.65);
+  background: var(--card);
+  box-shadow: 0 16px 38px -30px var(--brand-primary);
+}
+
+.toolbar {
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--card) 73%, var(--secondary));
+}
+
+.row {
+  display: grid;
+  min-width: 0;
+}
+
+.category {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.75rem 0.85rem 0.45rem;
+  color: var(--card-foreground);
+}
+
+.categoryIcon {
+  display: grid;
+  width: 2.2rem;
+  height: 2.2rem;
+  flex: none;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--chart-1) 25%, var(--border));
+  border-radius: calc(var(--radius) * 0.88);
+  color: var(--stack-blue);
+  background: linear-gradient(145deg, color-mix(in srgb, var(--chart-1) 11%, var(--card)), var(--card));
+}
+
+.tools {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 7rem), 1fr));
+  align-content: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.85rem 0.85rem;
+}
+
+.tool {
+  display: flex;
+  min-width: 0;
+  min-height: 2.25rem;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.3rem 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) * 0.8);
+  color: var(--card-foreground);
+  background: color-mix(in srgb, var(--card) 67%, var(--secondary));
+  font-size: 0.8125rem;
+  font-weight: 550;
+  line-height: 1.35;
+}
+
+.tool:hover {
+  border-color: color-mix(in srgb, var(--chart-1) 32%, var(--border));
+}
+
+.toolMark {
+  width: 0.45rem;
+  aspect-ratio: 1;
+  flex: none;
+  border: 1px solid var(--stack-blue);
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--chart-1) 24%, transparent);
+  rotate: 45deg;
+}
+
+.toolName {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 680px) {
+  .row {
+    grid-template-columns: clamp(10rem, 23vw, 13rem) minmax(0, 1fr);
+  }
+
+  .category {
+    padding: 0.8rem 1rem;
+    border-inline-end: 1px solid var(--border);
+    background: linear-gradient(90deg, color-mix(in srgb, var(--chart-1) 7%, var(--card)), var(--card));
+  }
+
+  .tools {
+    padding: 0.8rem 0.9rem;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .tool {
+    transition: color 160ms ease, border-color 160ms ease, background-color 160ms ease;
+  }
+
+  .rows .row {
+    animation: stack-appear 240ms ease-out both;
+  }
+}
+
+@keyframes stack-appear {
+  from { opacity: 0.6; }
+  to { opacity: 1; }
+}

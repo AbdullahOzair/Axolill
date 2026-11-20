@@ -1,0 +1,14 @@
+@media (prefers-reduced-motion: no-preference) and (scripting: enabled) {
+  .hero[data-hero-intro="pending"] [data-hero-icon] {
+    opacity: 0;
+  }
+
+  .hero[data-hero-intro="pending"] [data-hero-reveal] {
+    animation: reveal-unhydrated-hero 1s step-end both;
+  }
+}
+
+@keyframes reveal-unhydrated-hero {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

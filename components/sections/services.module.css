@@ -1,0 +1,218 @@
+.section {
+  --service-blue: color-mix(in srgb, var(--chart-1) 87%, var(--foreground));
+  color: var(--foreground);
+  border-block: 1px solid var(--border);
+  background:
+    radial-gradient(ellipse at 8% 0%, color-mix(in srgb, var(--chart-1) 8%, transparent), transparent 58%),
+    radial-gradient(ellipse at 96% 82%, color-mix(in srgb, var(--chart-2) 6%, transparent), transparent 52%),
+    var(--background);
+}
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--service-blue);
+  font-size: 0.6875rem;
+  font-weight: 650;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.eyebrow span {
+  width: 1.5rem;
+  height: 1px;
+  background: currentColor;
+}
+
+.titleAccent {
+  color: var(--service-blue);
+}
+
+.catalog {
+  display: grid;
+  gap: 1rem;
+  margin-block-start: 1.75rem;
+}
+
+.basket {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  padding: 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--chart-1) 15%, var(--border));
+  border-radius: calc(var(--radius) * 1.8);
+  color: var(--card-foreground);
+  background:
+    radial-gradient(ellipse at 95% 2%, color-mix(in srgb, var(--chart-1) 12%, transparent), transparent 54%),
+    var(--card);
+  box-shadow: 0 16px 36px -29px color-mix(in srgb, var(--brand-primary) 64%, transparent);
+}
+
+.basketHeader {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 0.7rem;
+  padding: 0.25rem 0.25rem 0.9rem;
+}
+
+.categoryCopy {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.categoryIcon,
+.loadingIcon {
+  display: grid;
+  width: 2.4rem;
+  height: 2.4rem;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--chart-1) 22%, var(--border));
+  border-radius: calc(var(--radius) * 0.9);
+  color: var(--service-blue);
+  background: color-mix(in srgb, var(--chart-1) 9%, var(--card));
+}
+
+.categoryLink {
+  border-radius: 0.2rem;
+}
+
+.categoryLink:hover {
+  color: var(--service-blue);
+}
+
+.summary {
+  margin-block-start: 0.35rem;
+  color: var(--muted-foreground);
+  font-size: 0.8125rem;
+  line-height: 1.55;
+}
+
+.tray {
+  position: relative;
+  display: flex;
+  min-height: 7.75rem;
+  flex: 1 0 auto;
+  flex-wrap: wrap;
+  align-content: flex-end;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 0.5rem;
+  overflow: clip;
+  padding: 2.25rem 0.675rem 0.675rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.pill {
+  --ball-indent: 0px;
+  --pill-tone: var(--chart-1);
+  position: relative;
+  width: min(var(--ball-diameter), 100% - var(--ball-indent));
+  min-width: 0;
+  aspect-ratio: 1;
+  margin-inline-start: var(--ball-indent);
+  border-radius: 50%;
+  translate: var(--ball-x, 0px) var(--ball-y, 0px);
+}
+
+.pill:nth-child(3n + 2) {
+  --ball-indent: 7px;
+  --pill-tone: var(--chart-2);
+  margin-block-end: 7px;
+}
+
+.pill:nth-child(3n + 3) {
+  --ball-indent: 3px;
+  --pill-tone: var(--chart-3);
+  margin-block-end: 3px;
+}
+
+.pillLabel {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--pill-tone) 62%, var(--border));
+  border-radius: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  user-select: none;
+}
+
+.pillLabel span {
+  width: 72%;
+  overflow-wrap: anywhere;
+}
+
+.pill[data-dragging] {
+  z-index: 1;
+}
+
+.pillLabel:hover,
+.pill[data-dragging] .pillLabel {
+  border-color: var(--pill-tone);
+  box-shadow: 0 0 12px -4px color-mix(in srgb, var(--pill-tone) 62%, transparent);
+}
+
+.categoryLink:focus-visible {
+  outline: 2px solid var(--service-blue);
+  outline-offset: 2px;
+}
+
+.loadingTitle,
+.loadingPill {
+  align-self: center;
+  min-height: 1rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--muted) 65%, var(--border));
+}
+
+.loadingTitle {
+  width: 42%;
+}
+
+.loadingPill {
+  width: 4.25rem;
+  aspect-ratio: 1;
+}
+
+@media (min-width: 680px) {
+  .catalog {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .basket {
+    padding: 0.875rem;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .tray[data-drop] .pill {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .tray[data-drop="playing"] .pill {
+    will-change: transform, opacity;
+  }
+
+  .pillLabel {
+    transition: border-color 160ms ease, box-shadow 160ms ease;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .pillLabel {
+    cursor: grab;
+  }
+
+  .tray:has([data-dragging]),
+  .pill[data-dragging] .pillLabel {
+    cursor: grabbing;
+  }
+}

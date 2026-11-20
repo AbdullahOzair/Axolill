@@ -1,11 +1,12 @@
 import { withApiErrors } from "@/lib/http-security";
 import { limitEndpoint } from "@/lib/rate-limit";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 
 import {
   badRequest,
   db,
+  json,
   mutationJson,
   newId,
   parseBody,
@@ -17,7 +18,7 @@ import { meeting, project } from "@/lib/db/schema";
 export const dynamic = "force-dynamic";
 
 const requestMeeting = z.object({
-  title: z.string().min(1).max(200),
+  title: z.string().trim().min(1).max(200),
   projectId: z.string().min(1).nullable().optional(),
   /** The client's preferred slot — the admin can move it when confirming. */
   preferredAt: z.iso.datetime({ local: true }).or(z.iso.datetime()),
@@ -47,9 +48,10 @@ export const POST = withApiErrors("POST /api/meetings/request", async function P
     return badRequest("Pick a time in the future.");
   }
 
+  const database = db();
   // A project, if named, must be the requester's own.
   if (body.projectId) {
-    const [owned] = await db()
+    const [owned] = await database
       .select({ clientId: project.clientId })
       .from(project)
       .where(eq(project.id, body.projectId))
@@ -61,40 +63,37 @@ export const POST = withApiErrors("POST /api/meetings/request", async function P
     }
   }
 
-  const open = await db()
-    .select({ id: meeting.id })
-    .from(meeting)
-    .where(
-      and(
-        eq(meeting.clientId, auth.user.id),
-        eq(meeting.status, "requested")
-      )
-    );
+  const projectId = body.projectId ?? null;
+  const scheduledAt = Math.floor(start.getTime() / 1000);
+  const pending = and(eq(meeting.clientId, auth.user.id), eq(meeting.status, "requested"));
+  const matching = and(
+    eq(meeting.clientId, auth.user.id),
+    eq(meeting.provider, "google_meet"),
+    sql`${meeting.status} in ('requested', 'scheduled')`,
+    sql`${meeting.projectId} is ${projectId}`,
+    sql`${meeting.scheduledAt} = ${scheduledAt}`,
+    sql`lower(trim(${meeting.title})) = lower(${body.title})`,
+  );
 
-  if (open.length >= MAX_OPEN_REQUESTS) {
+  // D1 evaluates both guards in the same write, including concurrent requests.
+  const inserted = await database.get<{ id: string }>(sql`
+    insert into ${meeting} ("id", "clientId", "projectId", "title", "attendeeName",
+      "attendeeEmail", "scheduledAt", "status", "provider")
+    select ${newId()}, ${auth.user.id}, ${projectId}, ${body.title}, ${auth.user.name},
+      ${auth.user.email}, ${scheduledAt}, 'requested', 'google_meet'
+    where not exists (select 1 from ${meeting} where ${matching})
+      and (select count(*) from ${meeting} where ${pending}) < ${MAX_OPEN_REQUESTS}
+    returning "id"
+  `);
+  if (!inserted) {
+    const duplicate = await database.select({ id: meeting.id }).from(meeting).where(matching).get();
+    if (duplicate) return json({ error: "You already requested a call for this topic and time." }, 409);
     return badRequest(
       "You already have a few pending requests. We'll confirm those first."
     );
   }
 
-  const [created] = await db()
-    .insert(meeting)
-    .values({
-      id: newId(),
-      leadId: null,
-      clientId: auth.user.id,
-      projectId: body.projectId ?? null,
-      title: body.title.trim(),
-      // Identity comes from the session, never the request body.
-      attendeeName: auth.user.name,
-      attendeeEmail: auth.user.email,
-      scheduledAt: start,
-      meetingUrl: null,
-      status: "requested",
-      googleEventId: null,
-      provider: "google_meet",
-    })
-    .returning();
+  const created = await database.select().from(meeting).where(eq(meeting.id, inserted.id)).get();
 
   return mutationJson(auth.user, "POST /api/meetings/request", { meeting: created }, 201);
 });

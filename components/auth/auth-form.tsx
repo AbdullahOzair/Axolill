@@ -16,6 +16,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { signIn, signUp } from "@/lib/auth-client";
 import { authRedirect } from "@/lib/auth-redirect";
+import { BOOK_CALL_CALLBACK } from "@/lib/booking-intent";
 import { BrandMark } from "@/components/brand-mark";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -208,7 +209,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
 
         <div className="rounded-2xl border border-border/60 bg-background/70 p-6 shadow-xl shadow-black/5 backdrop-blur-xl sm:p-8">
           {status === "success" ? (
-            <SuccessState mode={mode} reduce={!!reduce} />
+            <SuccessState mode={mode} reduce={!!reduce} booking={next === BOOK_CALL_CALLBACK} />
           ) : (
             <>
               {/* Header */}
@@ -218,7 +219,9 @@ export function AuthForm({ mode }: { mode: Mode }) {
                   {copy.title}
                 </h1>
                 <p className="mt-1.5 text-sm text-muted-foreground">
-                  {copy.subtitle}
+                  {mode === "login" && next === BOOK_CALL_CALLBACK
+                    ? "Please log in first to book a call."
+                    : copy.subtitle}
                 </p>
               </div>
 
@@ -382,7 +385,9 @@ export function AuthForm({ mode }: { mode: Mode }) {
           <p className="mt-6 text-center text-sm text-muted-foreground">
             {copy.switchText}{" "}
             <Link
-              href={copy.switchHref}
+              href={next === BOOK_CALL_CALLBACK
+                ? `${copy.switchHref}?next=${encodeURIComponent(next)}`
+                : copy.switchHref}
               className="rounded-sm font-medium text-brand-secondary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background dark:text-blue-400"
             >
               {copy.switchCta}
@@ -394,7 +399,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
   );
 }
 
-function SuccessState({ mode, reduce }: { mode: Mode; reduce: boolean }) {
+function SuccessState({ mode, reduce, booking }: { mode: Mode; reduce: boolean; booking: boolean }) {
   return (
     <div className="flex flex-col items-center py-6 text-center">
       <motion.span
@@ -409,7 +414,7 @@ function SuccessState({ mode, reduce }: { mode: Mode; reduce: boolean }) {
         {COPY[mode].successTitle}
       </h1>
       <p className="mt-2 max-w-xs text-sm text-muted-foreground">
-        Taking you to your portal…
+        {booking ? "Opening your booking…" : "Taking you to your portal…"}
       </p>
       <span className="mt-6 flex items-center gap-2 text-sm text-muted-foreground">
         <Loader2 className="size-4 animate-spin" />

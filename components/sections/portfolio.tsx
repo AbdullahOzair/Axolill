@@ -2,21 +2,24 @@
 
 import * as React from "react";
 import Image from "next/image";
-import { ArrowUpRight } from "lucide-react";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { ArrowUpRight, PanelsTopLeft, X } from "lucide-react";
 
-import { cn } from "@/lib/utils";
-import { fetchJson, useLoader } from "@/lib/use-api";
-import type { PortfolioItem } from "@/lib/data-model";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState, ErrorState } from "@/components/ui/states";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Reveal } from "@/components/reveal";
-import { TiltCard } from "@/components/tilt-card";
+import type { PortfolioItem } from "@/lib/data-model";
+import { fetchJson, useLoader } from "@/lib/use-api";
+import { CatalogControls } from "./catalog-controls";
+import styles from "./portfolio.module.css";
 
-/** Canonical tab order; any extra category from the CMS is appended. */
+/** Keep the existing filter order and append any new CMS categories. */
 const KNOWN_CATEGORIES = [
   "Web Development",
   "Mobile Apps",
@@ -26,224 +29,181 @@ const KNOWN_CATEGORIES = [
   "Dashboards",
   "Data Analytics",
 ];
+const PROJECTS_PER_PAGE = 3;
 
 async function loadPortfolio(): Promise<PortfolioItem[]> {
-  const { portfolio } = await fetchJson<{ portfolio: PortfolioItem[] }>(
-    "/api/portfolio"
-  );
-  return portfolio.filter((p) => p.published);
+  const { portfolio } = await fetchJson<{ portfolio: PortfolioItem[] }>("/api/portfolio");
+  return portfolio.filter((project) => project.published);
 }
 
 export function Portfolio() {
-  const reduce = useReducedMotion();
-  const { data, error, loading, reload } =
-    useLoader<PortfolioItem[]>(loadPortfolio);
-  const projects = React.useMemo(() => data ?? [], [data]);
+  const { data, error, loading, reload } = useLoader<PortfolioItem[]>(loadPortfolio);
+  const [selected, setSelected] = React.useState<string | null>(null);
+  const [page, setPage] = React.useState(0);
+  const projects = data ?? [];
 
-  const [active, setActive] = React.useState<string>("All");
-
-  /** Tabs come from the data — a filter with nothing behind it is dead UI. */
-  const filters = React.useMemo(() => {
-    const present = new Set(projects.map((p) => p.category));
-    const ordered = KNOWN_CATEGORIES.filter((c) => present.has(c));
-    const extras = [...present].filter((c) => !KNOWN_CATEGORIES.includes(c));
-    return ["All", ...ordered, ...extras];
-  }, [projects]);
-
-  // The active tab can disappear when content changes.
-  React.useEffect(() => {
-    if (!filters.includes(active)) setActive("All");
-  }, [filters, active]);
-
-  const visible =
-    active === "All"
-      ? projects
-      : projects.filter((p) => p.category === active);
+  const present = new Set(projects.map(({ category }) => category));
+  const filters = [
+    ...KNOWN_CATEGORIES.filter((category) => present.has(category)),
+    ...Array.from(present).filter((category) => !KNOWN_CATEGORIES.includes(category)),
+  ];
+  const active = selected !== null && present.has(selected) ? selected : null;
+  const matching = active === null ? projects : projects.filter((project) => project.category === active);
+  const pageCount = Math.ceil(matching.length / PROJECTS_PER_PAGE);
+  const currentPage = Math.min(page, Math.max(0, pageCount - 1));
+  const visible = matching.slice(currentPage * PROJECTS_PER_PAGE, (currentPage + 1) * PROJECTS_PER_PAGE);
 
   return (
-    <section id="work" className="relative py-24 sm:py-32">
-      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
-        {/* Header */}
-        <Reveal className="mx-auto max-w-2xl text-center">
-          <p className="text-xs font-medium tracking-wider text-brand-secondary uppercase dark:text-blue-400">
-            Our work
-          </p>
-          <h2 className="mt-4 font-heading text-3xl font-bold tracking-tight text-balance sm:text-4xl md:text-5xl">
-            Selected projects
+    <section id="work" aria-labelledby="portfolio-heading" aria-busy={loading} className={`${styles.section} scroll-mt-16 py-14 font-sans sm:py-18`}>
+      <div className="mx-auto w-full max-w-5xl px-4 sm:px-6 lg:px-8">
+        <header className="max-w-2xl">
+          <p className={styles.eyebrow}>Our work</p>
+          <h2 id="portfolio-heading" className="mt-3 font-heading text-3xl leading-[1.1] font-semibold tracking-tight text-balance sm:text-4xl lg:text-5xl">
+            Selected <span className={styles.accent}>projects</span>
           </h2>
-          <p className="mt-4 text-base text-pretty text-muted-foreground sm:text-lg">
-            A cross-section of what we&apos;ve shipped — filter by the kind of
-            work you&apos;re looking for.
+          <p className="mt-3 max-w-xl text-sm leading-relaxed text-pretty text-muted-foreground sm:text-base">
+            A cross-section of what we&apos;ve shipped. Explore the work by category.
           </p>
-        </Reveal>
+        </header>
 
-        {loading ? (
-          <GridSkeleton />
-        ) : error ? (
-          <ErrorState message={error} onRetry={reload} className="mt-12" />
-        ) : projects.length === 0 ? (
-          <EmptyState
-            title="No projects published yet"
-            description="Work added in the admin will appear here once published."
-            className="mt-12"
-          />
-        ) : (
-          <>
-            {/* Filter tabs */}
-            <Tabs
-              value={active}
-              onValueChange={(v) => setActive(v as string)}
-              className="mt-10 items-center"
-            >
-              <div className="w-full max-w-full overflow-x-auto pb-1">
-                <TabsList className="mx-auto h-auto flex-wrap justify-center gap-1">
-                  {filters.map((filter) => (
-                    <TabsTrigger
-                      key={filter}
-                      value={filter}
-                      className="h-8 flex-none px-3"
-                    >
-                      {filter}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-              </div>
-            </Tabs>
-
-            {/* Animated grid */}
-            <motion.div
-              layout={!reduce}
-              initial={reduce ? { opacity: 0 } : { opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-80px" }}
-              transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-              className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
-            >
-              <AnimatePresence mode="popLayout">
-                {visible.map((project) => (
-                  <ProjectCard
-                    key={project.id}
-                    project={project}
-                    reduce={!!reduce}
-                  />
-                ))}
-              </AnimatePresence>
-            </motion.div>
-
-            {visible.length === 0 && (
-              <p className="mt-12 text-center text-sm text-muted-foreground">
-                No projects in this category yet — check back soon.
-              </p>
-            )}
-          </>
-        )}
+        <div className="mt-7">
+          {loading && !data ? (
+            <GridSkeleton />
+          ) : error ? (
+            <ErrorState message={error} onRetry={reload} />
+          ) : !projects.length ? (
+            <EmptyState title="No projects published yet" description="Work added in the admin will appear here once published." />
+          ) : (
+            <div className="grid gap-3">
+              <CatalogControls
+                filter={filters.length > 1 ? {
+                  label: "Filter projects by category",
+                  allLabel: "All projects",
+                  categories: filters,
+                  selected: active,
+                  onChange: (category) => { setSelected(category); setPage(0); },
+                } : undefined}
+                label="Project pages"
+                page={currentPage}
+                pageCount={pageCount}
+                onPageChange={setPage}
+              />
+              <ul className={styles.gallery}>
+                {visible.map((project) => <ProjectCard key={project.id} project={project} lead={matching.length === 1} />)}
+              </ul>
+            </div>
+          )}
+        </div>
       </div>
     </section>
   );
 }
 
-function ProjectCard({
-  project,
-  reduce,
-}: {
-  project: PortfolioItem;
-  reduce: boolean;
-}) {
+function ProjectCard({ project, lead }: { project: PortfolioItem; lead: boolean }) {
   const { title, category, description, tags, coverImage } = project;
 
   return (
-    <motion.div
-      layout={!reduce}
-      initial={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.92, y: 16 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      exit={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.92 }}
-      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-    >
-      <TiltCard maxTilt={6}>
-        <Card className="group h-full gap-0 overflow-hidden border-border/60 bg-background/60 pt-0 backdrop-blur transition-all duration-300 hover:-translate-y-1.5 hover:border-brand-secondary/40 hover:shadow-xl hover:shadow-brand-secondary/10">
-          {/* Cover image if one was uploaded; otherwise the gradient band. */}
-          <div className="relative h-32 overflow-hidden bg-gradient-to-br from-brand-secondary/15 via-accent-cyan/10 to-brand-success/10">
-            {coverImage ? (
-              <Image
-                src={`/api/media/${coverImage}`}
-                alt=""
-                fill
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                className="object-cover transition-transform duration-500 group-hover:scale-105"
-                unoptimized
-              />
-            ) : (
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,color-mix(in_oklch,var(--color-brand-secondary)_25%,transparent),transparent_55%)]" />
-            )}
+    <li className={styles.galleryItem} data-lead={lead || undefined}>
+      <Dialog>
+        <article className={styles.card}>
+          <ProjectCover key={coverImage} cover={coverImage} />
+          <div className={styles.cardCopy}>
+            <p className={styles.category}>{category}</p>
+            <h3 className={styles.cardTitle}>{title}</h3>
+            {description && <p className={styles.preview}>{description}</p>}
+            {tags.length > 0 && <ProjectTags tags={tags.slice(0, 3)} />}
+            <span aria-hidden className={styles.viewProject}>View project <ArrowUpRight size={16} /></span>
+          </div>
+          <DialogTrigger type="button" aria-label={`View project: ${title}`} className={styles.trigger} />
+        </article>
 
-            <span className="absolute top-3 left-3">
-              <Badge className="rounded-full bg-background/80 text-foreground backdrop-blur">
-                {category}
-              </Badge>
-            </span>
-            <ArrowUpRight className="absolute right-3 bottom-3 size-5 text-foreground/40 transition-all duration-300 group-hover:right-2.5 group-hover:bottom-2.5 group-hover:text-brand-secondary" />
+        <DialogContent
+          showCloseButton={false}
+          className={`${styles.detail} z-[60] flex max-h-[calc(100dvh-1.5rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-4xl motion-reduce:animate-none!`}
+        >
+          <div className={styles.detailHeader}>
+            <div className="min-w-0">
+              <p className={styles.category}>{category}</p>
+              <DialogTitle className={styles.detailTitle}>{title}</DialogTitle>
+            </div>
+            <DialogClose type="button" aria-label="Close project" className={styles.close}>
+              <X aria-hidden size={20} />
+            </DialogClose>
           </div>
 
-          <CardHeader className="pt-5">
-            <CardTitle className="font-heading text-lg">{title}</CardTitle>
-          </CardHeader>
+          <div className={styles.detailBody}>
+            {coverImage && <ProjectCover key={coverImage} cover={coverImage} expanded alt={`${title} project cover`} />}
 
-          <CardContent className="flex flex-1 flex-col">
             {description && (
-              <p className="text-sm text-pretty text-muted-foreground">
-                {description}
-              </p>
-            )}
-            {tags.length > 0 && (
-              <div className="mt-4 flex flex-wrap gap-1.5">
-                {tags.map((tag) => (
-                  <Badge
-                    key={tag}
-                    variant="secondary"
-                    className={cn(
-                      "rounded-full border border-border/60 bg-secondary/60 px-2.5 py-0.5 text-xs font-medium",
-                      "text-muted-foreground"
-                    )}
-                  >
-                    {tag}
-                  </Badge>
-                ))}
+              <div className={styles.detailSection}>
+                <h3 className={styles.detailLabel}>Overview</h3>
+                <DialogDescription className={styles.fullDescription}>{description}</DialogDescription>
               </div>
             )}
-          </CardContent>
-        </Card>
-      </TiltCard>
-    </motion.div>
+
+            {tags.length > 0 && (
+              <div className={styles.detailSection}>
+                <h3 className={styles.detailLabel}>Project tags</h3>
+                <ProjectTags tags={tags} />
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </li>
+  );
+}
+
+function ProjectCover({ cover, alt = "", expanded = false }: {
+  cover: PortfolioItem["coverImage"];
+  alt?: string;
+  expanded?: boolean;
+}) {
+  const [failed, setFailed] = React.useState(false);
+  if (expanded && failed) return null;
+
+  return (
+    <div className={expanded ? styles.expandedCover : styles.cover}>
+      {cover && !failed ? (
+        <Image
+          src={`/api/media/${cover}`}
+          alt={alt}
+          fill
+          sizes={expanded ? "(max-width: 640px) 100vw, 896px" : "(max-width: 640px) 100vw, 550px"}
+          unoptimized
+          onError={() => setFailed(true)}
+        />
+      ) : (
+        <div aria-hidden className={styles.coverFallback}>
+          <span><PanelsTopLeft size={36} strokeWidth={1.25} /></span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ProjectTags({ tags }: { tags: string[] }) {
+  return (
+    <ul className={styles.tags}>
+      {tags.map((tag, index) => <li key={`${index}-${tag}`}>{tag}</li>)}
+    </ul>
   );
 }
 
 function GridSkeleton() {
   return (
-    <>
-      <div className="mt-10 flex flex-wrap justify-center gap-1">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Skeleton key={i} className="h-8 w-24 rounded-md" />
-        ))}
-      </div>
-      <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div
-            key={i}
-            className="overflow-hidden rounded-xl border border-border/60 bg-background/60"
-          >
-            <Skeleton className="h-32 w-full rounded-none" />
-            <div className="p-6">
-              <Skeleton className="h-6 w-2/3" />
-              <Skeleton className="mt-3 h-4 w-full" />
-              <Skeleton className="mt-1.5 h-4 w-4/5" />
-              <div className="mt-4 flex gap-1.5">
-                <Skeleton className="h-5 w-16 rounded-full" />
-                <Skeleton className="h-5 w-16 rounded-full" />
-              </div>
-            </div>
+    <div role="status" className={styles.gallery}>
+      <span className="sr-only">Loading projects…</span>
+      <div aria-hidden className={styles.galleryItem} data-lead>
+        <div className={styles.card}>
+          <Skeleton className="min-h-48 w-full rounded-none" />
+          <div className={styles.cardCopy}>
+            <Skeleton className="h-3 w-24" />
+            <Skeleton className="h-7 w-3/4" />
+            <Skeleton className="h-4 w-5/6" />
           </div>
-        ))}
+        </div>
       </div>
-    </>
+    </div>
   );
 }
