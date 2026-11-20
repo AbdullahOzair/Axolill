@@ -88,7 +88,7 @@ function useSession() {
 
 const signIn = {
 	async email({ email, password }: { email: string; password: string }) {
-		return postJson<unknown>("/sign-in/email", { email, password });
+		return postJson<{ twoFactorRedirect?: boolean }>("/sign-in/email", { email, password });
 	},
 	async social({
 		provider,
@@ -130,6 +130,14 @@ async function signOut() {
 	return postJson<unknown>("/sign-out");
 }
 
+const twoFactor = {
+	enable: (password: string) =>
+		postJson<{ method: "totp"; totpURI: string; backupCodes: string[] }>("/two-factor/enable", { password }),
+	disable: (password: string) => postJson("/two-factor/disable", { password }),
+	verify: (code: string, backup = false) =>
+		postJson(backup ? "/two-factor/verify-backup-code" : "/two-factor/verify-totp", { code }),
+};
+
 /**
  * Browser-side auth client. Talks to the /api/auth/[...all] route on the same
  * origin, so no baseURL is needed.
@@ -139,6 +147,7 @@ export const authClient = {
 	signIn,
 	signUp,
 	signOut,
+	twoFactor,
 	useSession,
 };
 

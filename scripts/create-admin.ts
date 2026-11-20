@@ -2,14 +2,14 @@
  * Create (or promote) an admin. This is the ONLY way an admin comes into
  * existence — the website can never produce one.
  *
- *   npm run create-admin -- you@axonill.com --name "Your Name" --password "secret123"
+ *   npm run create-admin -- you@axonill.com --name "Your Name"
  *   npm run create-admin -- you@axonill.com --remote        # production D1
  *
  * Behaviour:
  *   - user doesn't exist        -> creates the user + a password credential, role=admin
- *   - user exists (any role)    -> sets role=admin, and sets/replaces the password
- *                                  if --password is given
- *   - --password omitted        -> a strong password is generated and printed ONCE
+ *   - promotion               -> sets a fresh password and revokes old sessions
+ *   - --rotate-password        -> replaces an existing admin's password
+ *   - --reset-mfa              -> also clears two-factor enrollment for recovery
  *
  * Admins sign in at /admin/login (email + password only — no signup, no Google).
  *
@@ -23,15 +23,16 @@ import { randomUUID, randomBytes } from "node:crypto";
 import path from "node:path";
 
 import { hashPassword } from "better-auth/crypto";
-import { eq } from "drizzle-orm";
+import { and, eq, like, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/sqlite-proxy";
 
-import { account, user } from "../lib/db/schema";
+import { account, session, twoFactor, user, verification } from "../lib/db/schema";
 
 // wrangler doesn't expose ./bin/wrangler.js via package "exports", so resolve
 // the file path directly rather than through require.resolve().
 const WRANGLER_BIN = path.join(
-  process.cwd(),
+  __dirname,
+  "..",
   "node_modules",
   "wrangler",
   "bin",
@@ -58,14 +59,16 @@ const remote = argv.includes("--remote");
 const email = argv.find((a) => !a.startsWith("--") && a.includes("@"));
 const nameArg = flag("name");
 const passwordArg = flag("password");
+const resetMfa = argv.includes("--reset-mfa");
+const rotatePassword = Boolean(passwordArg || resetMfa || argv.includes("--rotate-password"));
 
 if (!email) {
   console.error(
     [
       "",
-      "Usage: npm run create-admin -- <email> [--name <name>] [--password <password>] [--remote]",
+      "Usage: npm run create-admin -- <email> [--name <name>] [--rotate-password] [--reset-mfa] [--remote]",
       "",
-      '  npm run create-admin -- you@axonill.com --name "Your Name" --password "secret123"',
+      '  npm run create-admin -- you@axonill.com --name "Your Name"',
       "  npm run create-admin -- you@axonill.com --remote",
       "",
       "  --password may be omitted; one will be generated and printed once.",
@@ -77,8 +80,8 @@ if (!email) {
 
 const target = email.trim().toLowerCase();
 
-if (passwordArg && passwordArg.length < 8) {
-  console.error("\n✖ Password must be at least 8 characters.\n");
+if (argv.includes("--password") && (!passwordArg || passwordArg.startsWith("--") || passwordArg.length < 14)) {
+  console.error("Admin passwords must be at least 14 characters.");
   process.exit(1);
 }
 
@@ -101,8 +104,10 @@ function inline(sql: string, params: unknown[]): string {
 
 type Row = Record<string, unknown>;
 
-function execute(sql: string, params: unknown[]): Row[] {
-  const command = inline(sql, params);
+class ProvisioningError extends Error {}
+
+function execute(sql: string, params: unknown[], extra: Array<{ sql: string; params: unknown[] }> = []): Row[] {
+  const command = [{ sql, params }, ...extra].map((query) => inline(query.sql, query.params)).join(";\n");
 
   /*
    * Invoke wrangler's JS entry with the current Node binary rather than `npx`.
@@ -127,10 +132,13 @@ function execute(sql: string, params: unknown[]): Row[] {
       stdio: ["ignore", "pipe", "pipe"],
     });
   } catch (error) {
-    const err = error as { stderr?: string; stdout?: string };
-    console.error("\n✖ wrangler failed:\n");
-    console.error(err.stderr || err.stdout || String(error));
-    process.exit(1);
+    const result = error as { stderr?: string; stdout?: string; code?: string };
+    const output = [result.stderr, result.stdout, result.code].filter(Boolean).join("\n");
+    const reason = output.match(/\b(?:SQLITE_[A-Z_]+|D1_ERROR|EADDRINUSE|EACCES|EPERM|ENOENT|ECONNREFUSED|ECONNRESET)\b/)
+      ?? output.match(/database is locked|no such table|no such column|syntax error|address already in use|cannot access the file|unexpected end of (?:JSON|input)/i);
+    throw new ProvisioningError(
+      reason ? `Wrangler could not execute the database batch (${reason[0]}).` : "Wrangler could not execute the database batch."
+    );
   }
 
   const parsed = JSON.parse(stdout) as Array<{ results?: Row[] }>;
@@ -145,119 +153,73 @@ const qb = drizzle(async () => ({ rows: [] }));
 // tsx compiles this to CJS (no "type":"module" in package.json), where top-level
 // await is unsupported — so the body lives in an async main().
 async function main() {
-const where = remote ? "remote (production)" : "local";
-const password = passwordArg ?? randomBytes(12).toString("base64url");
-const generated = !passwordArg;
+  const selectUser = qb.select({ id: user.id, role: user.role })
+    .from(user).where(eq(user.email, target)).toSQL();
+  const existing = execute(selectUser.sql, selectUser.params)[0] as
+    | { id: string; role: "admin" | "client" }
+    | undefined;
 
-console.log(`\nTarget: ${target}  (${where} D1)`);
+  const userId = existing?.id ?? randomUUID();
+  const selectAccount = qb.select({ id: account.id }).from(account)
+    .where(and(eq(account.userId, userId), eq(account.providerId, "credential"))).toSQL();
+  const credential = existing
+    ? execute(selectAccount.sql, selectAccount.params)[0] as { id: string } | undefined
+    : undefined;
 
-// 1. Does the user exist?
-const selectUser = qb
-  .select({ id: user.id, email: user.email, name: user.name, role: user.role })
-  .from(user)
-  .where(eq(user.email, target))
-  .toSQL();
-
-const existing = execute(selectUser.sql, selectUser.params)[0] as
-  | { id: string; email: string; name: string; role: string }
-  | undefined;
-
-const now = new Date();
-const hash = await hashPassword(password);
-
-let userId: string;
-
-if (existing) {
-  userId = existing.id;
-  console.log(`  Found existing user "${existing.name}" (role=${existing.role})`);
-
-  const promote = qb
-    .update(user)
-    .set({ role: "admin", updatedAt: now })
-    .where(eq(user.id, userId))
-    .toSQL();
-  execute(promote.sql, promote.params);
-  console.log("  → role set to admin");
-} else {
-  userId = randomUUID();
-  const insertUser = qb
-    .insert(user)
-    .values({
-      id: userId,
-      name: nameArg ?? target.split("@")[0],
-      email: target,
-      emailVerified: true, // provisioned by staff, no verification mail to send
-      role: "admin",
-      createdAt: now,
-      updatedAt: now,
-    })
-    .toSQL();
-  execute(insertUser.sql, insertUser.params);
-  console.log("  → created new user with role=admin");
-}
-
-// 2. Set the password credential (so they can sign in at /admin/login).
-//    better-auth stores password logins as providerId="credential" with
-//    accountId === userId. A Google-only user has no such row.
-const credQuery = qb
-  .select({ id: account.id, providerId: account.providerId })
-  .from(account)
-  .where(eq(account.userId, userId))
-  .toSQL();
-const accounts = execute(credQuery.sql, credQuery.params) as Array<{
-  id: string;
-  providerId: string;
-}>;
-const credential = accounts.find((a) => a.providerId === "credential");
-
-if (credential) {
-  if (passwordArg || !existing) {
-    const upd = qb
-      .update(account)
-      .set({ password: hash, updatedAt: now })
-      .where(eq(account.id, credential.id))
-      .toSQL();
-    execute(upd.sql, upd.params);
-    console.log("  → password updated");
-  } else {
-    console.log("  → existing password kept (pass --password to change it)");
+  if (existing?.role === "admin" && credential && !rotatePassword) {
+    console.log("Admin already provisioned. Use --rotate-password to replace the password.");
+    return;
   }
-} else {
-  const ins = qb
-    .insert(account)
-    .values({
-      id: randomUUID(),
-      accountId: userId,
-      providerId: "credential",
-      userId,
-      password: hash,
-      createdAt: now,
-      updatedAt: now,
-    })
-    .toSQL();
-  execute(ins.sql, ins.params);
-  console.log("  → password credential created");
+
+  const now = new Date();
+  const password = passwordArg ?? randomBytes(24).toString("base64url");
+  const hash = await hashPassword(password);
+  const resetEnrollment = resetMfa || existing?.role === "client";
+
+  const saveUser = existing
+    ? qb.update(user).set({
+        role: "admin",
+        updatedAt: now,
+        ...(resetEnrollment ? { twoFactorEnabled: false } : {}),
+      }).where(eq(user.id, userId)).toSQL()
+    : qb.insert(user).values({
+        id: userId,
+        name: nameArg ?? target.split("@")[0],
+        email: target,
+        emailVerified: true,
+        role: "admin",
+        createdAt: now,
+        updatedAt: now,
+      }).toSQL();
+
+  const savePassword = credential
+    ? qb.update(account).set({ password: hash, updatedAt: now })
+        .where(and(eq(account.userId, userId), eq(account.providerId, "credential"))).toSQL()
+    : qb.insert(account).values({
+        id: randomUUID(), accountId: userId, userId,
+        providerId: "credential", password: hash, createdAt: now, updatedAt: now,
+      }).toSQL();
+
+  const writes = [
+    savePassword,
+    qb.delete(session).where(eq(session.userId, userId)).toSQL(),
+    qb.delete(verification).where(and(
+      eq(verification.value, userId),
+      or(like(verification.identifier, "trust-device-%"), like(verification.identifier, "2fa-%"))
+    )).toSQL(),
+  ];
+  if (resetEnrollment) {
+    writes.push(qb.delete(twoFactor).where(eq(twoFactor.userId, userId)).toSQL());
+  }
+
+  execute(saveUser.sql, saveUser.params, writes);
+
+  console.log(`Admin ready for ${target} (${remote ? "production" : "local"} D1).`);
+  if (!passwordArg) console.log(`Generated password (shown once): ${password}`);
 }
 
-const showPassword = generated && (!existing || !credential);
-
-console.log(
-  [
-    "",
-    "✓ Admin ready.",
-    "",
-    `    email:    ${target}`,
-    showPassword ? `    password: ${password}   ← save this, shown once` : "",
-    "",
-    "  Sign in at /admin/login (email + password only).",
-    "",
-  ]
-    .filter(Boolean)
-    .join("\n")
-);
-}
-
-main().catch((error) => {
-  console.error("\n✖ create-admin failed:\n", error);
-  process.exit(1);
+main().catch((error: unknown) => {
+  if (error instanceof ProvisioningError) console.error(error.message);
+  console.error("Admin provisioning failed. Check the database and migration status.");
+  process.exitCode = 1;
 });

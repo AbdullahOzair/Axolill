@@ -6,10 +6,13 @@ import { redirect } from "next/navigation";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { twoFactor as twoFactorPlugin } from "better-auth/plugins/two-factor";
+import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 
-import { account, session, user, verification } from "@/lib/db/schema";
+import { account, session, twoFactor, user, verification } from "@/lib/db/schema";
 import * as schema from "@/lib/db/schema";
+import { securityEvent } from "@/lib/http-security";
 
 /**
  * better-auth must be constructed **per request**: the D1 binding only exists
@@ -25,11 +28,24 @@ export const getAuth = cache(() => {
     database: drizzleAdapter(db, {
       provider: "sqlite",
       // Map better-auth's models onto our Drizzle tables.
-      schema: { user, session, account, verification },
+      schema: { user, session, account, verification, twoFactor },
     }),
 
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
+    logger: { disabled: true },
+    advanced: {
+      useSecureCookies: new URL(env.BETTER_AUTH_URL).protocol === "https:",
+      ipAddress: { ipAddressHeaders: ["cf-connecting-ip"] },
+      defaultCookieAttributes: { httpOnly: true, sameSite: "lax" },
+    },
+    session: {
+      expiresIn: 60 * 60 * 24 * 7,
+      updateAge: 60 * 60 * 24,
+      cookieCache: { enabled: false },
+    },
+    plugins: [twoFactorPlugin({ issuer: "Axonill" })],
+    onAPIError: { errorURL: new URL("/login", env.BETTER_AUTH_URL).href },
 
     emailAndPassword: {
       enabled: true,
@@ -43,19 +59,29 @@ export const getAuth = cache(() => {
       },
     },
 
-    // Allow a user who registered with email+password to also sign in with
-    // Google (same email address). Without this, better-auth rejects the
-    // Google sign-in with "account_not_linked".
     account: {
+      encryptOAuthTokens: true,
       accountLinking: {
         enabled: true,
-        trustedProviders: ["google"],
+        requireLocalEmailVerified: true,
       },
     },
 
     // Extra columns we added to the `user` table (from DATA_MODEL.md).
     // `input: false` on role stops clients from self-assigning admin.
     user: {
+      async validateUserInfo({ user: identity, source }) {
+        if (source.oauth?.providerId !== "google") return;
+        if (!identity.emailVerified) return { error: "google_email_unverified" };
+        if (source.action === "create-user" || !identity.id) return;
+
+        const [owner] = await db.select({ role: user.role }).from(user)
+          .where(eq(user.id, identity.id)).limit(1);
+        if (owner?.role === "admin") {
+          securityEvent("admin_social_auth_rejected");
+          return { error: "admin_password_required" };
+        }
+      },
       additionalFields: {
         role: {
           type: "string",
@@ -65,6 +91,20 @@ export const getAuth = cache(() => {
         },
         company: { type: "string", required: false },
         phone: { type: "string", required: false },
+      },
+    },
+    databaseHooks: {
+      user: {
+        update: {
+          async after(updated, context) {
+            if (context?.path === "/two-factor/verify-totp" && updated.twoFactorEnabled) {
+              // Enrollment rotates the current session just after this hook.
+              // Revoke earlier password-only sessions before it issues the new one.
+              await db.delete(session).where(eq(session.userId, updated.id));
+              securityEvent("admin_mfa_enrolled", { actorId: updated.id });
+            }
+          },
+        },
       },
     },
 
@@ -94,7 +134,12 @@ export type Session = Awaited<
  */
 export const getServerSession = cache(async () => {
   const requestHeaders = await headers();
-  return getAuth().api.getSession({ headers: requestHeaders });
+  try {
+    return await getAuth().api.getSession({ headers: requestHeaders });
+  } catch {
+    securityEvent("session_lookup_failed");
+    return null;
+  }
 });
 
 /** Require any signed-in user, else bounce to /login. */

@@ -1,3 +1,4 @@
+import { withApiErrors } from "@/lib/http-security";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 
@@ -5,6 +6,7 @@ import {
   badRequest,
   db,
   json,
+  mutationJson,
   notFound,
   parseBody,
   requireSession,
@@ -32,8 +34,8 @@ const patchMeeting = z.discriminatedUnion("action", [
   z.object({ action: z.literal("acknowledge") }),
 ]);
 
-export async function PATCH(request: Request, { params }: Ctx) {
-  const auth = await requireSession();
+export const PATCH = withApiErrors("PATCH /api/meetings/[id]", async function PATCH(request: Request, { params }: Ctx) {
+  const auth = await requireSession(request);
   if (auth instanceof Response) return auth;
 
   const { id } = await params;
@@ -79,7 +81,7 @@ export async function PATCH(request: Request, { params }: Ctx) {
       .where(eq(meeting.id, id))
       .returning();
 
-    return json({ meeting: updated });
+    return mutationJson(auth.user, "PATCH /api/meetings/[id]", { meeting: updated });
   }
 
   /* -------------------------------- confirm -------------------------------- */
@@ -123,5 +125,5 @@ export async function PATCH(request: Request, { params }: Ctx) {
     .where(eq(meeting.id, id))
     .returning();
 
-  return json({ meeting: updated });
-}
+  return mutationJson(auth.user, "PATCH /api/meetings/[id]", { meeting: updated });
+});

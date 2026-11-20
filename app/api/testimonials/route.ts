@@ -1,9 +1,11 @@
+import { withApiErrors } from "@/lib/http-security";
 import { desc, eq } from "drizzle-orm";
 import { z } from "zod";
 
 import {
   db,
   json,
+  mutationJson,
   newId,
   parseBody,
   requireAdmin,
@@ -25,7 +27,7 @@ const createTestimonial = z.object({
  * GET — public. Anonymous callers get only published testimonials (what the
  * marketing carousel renders); admins get everything, including drafts.
  */
-export async function GET() {
+export const GET = withApiErrors("GET /api/testimonials", async function GET() {
   const session = await getServerSession();
   const isAdmin = session?.user?.role === "admin";
 
@@ -38,11 +40,11 @@ export async function GET() {
         .orderBy(desc(testimonial.createdAt));
 
   return json({ testimonials: rows });
-}
+});
 
 /** POST — admin only. Unpublished by default. */
-export async function POST(request: Request) {
-  const auth = await requireAdmin();
+export const POST = withApiErrors("POST /api/testimonials", async function POST(request: Request) {
+  const auth = await requireAdmin(request);
   if (auth instanceof Response) return auth;
 
   const body = await parseBody(request, createTestimonial);
@@ -60,5 +62,5 @@ export async function POST(request: Request) {
     })
     .returning();
 
-  return json({ testimonial: created }, 201);
-}
+  return mutationJson(auth.user, "POST /api/testimonials", { testimonial: created }, 201);
+});

@@ -1,6 +1,7 @@
 import "server-only";
 
 import { badRequest, filesBucket } from "@/lib/api";
+import { securityEvent } from "@/lib/http-security";
 
 export const MAX_UPLOAD_BYTES = 25 * 1024 * 1024; // 25 MB
 
@@ -33,8 +34,8 @@ export async function uploadFileToR2(
       httpMetadata: { contentType },
       customMetadata,
     });
-  } catch (error) {
-    console.error("R2 upload failed", error);
+  } catch {
+    securityEvent("private_upload_failed");
     return badRequest("Upload failed");
   }
 

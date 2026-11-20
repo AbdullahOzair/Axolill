@@ -7,12 +7,14 @@ import type { z } from "zod";
 import {
   db,
   json,
+  mutationJson,
   newId,
   notFound,
   parseBody,
   requireAdmin,
 } from "@/lib/api";
 import { getServerSession } from "@/lib/auth";
+import { withApiErrors } from "@/lib/http-security";
 
 /**
  * Shared CRUD for the CMS tables (service, technology, portfolio_item,
@@ -60,7 +62,7 @@ export function collectionRoute<S extends z.ZodType>(opts: {
   }
 
   async function POST(request: Request) {
-    const auth = await requireAdmin();
+    const auth = await requireAdmin(request);
     if (auth instanceof Response) return auth;
 
     const body = await parseBody(request, opts.createSchema);
@@ -71,10 +73,13 @@ export function collectionRoute<S extends z.ZodType>(opts: {
       .values({ id: newId(), ...opts.toValues(body) })
       .returning();
 
-    return json({ [opts.itemKey]: created }, 201);
+    return mutationJson(auth.user, "cms." + opts.itemKey + ".POST", { [opts.itemKey]: created }, 201);
   }
 
-  return { GET, POST };
+  return {
+    GET: withApiErrors(`cms.${opts.itemKey}.GET`, GET),
+    POST: withApiErrors(`cms.${opts.itemKey}.POST`, POST),
+  };
 }
 
 export function itemRoute<S extends z.ZodType>(opts: {
@@ -87,7 +92,7 @@ export function itemRoute<S extends z.ZodType>(opts: {
   type Ctx = { params: Promise<{ id: string }> };
 
   async function PATCH(request: Request, { params }: Ctx) {
-    const auth = await requireAdmin();
+    const auth = await requireAdmin(request);
     if (auth instanceof Response) return auth;
 
     const { id } = await params;
@@ -106,11 +111,11 @@ export function itemRoute<S extends z.ZodType>(opts: {
       .returning();
 
     if (!updated) return notFound("Not found");
-    return json({ [opts.itemKey]: updated });
+    return mutationJson(auth.user, "cms." + opts.itemKey + ".PATCH", { [opts.itemKey]: updated });
   }
 
-  async function DELETE(_request: Request, { params }: Ctx) {
-    const auth = await requireAdmin();
+  async function DELETE(request: Request, { params }: Ctx) {
+    const auth = await requireAdmin(request);
     if (auth instanceof Response) return auth;
 
     const { id } = await params;
@@ -120,10 +125,13 @@ export function itemRoute<S extends z.ZodType>(opts: {
       .returning();
 
     if (!deleted) return notFound("Not found");
-    return json({ deleted: id });
+    return mutationJson(auth.user, "cms." + opts.itemKey + ".DELETE", { deleted: id });
   }
 
-  return { PATCH, DELETE };
+  return {
+    PATCH: withApiErrors(`cms.${opts.itemKey}.PATCH`, PATCH),
+    DELETE: withApiErrors(`cms.${opts.itemKey}.DELETE`, DELETE),
+  };
 }
 
 /** Strips undefined keys so a PATCH only touches the fields that were sent. */

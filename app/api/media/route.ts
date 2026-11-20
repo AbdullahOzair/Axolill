@@ -1,9 +1,10 @@
-import { badRequest, filesBucket, json, newId, requireAdmin } from "@/lib/api";
+import { badRequest, filesBucket, mutationJson, newId, parseMultipart, requireAdmin } from "@/lib/api";
+import { matchesCmsImageType } from "@/lib/cms-image";
+import { securityEvent, withApiErrors } from "@/lib/http-security";
 
 export const dynamic = "force-dynamic";
 
 const MAX_BYTES = 5 * 1024 * 1024; // 5 MB — these are marketing images
-const ALLOWED = ["image/png", "image/jpeg", "image/webp", "image/avif", "image/gif"];
 
 /**
  * POST — admin-only image upload for CMS content (portfolio covers, team photos).
@@ -12,16 +13,12 @@ const ALLOWED = ["image/png", "image/jpeg", "image/webp", "image/avif", "image/g
  * Returns the R2 object key; store it in `portfolio_item.coverImage` /
  * `team_member.photoUrl`, and serve it back via GET /api/media/<key>.
  */
-export async function POST(request: Request) {
-  const auth = await requireAdmin();
+export const POST = withApiErrors("POST /api/media", async function POST(request: Request) {
+  const auth = await requireAdmin(request);
   if (auth instanceof Response) return auth;
 
-  let form: FormData;
-  try {
-    form = await request.formData();
-  } catch {
-    return badRequest("Expected multipart/form-data");
-  }
+  const form = await parseMultipart(request, MAX_BYTES + 64 * 1024);
+  if (form instanceof Response) return form;
 
   const file = form.get("file");
   if (!(file instanceof File)) return badRequest("Missing `file` field");
@@ -29,7 +26,7 @@ export async function POST(request: Request) {
   if (file.size > MAX_BYTES) {
     return badRequest(`Image exceeds the ${MAX_BYTES / 1024 / 1024}MB limit`);
   }
-  if (!ALLOWED.includes(file.type)) {
+  if (!(await matchesCmsImageType(file))) {
     return badRequest("Only PNG, JPEG, WebP, AVIF or GIF images are allowed");
   }
 
@@ -45,10 +42,10 @@ export async function POST(request: Request) {
       httpMetadata: { contentType: file.type },
       customMetadata: { uploadedBy: auth.user.id },
     });
-  } catch (error) {
-    console.error("CMS image upload failed", error);
+  } catch {
+    securityEvent("cms_upload_failed", { actorId: auth.user.id });
     return badRequest("Upload failed");
   }
 
-  return json({ key, url: `/api/media/${key}` }, 201);
-}
+  return mutationJson(auth.user, "POST /api/media", { key, url: `/api/media/${key}` }, 201);
+});

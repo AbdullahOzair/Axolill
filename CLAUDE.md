@@ -11,7 +11,7 @@ introduce new brand colors, fonts, or data fields without updating the matching 
 
 ## Tech Stack
 
-- **Next.js 15** (App Router) + **React 19** + **TypeScript**
+- **Next.js 16** (App Router) + **React 19** + **TypeScript**
 - **Tailwind CSS v4** (CSS-first config via `@theme` in [app/globals.css](app/globals.css))
 - **shadcn/ui** (components in `components/ui`, style preset `base-nova`, icon library `lucide`)
 - **framer-motion** for animation

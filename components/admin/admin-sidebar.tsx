@@ -16,6 +16,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Server,
+  ShieldCheck,
   Sparkles,
   Users,
 } from "lucide-react";
@@ -84,6 +85,7 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
         label: "Calendar",
         icon: CalendarCheck,
       },
+      { href: "/admin/settings/security", label: "Security", icon: ShieldCheck },
     ],
   },
 ];

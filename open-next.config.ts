@@ -5,7 +5,6 @@ import { defineCloudflareConfig } from "@opennextjs/cloudflare";
  * Preview:     npm run cf:preview
  * Deploy:      npm run cf:deploy
  *
- * NOTE: `npm run build` (no --turbopack) is used for production builds.
- * Turbopack is only enabled in `npm run dev` for fast local iteration.
+ * The production build uses Webpack. Local development uses Turbopack.
  */
 export default defineCloudflareConfig();

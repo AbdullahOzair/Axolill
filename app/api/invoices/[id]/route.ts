@@ -1,9 +1,11 @@
+import { withApiErrors } from "@/lib/http-security";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 
 import {
   db,
   json,
+  mutationJson,
   loadProject,
   notFound,
   parseBody,
@@ -37,7 +39,7 @@ async function findInvoice(id: string) {
 }
 
 /** GET — admin, or the client who owns the parent project. */
-export async function GET(_request: Request, { params }: Ctx) {
+export const GET = withApiErrors("GET /api/invoices/[id]", async function GET(_request: Request, { params }: Ctx) {
   const auth = await requireSession();
   if (auth instanceof Response) return auth;
 
@@ -50,11 +52,11 @@ export async function GET(_request: Request, { params }: Ctx) {
   if (project instanceof Response) return notFound("Invoice not found");
 
   return json({ invoice: found });
-}
+});
 
 /** PATCH — admin only (e.g. mark paid). */
-export async function PATCH(request: Request, { params }: Ctx) {
-  const auth = await requireAdmin();
+export const PATCH = withApiErrors("PATCH /api/invoices/[id]", async function PATCH(request: Request, { params }: Ctx) {
+  const auth = await requireAdmin(request);
   if (auth instanceof Response) return auth;
 
   const { id } = await params;
@@ -78,12 +80,12 @@ export async function PATCH(request: Request, { params }: Ctx) {
     .where(eq(invoice.id, id))
     .returning();
 
-  return json({ invoice: updated });
-}
+  return mutationJson(auth.user, "PATCH /api/invoices/[id]", { invoice: updated });
+});
 
 /** DELETE — admin only. */
-export async function DELETE(_request: Request, { params }: Ctx) {
-  const auth = await requireAdmin();
+export const DELETE = withApiErrors("DELETE /api/invoices/[id]", async function DELETE(request: Request, { params }: Ctx) {
+  const auth = await requireAdmin(request);
   if (auth instanceof Response) return auth;
 
   const { id } = await params;
@@ -91,5 +93,5 @@ export async function DELETE(_request: Request, { params }: Ctx) {
   if (!found) return notFound("Invoice not found");
 
   await db().delete(invoice).where(eq(invoice.id, id));
-  return json({ deleted: id });
-}
+  return mutationJson(auth.user, "DELETE /api/invoices/[id]", { deleted: id });
+});

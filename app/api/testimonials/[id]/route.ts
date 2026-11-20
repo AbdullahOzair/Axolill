@@ -1,9 +1,10 @@
+import { withApiErrors } from "@/lib/http-security";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 
 import {
   db,
-  json,
+  mutationJson,
   notFound,
   parseBody,
   requireAdmin,
@@ -25,8 +26,8 @@ const patchTestimonial = z
   .partial();
 
 /** PATCH — admin only (e.g. toggle `published`). */
-export async function PATCH(request: Request, { params }: Ctx) {
-  const auth = await requireAdmin();
+export const PATCH = withApiErrors("PATCH /api/testimonials/[id]", async function PATCH(request: Request, { params }: Ctx) {
+  const auth = await requireAdmin(request);
   if (auth instanceof Response) return auth;
 
   const { id } = await params;
@@ -40,12 +41,12 @@ export async function PATCH(request: Request, { params }: Ctx) {
     .returning();
 
   if (!updated) return notFound("Testimonial not found");
-  return json({ testimonial: updated });
-}
+  return mutationJson(auth.user, "PATCH /api/testimonials/[id]", { testimonial: updated });
+});
 
 /** DELETE — admin only. */
-export async function DELETE(_request: Request, { params }: Ctx) {
-  const auth = await requireAdmin();
+export const DELETE = withApiErrors("DELETE /api/testimonials/[id]", async function DELETE(request: Request, { params }: Ctx) {
+  const auth = await requireAdmin(request);
   if (auth instanceof Response) return auth;
 
   const { id } = await params;
@@ -55,5 +56,5 @@ export async function DELETE(_request: Request, { params }: Ctx) {
     .returning();
 
   if (!deleted) return notFound("Testimonial not found");
-  return json({ deleted: id });
-}
+  return mutationJson(auth.user, "DELETE /api/testimonials/[id]", { deleted: id });
+});

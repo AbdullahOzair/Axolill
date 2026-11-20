@@ -1,10 +1,12 @@
+import { withApiErrors } from "@/lib/http-security";
+import { limitEndpoint } from "@/lib/rate-limit";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 
 import {
   badRequest,
   db,
-  json,
+  mutationJson,
   newId,
   parseBody,
   requireSession,
@@ -30,9 +32,11 @@ const MAX_OPEN_REQUESTS = 3;
  * Creates a `requested` meeting with NO meetingUrl. An admin confirms it in
  * /admin/meetings, which is what actually mints the Google Meet link.
  */
-export async function POST(request: Request) {
-  const auth = await requireSession();
+export const POST = withApiErrors("POST /api/meetings/request", async function POST(request: Request) {
+  const auth = await requireSession(request);
   if (auth instanceof Response) return auth;
+  const limited = await limitEndpoint(request, "meeting_request", auth.user.id);
+  if (limited) return limited;
 
   const body = await parseBody(request, requestMeeting);
   if (body instanceof Response) return body;
@@ -92,5 +96,5 @@ export async function POST(request: Request) {
     })
     .returning();
 
-  return json({ meeting: created }, 201);
-}
+  return mutationJson(auth.user, "POST /api/meetings/request", { meeting: created }, 201);
+});

@@ -181,9 +181,8 @@ export function About() {
                 </p>
               </div>
             </motion.div>
-          </motion.div>
 
-           {/* Mission callout */}
+            {/* Mission callout */}
             <motion.div
               variants={item}
               className="mt-8 flex gap-4 rounded-xl border border-border/60 bg-secondary/50 p-5"

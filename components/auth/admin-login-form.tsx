@@ -7,6 +7,7 @@ import { CircleAlert, Eye, EyeOff, Loader2, Shield } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 
 import { authClient, signIn, signOut } from "@/lib/auth-client";
+import { authRedirect } from "@/lib/auth-redirect";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -19,11 +20,14 @@ export function AdminLoginForm() {
   const reduce = useReducedMotion();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get("next") ?? "/admin";
+  const next = authRedirect(searchParams.get("next"), "/admin");
 
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [show, setShow] = React.useState(false);
+  const [challenge, setChallenge] = React.useState(searchParams.get("verify") === "1");
+  const [backup, setBackup] = React.useState(false);
+  const [code, setCode] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);
   const [status, setStatus] = React.useState<"idle" | "submitting">("idle");
 
@@ -31,16 +35,25 @@ export function AdminLoginForm() {
     e.preventDefault();
     setError(null);
 
-    if (!email.trim() || !password) {
-      setError("Enter your email and password.");
+    const ready = challenge ? code.trim() : email.trim() && password;
+    if (!ready) {
+      setError(challenge ? "Enter a verification code." : "Enter your email and password.");
       return;
     }
 
     setStatus("submitting");
 
-    const result = await signIn.email({ email: email.trim(), password });
+    const result = challenge
+      ? await authClient.twoFactor.verify(code.trim(), backup)
+      : await signIn.email({ email: email.trim(), password });
     if (result.error) {
       setError(result.error.message ?? "Invalid email or password.");
+      setStatus("idle");
+      return;
+    }
+    if (!challenge && (result.data as { twoFactorRedirect?: boolean } | null)?.twoFactorRedirect) {
+      setChallenge(true);
+      setPassword("");
       setStatus("idle");
       return;
     }
@@ -104,6 +117,28 @@ export function AdminLoginForm() {
               </div>
             )}
 
+            {challenge ? (
+              <div className="space-y-2">
+                <Label htmlFor="admin-verification">{backup ? "Recovery code" : "Authenticator code"}</Label>
+                <Input
+                  id="admin-verification"
+                  autoComplete="one-time-code"
+                  inputMode={backup ? "text" : "numeric"}
+                  value={code}
+                  onChange={(event) => setCode(event.target.value)}
+                  aria-invalid={!!error}
+                  maxLength={backup ? 64 : 6}
+                />
+                <button
+                  type="button"
+                  className="text-sm underline"
+                  onClick={() => { setBackup(!backup); setCode(""); setError(null); }}
+                >
+                  {backup ? "Use authenticator code" : "Use a recovery code"}
+                </button>
+              </div>
+            ) : (
+            <>
             <div className="space-y-2">
               <Label htmlFor="admin-email">Email</Label>
               <Input
@@ -141,6 +176,8 @@ export function AdminLoginForm() {
                 </button>
               </div>
             </div>
+            </>
+            )}
 
             <button
               type="submit"
@@ -155,10 +192,19 @@ export function AdminLoginForm() {
                     Signing in…
                   </>
                 ) : (
-                  "Sign in"
+                  challenge ? "Verify" : "Sign in"
                 )}
               </span>
             </button>
+            {challenge && (
+              <button
+                type="button"
+                className="w-full text-sm text-muted-foreground underline"
+                onClick={() => { setChallenge(false); setError(null); setCode(""); }}
+              >
+                Back to password sign-in
+              </button>
+            )}
           </form>
 
           <p className="mt-6 border-t border-border/60 pt-4 text-center text-xs text-muted-foreground">

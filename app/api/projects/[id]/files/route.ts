@@ -1,23 +1,27 @@
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 
 import {
   badRequest,
   db,
   filesBucket,
   json,
+  mutationJson,
   loadProject,
   newId,
+  notFound,
+  parseMultipart,
   requireSession,
 } from "@/lib/api";
-import { projectFile } from "@/lib/db/schema";
-import { safeFileName, uploadFileToR2 } from "@/lib/r2-upload";
+import { milestone, projectFile } from "@/lib/db/schema";
+import { MAX_UPLOAD_BYTES, safeFileName, uploadFileToR2 } from "@/lib/r2-upload";
+import { securityEvent, withApiErrors } from "@/lib/http-security";
 
 export const dynamic = "force-dynamic";
 
 type Ctx = { params: Promise<{ id: string }> };
 
 /** GET — list files for a project (owner or admin). */
-export async function GET(_request: Request, { params }: Ctx) {
+export const GET = withApiErrors("GET /api/projects/[id]/files", async function GET(_request: Request, { params }: Ctx) {
   const auth = await requireSession();
   if (auth instanceof Response) return auth;
 
@@ -32,7 +36,7 @@ export async function GET(_request: Request, { params }: Ctx) {
     .orderBy(desc(projectFile.createdAt));
 
   return json({ files: rows });
-}
+});
 
 /**
  * POST — upload a file to R2 (multipart/form-data).
@@ -42,20 +46,16 @@ export async function GET(_request: Request, { params }: Ctx) {
  * The R2 object key is stored in ProjectFile.fileUrl; download it back through
  * GET /api/projects/[id]/files/[fileId].
  */
-export async function POST(request: Request, { params }: Ctx) {
-  const auth = await requireSession();
+export const POST = withApiErrors("POST /api/projects/[id]/files", async function POST(request: Request, { params }: Ctx) {
+  const auth = await requireSession(request);
   if (auth instanceof Response) return auth;
 
   const { id } = await params;
   const found = await loadProject(id, auth.user);
   if (found instanceof Response) return found;
 
-  let form: FormData;
-  try {
-    form = await request.formData();
-  } catch {
-    return badRequest("Expected multipart/form-data");
-  }
+  const form = await parseMultipart(request, MAX_UPLOAD_BYTES + 64 * 1024);
+  if (form instanceof Response) return form;
 
   const file = form.get("file");
   if (!(file instanceof File)) {
@@ -67,6 +67,14 @@ export async function POST(request: Request, { params }: Ctx) {
     typeof rawMilestoneId === "string" && rawMilestoneId.length > 0
       ? rawMilestoneId
       : null;
+  if (milestoneId) {
+    const [linked] = await db()
+      .select({ id: milestone.id })
+      .from(milestone)
+      .where(and(eq(milestone.id, milestoneId), eq(milestone.projectId, id)))
+      .limit(1);
+    if (!linked) return notFound("Milestone not found");
+  }
 
   const fileId = newId();
   const key = `projects/${id}/${fileId}-${safeFileName(file.name)}`;
@@ -90,11 +98,11 @@ export async function POST(request: Request, { params }: Ctx) {
       })
       .returning();
 
-    return json({ file: created }, 201);
-  } catch (error) {
+    return mutationJson(auth.user, "POST /api/projects/[id]/files", { file: created }, 201);
+  } catch {
     // Don't leave an orphaned object behind if the DB row fails.
-    console.error("DB insert failed after upload, rolling back R2", error);
-    await filesBucket().delete(key);
+    securityEvent("project_upload_record_failed", { actorId: auth.user.id });
+    await filesBucket().delete(key).catch(() => securityEvent("project_upload_cleanup_failed"));
     return badRequest("Could not record the upload");
   }
-}
+});

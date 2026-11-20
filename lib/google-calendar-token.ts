@@ -1,11 +1,13 @@
 import "server-only";
 
 import { getCloudflareContext } from "@opennextjs/cloudflare";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 import { db } from "@/lib/api";
 import { googleCalendarConnection } from "@/lib/db/schema";
 import { refreshAccessToken } from "@/lib/google-calendar";
+import { isSealedCalendarToken, openCalendarToken, sealCalendarToken } from "@/lib/calendar-token-crypto";
+import { securityEvent } from "@/lib/http-security";
 
 /** Refresh a little early — a token that expires mid-flight is a failed booking. */
 const SKEW_MS = 60_000;
@@ -36,34 +38,46 @@ export async function getAccessToken(adminUserId: string): Promise<TokenResult> 
     };
   }
 
-  const stillValid = conn.expiresAt.getTime() - SKEW_MS > Date.now();
-  if (stillValid) return { ok: true, accessToken: conn.accessToken };
-
   const { env } = getCloudflareContext();
+  const key = env.GOOGLE_CALENDAR_TOKEN_KEY;
+  const accessContext = `${adminUserId}:access`;
+  const refreshContext = `${adminUserId}:refresh`;
 
   try {
+    if (conn.expiresAt.getTime() - SKEW_MS > Date.now()) {
+      return { ok: true, accessToken: await openCalendarToken(conn.accessToken, key, accessContext) };
+    }
+
+    const refreshToken = await openCalendarToken(conn.refreshToken, key, refreshContext);
     const fresh = await refreshAccessToken({
       clientId: env.GOOGLE_CLIENT_ID,
       clientSecret: env.GOOGLE_CLIENT_SECRET,
-      refreshToken: conn.refreshToken,
+      refreshToken,
     });
 
     const expiresAt = new Date(Date.now() + fresh.expires_in * 1000);
+    const storedRefresh = fresh.refresh_token
+      ? await sealCalendarToken(fresh.refresh_token, key, refreshContext)
+      : key && !isSealedCalendarToken(conn.refreshToken)
+        ? await sealCalendarToken(refreshToken, key, refreshContext)
+        : conn.refreshToken;
 
     await db()
       .update(googleCalendarConnection)
       .set({
-        accessToken: fresh.access_token,
+        accessToken: await sealCalendarToken(fresh.access_token, key, accessContext),
         expiresAt,
-        // Google usually omits refresh_token on refresh — keep the stored one.
-        ...(fresh.refresh_token ? { refreshToken: fresh.refresh_token } : {}),
+        refreshToken: storedRefresh,
         updatedAt: new Date(),
       })
-      .where(eq(googleCalendarConnection.adminUserId, adminUserId));
+      .where(and(
+        eq(googleCalendarConnection.id, conn.id),
+        eq(googleCalendarConnection.accessToken, conn.accessToken)
+      ));
 
     return { ok: true, accessToken: fresh.access_token };
-  } catch (error) {
-    console.error("[google-calendar] refresh failed", error);
+  } catch {
+    securityEvent("calendar_token_unavailable", { actorId: adminUserId });
     return {
       ok: false,
       reason: "refresh_failed",

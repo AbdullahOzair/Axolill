@@ -1,6 +1,8 @@
+import { withApiErrors } from "@/lib/http-security";
 import { eq } from "drizzle-orm";
+import { z } from "zod";
 
-import { db, json, notFound, requireAdmin } from "@/lib/api";
+import { db, json, mutationJson, notFound, parseBody, requireAdmin } from "@/lib/api";
 import * as schema from "@/lib/db/schema";
 
 export const dynamic = "force-dynamic";
@@ -12,7 +14,7 @@ export const dynamic = "force-dynamic";
  * LeadAttachment rows so the detail panel can render them without a second
  * fetch.
  */
-export async function GET(
+export const GET = withApiErrors("GET /api/admin/leads/[id]", async function GET(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -50,7 +52,7 @@ export async function GET(
     .orderBy(schema.leadAttachment.createdAt);
 
   return json({ lead, client, attachments });
-}
+});
 
 /**
  * PATCH /api/admin/leads/[id]
@@ -58,41 +60,29 @@ export async function GET(
  * Admin-only. Currently supports a single action: `{ status }` update.
  * Used by "Convert to Project" to mark the lead as "won".
  */
-export async function PATCH(
-  req: Request,
+export const PATCH = withApiErrors("PATCH /api/admin/leads/[id]", async function PATCH(
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const auth = await requireAdmin();
+  const auth = await requireAdmin(request);
   if (auth instanceof Response) return auth;
 
   const { id } = await params;
 
-  let body: { status?: string };
-  try {
-    body = (await req.json()) as { status?: string };
-  } catch {
-    body = {};
-  }
-
-  const validStatuses = ["new", "contacted", "qualified", "won", "lost"] as const;
-  type LeadStatus = (typeof validStatuses)[number];
-
-  if (
-    body.status !== undefined &&
-    !validStatuses.includes(body.status as LeadStatus)
-  ) {
-    return Response.json({ error: "Invalid status" }, { status: 400 });
-  }
+  const body = await parseBody(request, z.object({
+    status: z.enum(["new", "contacted", "qualified", "won", "lost"]),
+  }));
+  if (body instanceof Response) return body;
 
   const rows = await db()
     .update(schema.lead)
     .set({
-      ...(body.status ? { status: body.status as LeadStatus } : {}),
+      status: body.status,
       updatedAt: new Date(),
     })
     .where(eq(schema.lead.id, id))
     .returning();
 
   if (!rows[0]) return notFound("Lead not found");
-  return json({ lead: rows[0] });
-}
+  return mutationJson(auth.user, "PATCH /api/admin/leads/[id]", { lead: rows[0] });
+});

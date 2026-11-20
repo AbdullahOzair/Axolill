@@ -1,6 +1,8 @@
 import "server-only";
 
 import { getAccessToken } from "@/lib/google-calendar-token";
+import { securityEvent } from "@/lib/http-security";
+import { safeMeetingLink } from "@/lib/meeting-link";
 import {
   createMeetEvent,
   deleteEvent,
@@ -44,9 +46,7 @@ function explainGoogleFailure(error: unknown): string {
       return "Google rejected the stored credentials. Reconnect in Settings → Calendar.";
 
     default:
-      // Surface Google's own words — this route is admin-only, so the detail
-      // is safe to show and is the fastest route to a fix.
-      return `Google rejected the event (${error.status}): ${error.message}`;
+      return "Google rejected the calendar event. Review the connection and try again.";
   }
 }
 
@@ -90,7 +90,7 @@ export async function createMeet(opts: {
       attendeeEmails: [opts.attendeeEmail],
     });
   } catch (error) {
-    console.error("[google-calendar] event creation failed", error);
+    securityEvent("calendar_event_create_failed", { actorId: opts.adminUserId });
     return {
       ok: false,
       status: 502,
@@ -98,7 +98,7 @@ export async function createMeet(opts: {
     };
   }
 
-  const meetingUrl = meetLinkOf(event);
+  const meetingUrl = safeMeetingLink(meetLinkOf(event));
   if (!meetingUrl) {
     // An event with no Meet link isn't what was asked for — don't keep it.
     await deleteEvent(token.accessToken, event.id);

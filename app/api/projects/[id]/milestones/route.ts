@@ -1,9 +1,11 @@
+import { withApiErrors } from "@/lib/http-security";
 import { asc, eq } from "drizzle-orm";
 import { z } from "zod";
 
 import {
   db,
   json,
+  mutationJson,
   loadProject,
   newId,
   parseBody,
@@ -34,7 +36,7 @@ const createMilestone = z.object({
 });
 
 /** GET — owner or admin. Ordered by `order`, as the portal checklist expects. */
-export async function GET(_request: Request, { params }: Ctx) {
+export const GET = withApiErrors("GET /api/projects/[id]/milestones", async function GET(_request: Request, { params }: Ctx) {
   const auth = await requireSession();
   if (auth instanceof Response) return auth;
 
@@ -49,11 +51,11 @@ export async function GET(_request: Request, { params }: Ctx) {
     .orderBy(asc(milestone.order));
 
   return json({ milestones: rows });
-}
+});
 
 /** POST — admin only. */
-export async function POST(request: Request, { params }: Ctx) {
-  const auth = await requireAdmin();
+export const POST = withApiErrors("POST /api/projects/[id]/milestones", async function POST(request: Request, { params }: Ctx) {
+  const auth = await requireAdmin(request);
   if (auth instanceof Response) return auth;
 
   const { id } = await params;
@@ -76,5 +78,5 @@ export async function POST(request: Request, { params }: Ctx) {
     })
     .returning();
 
-  return json({ milestone: created }, 201);
-}
+  return mutationJson(auth.user, "POST /api/projects/[id]/milestones", { milestone: created }, 201);
+});

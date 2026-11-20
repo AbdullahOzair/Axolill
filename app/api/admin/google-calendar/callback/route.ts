@@ -1,35 +1,56 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
-import { eq } from "drizzle-orm";
+import { NextRequest, NextResponse } from "next/server";
 
 import { db, newId, requireAdmin } from "@/lib/api";
 import { googleCalendarConnection } from "@/lib/db/schema";
 import {
   CALENDAR_SCOPE,
+  CALENDAR_STATE_COOKIE,
+  calendarStateCookieOptions,
+  callbackUrl,
   exchangeCode,
   GoogleTokenError,
   verifyState,
 } from "@/lib/google-calendar";
+import { sealCalendarToken } from "@/lib/calendar-token-crypto";
+import { PRIVATE_CACHE, securityEvent, withApiErrors } from "@/lib/http-security";
 
 export const dynamic = "force-dynamic";
 
 const SETTINGS = "/admin/settings/calendar";
 
 /** Send the admin back to the settings page with a human-readable outcome. */
-const back = (origin: string, params: Record<string, string>) =>
-  Response.redirect(
+function back(origin: string, params: Record<string, string>) {
+  const response = NextResponse.redirect(
     `${origin}${SETTINGS}?${new URLSearchParams(params)}`,
-    302
+    { status: 302, headers: { "Cache-Control": PRIVATE_CACHE, "Referrer-Policy": "no-referrer" } }
   );
+  response.cookies.set(CALENDAR_STATE_COOKIE, "", {
+    ...calendarStateCookieOptions(origin),
+    maxAge: 0,
+  });
+  return response;
+}
 
-export async function GET(request: Request) {
+export const GET = withApiErrors("GET /api/admin/google-calendar/callback", async function GET(request: NextRequest) {
   // Still admin-only: the callback writes a token to the DB.
   const auth = await requireAdmin();
   if (auth instanceof Response) return auth;
 
   const { env } = getCloudflareContext();
-  const url = new URL(request.url);
-  const origin = url.origin;
-  const redirectUri = `${origin}/api/admin/google-calendar/callback`;
+  const url = request.nextUrl;
+  const origin = new URL(env.BETTER_AUTH_URL).origin;
+  const redirectUri = callbackUrl(env.BETTER_AUTH_URL);
+
+  const returnedState = url.searchParams.get("state");
+  const browserState = request.cookies.get(CALENDAR_STATE_COOKIE)?.value;
+  const state = returnedState && returnedState === browserState
+    ? await verifyState(env.BETTER_AUTH_SECRET, returnedState)
+    : null;
+  if (state?.uid !== auth.user.id) {
+    securityEvent("calendar_oauth_state_rejected", { actorId: auth.user.id });
+    return back(origin, { error: "This authorisation link is invalid or has expired. Try again." });
+  }
 
   // The user can decline on Google's screen.
   const denied = url.searchParams.get("error");
@@ -38,33 +59,12 @@ export async function GET(request: Request) {
       error:
         denied === "access_denied"
           ? "Consent was declined — Google Calendar is not connected."
-          : `Google returned an error: ${denied}`,
+          : "Google could not complete the authorisation.",
     });
   }
 
   const code = url.searchParams.get("code");
   if (!code) return back(origin, { error: "Google didn't return a code." });
-
-  /**
-   * CSRF: `state` is signed with BETTER_AUTH_SECRET and carries the admin id
-   * that started the flow. An attacker can't forge it, and a state minted for
-   * a *different* admin must not be redeemable in this session — otherwise one
-   * admin could graft their calendar grant onto another admin's account.
-   */
-  const state = await verifyState(
-    env.BETTER_AUTH_SECRET,
-    url.searchParams.get("state")
-  );
-  if (!state) {
-    return back(origin, {
-      error: "This authorisation link is invalid or has expired. Try again.",
-    });
-  }
-  if (state.uid !== auth.user.id) {
-    return back(origin, {
-      error: "That authorisation was started by a different account.",
-    });
-  }
 
   let tokens;
   try {
@@ -75,13 +75,8 @@ export async function GET(request: Request) {
       code,
     });
   } catch (error) {
+    securityEvent("calendar_oauth_exchange_failed", { actorId: auth.user.id });
     if (error instanceof GoogleTokenError) {
-      console.error("[google-calendar] token exchange failed", {
-        status: error.status,
-        code: error.code,
-        message: error.message,
-        redirectUri,
-      });
       const message =
         error.code === "invalid_client"
           ? "Google OAuth client credentials are invalid. Check the production Client ID and Client Secret."
@@ -91,7 +86,6 @@ export async function GET(request: Request) {
       return back(origin, { error: message });
     }
 
-    console.error("[google-calendar] unexpected token exchange failure", error);
     return back(origin, {
       error: "Couldn't exchange the code with Google. Try connecting again.",
     });
@@ -117,37 +111,25 @@ export async function GET(request: Request) {
   const expiresAt = new Date(Date.now() + tokens.expires_in * 1000);
   const now = new Date();
 
-  // One connection per admin (unique index on adminUserId), so reconnecting
-  // replaces the existing grant rather than piling up rows.
-  const existing = await db()
-    .select({ id: googleCalendarConnection.id })
-    .from(googleCalendarConnection)
-    .where(eq(googleCalendarConnection.adminUserId, auth.user.id))
-    .limit(1);
-
-  if (existing[0]) {
-    await db()
-      .update(googleCalendarConnection)
-      .set({
-        accessToken: tokens.access_token,
-        refreshToken: tokens.refresh_token,
-        expiresAt,
-        scope: tokens.scope ?? "",
-        connectedAt: now,
-        updatedAt: now,
-      })
-      .where(eq(googleCalendarConnection.adminUserId, auth.user.id));
-  } else {
-    await db().insert(googleCalendarConnection).values({
-      id: newId(),
-      adminUserId: auth.user.id,
-      accessToken: tokens.access_token,
-      refreshToken: tokens.refresh_token,
+  const actorId = auth.user.id;
+  const key = env.GOOGLE_CALENDAR_TOKEN_KEY;
+  try {
+    const grant = {
+      accessToken: await sealCalendarToken(tokens.access_token, key, `${actorId}:access`),
+      refreshToken: await sealCalendarToken(tokens.refresh_token, key, `${actorId}:refresh`),
       expiresAt,
       scope: tokens.scope ?? "",
       connectedAt: now,
-    });
+      updatedAt: now,
+    };
+    await db().insert(googleCalendarConnection)
+      .values({ id: newId(), adminUserId: actorId, ...grant })
+      .onConflictDoUpdate({ target: googleCalendarConnection.adminUserId, set: grant });
+  } catch {
+    securityEvent("calendar_oauth_store_failed", { actorId });
+    return back(origin, { error: "Could not save the Calendar connection. Try again." });
   }
 
+  securityEvent("admin_mutation_succeeded", { actorId, action: "calendar.connect", status: 302 });
   return back(origin, { connected: "1" });
-}
+});

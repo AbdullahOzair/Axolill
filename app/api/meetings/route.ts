@@ -4,6 +4,8 @@ import { z } from "zod";
 
 import { db, forbidden, json, requireSession } from "@/lib/api";
 import { lead, meeting, user } from "@/lib/db/schema";
+import { boundedBody, securityEvent, withApiErrors } from "@/lib/http-security";
+import { safeMeetingLink } from "@/lib/meeting-link";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +22,7 @@ function timingSafeEqual(a: string, b: string) {
 }
 
 /** Cal.com signs the raw body with HMAC-SHA256, sent as x-cal-signature-256. */
-async function verifyCalSignature(rawBody: string, signature: string | null) {
+async function verifyCalSignature(rawBody: ArrayBuffer, signature: string | null) {
   const { env } = getCloudflareContext();
   const secret = env.CAL_WEBHOOK_SECRET;
 
@@ -38,7 +40,7 @@ async function verifyCalSignature(rawBody: string, signature: string | null) {
   const mac = await crypto.subtle.sign(
     "HMAC",
     key,
-    new TextEncoder().encode(rawBody)
+    rawBody
   );
   const expected = [...new Uint8Array(mac)]
     .map((b) => b.toString(16).padStart(2, "0"))
@@ -82,17 +84,29 @@ const STATUS_BY_EVENT: Record<string, "scheduled" | "cancelled"> = {
  * Idempotent: keyed on Cal's booking `uid`, so re-deliveries update the same
  * row instead of inserting duplicates.
  */
-export async function POST(request: Request) {
+export const POST = withApiErrors("POST /api/meetings", async function POST(request: Request) {
   // Read the RAW body — signature is over the exact bytes, not re-serialised JSON.
-  const rawBody = await request.text();
   const signature = request.headers.get("x-cal-signature-256");
+  if (!signature || !/^[a-f0-9]{64}$/i.test(signature)) {
+    return forbidden("Invalid webhook signature");
+  }
 
+  let rawBody: ArrayBuffer | Response;
+  try {
+    rawBody = await boundedBody(request, 256 * 1024);
+  } catch {
+    return json({ error: "Could not read webhook body" }, 400);
+  }
+  if (rawBody instanceof Response) return rawBody;
   const valid = await verifyCalSignature(rawBody, signature);
-  if (!valid) return forbidden("Invalid webhook signature");
+  if (!valid) {
+    securityEvent("cal_webhook_signature_rejected");
+    return forbidden("Invalid webhook signature");
+  }
 
   let parsed: unknown;
   try {
-    parsed = JSON.parse(rawBody);
+    parsed = JSON.parse(new TextDecoder().decode(rawBody));
   } catch {
     return json({ error: "Invalid JSON" }, 400);
   }
@@ -144,7 +158,7 @@ export async function POST(request: Request) {
     attendeeName,
     attendeeEmail,
     scheduledAt: new Date(payload.startTime),
-    meetingUrl: payload.metadata?.videoCallUrl ?? payload.location ?? null,
+    meetingUrl: safeMeetingLink(payload.metadata?.videoCallUrl) ?? safeMeetingLink(payload.location),
     status,
   };
 
@@ -164,13 +178,13 @@ export async function POST(request: Request) {
     .returning();
 
   return json({ meeting: saved }, 201);
-}
+});
 
 /**
  * GET — admins see every meeting (the /admin Meetings view); a client sees only
  * the meetings booked against them, which is what the portal renders.
  */
-export async function GET() {
+export const GET = withApiErrors("GET /api/meetings", async function GET() {
   const auth = await requireSession();
   if (auth instanceof Response) return auth;
 
@@ -183,5 +197,7 @@ export async function GET() {
           .where(eq(meeting.clientId, auth.user.id))
           .orderBy(desc(meeting.scheduledAt));
 
-  return json({ meetings: rows });
-}
+  return json({
+    meetings: rows.map((row) => ({ ...row, meetingUrl: safeMeetingLink(row.meetingUrl) })),
+  });
+});

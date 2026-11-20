@@ -1,8 +1,11 @@
 import { eq } from "drizzle-orm";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 
-import { db, json, notFound, requireAdmin } from "@/lib/api";
+import { db, json, mutationJson, notFound, requireAdmin } from "@/lib/api";
 import { googleCalendarConnection } from "@/lib/db/schema";
 import { CALENDAR_SCOPE, revokeToken } from "@/lib/google-calendar";
+import { openCalendarToken } from "@/lib/calendar-token-crypto";
+import { securityEvent, withApiErrors } from "@/lib/http-security";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +15,7 @@ export const dynamic = "force-dynamic";
  * Tokens NEVER leave the server. The client only needs to know whether a
  * connection exists, when it was made, and whether the grant is still good.
  */
-export async function GET() {
+export const GET = withApiErrors("GET /api/admin/google-calendar", async function GET() {
   const auth = await requireAdmin();
   if (auth instanceof Response) return auth;
 
@@ -39,11 +42,11 @@ export async function GET() {
       hasCalendarScope: row.scope.split(" ").includes(CALENDAR_SCOPE),
     },
   });
-}
+});
 
 /** DELETE — disconnect: revoke the grant at Google, then drop the row. */
-export async function DELETE() {
-  const auth = await requireAdmin();
+export const DELETE = withApiErrors("DELETE /api/admin/google-calendar", async function DELETE(request: Request) {
+  const auth = await requireAdmin(request);
   if (auth instanceof Response) return auth;
 
   const rows = await db()
@@ -56,7 +59,16 @@ export async function DELETE() {
   if (!row) return notFound("No Google Calendar connection");
 
   // Revoking the refresh token invalidates the whole grant (access tokens too).
-  const revoked = await revokeToken(row.refreshToken);
+  const { env } = getCloudflareContext();
+  let revoked = false;
+  try {
+    const refreshToken = await openCalendarToken(
+      row.refreshToken, env.GOOGLE_CALENDAR_TOKEN_KEY, `${auth.user.id}:refresh`
+    );
+    revoked = await revokeToken(refreshToken);
+  } catch {
+    securityEvent("calendar_revoke_failed", { actorId: auth.user.id });
+  }
 
   await db()
     .delete(googleCalendarConnection)
@@ -64,5 +76,5 @@ export async function DELETE() {
 
   // We delete our row either way — a revoke failure at Google must not leave
   // the admin stuck with a connection they can't remove from our side.
-  return json({ disconnected: true, revokedAtGoogle: revoked });
-}
+  return mutationJson(auth.user, "DELETE /api/admin/google-calendar", { disconnected: true, revokedAtGoogle: revoked });
+});

@@ -1,3 +1,4 @@
+import { withApiErrors } from "@/lib/http-security";
 import { asc, eq } from "drizzle-orm";
 
 import { db, json, requireAdmin } from "@/lib/api";
@@ -13,7 +14,7 @@ export const dynamic = "force-dynamic";
  * auth field added to it later. Admins are excluded — they aren't clients, and
  * the admin roster isn't something this screen should expose.
  */
-export async function GET() {
+export const GET = withApiErrors("GET /api/clients", async function GET() {
   const auth = await requireAdmin();
   if (auth instanceof Response) return auth;
 
@@ -33,4 +34,4 @@ export async function GET() {
     .orderBy(asc(user.name));
 
   return json({ clients });
-}
+});

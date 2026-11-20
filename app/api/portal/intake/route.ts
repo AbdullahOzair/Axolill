@@ -7,12 +7,18 @@ import {
   filesBucket,
   json,
   newId,
+  parseMultipart,
   requireClient,
 } from "@/lib/api";
 import { lead, leadAttachment, meeting, user } from "@/lib/db/schema";
-import { safeFileName, uploadFileToR2 } from "@/lib/r2-upload";
+import { MAX_UPLOAD_BYTES, safeFileName, uploadFileToR2 } from "@/lib/r2-upload";
+import { securityEvent, withApiErrors } from "@/lib/http-security";
+import { limitEndpoint } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
+
+const MAX_ATTACHMENTS = 8;
+const MAX_TOTAL_BYTES = 30 * 1024 * 1024;
 
 const intakeFields = z.object({
   projectName: z.string().trim().min(1).max(200),
@@ -44,7 +50,8 @@ function parseFeatures(raw: FormDataEntryValue | null): string[] | undefined {
     try {
       const parsed = JSON.parse(trimmed) as unknown;
       if (!Array.isArray(parsed)) return undefined;
-      return parsed.map(String);
+      if (parsed.some((feature) => typeof feature !== "string")) return undefined;
+      return parsed;
     } catch {
       return undefined;
     }
@@ -103,16 +110,14 @@ function defaultScheduledAt() {
  *   projectName, projectType, description, features (JSON array or newline list),
  *   budgetRange, timeline, packageName, wantsCall, files (0+)
  */
-export async function POST(request: Request) {
-  const auth = await requireClient();
+export const POST = withApiErrors("POST /api/portal/intake", async function POST(request: Request) {
+  const auth = await requireClient(request);
   if (auth instanceof Response) return auth;
+  const limited = await limitEndpoint(request, "intake", auth.user.id);
+  if (limited) return limited;
 
-  let form: FormData;
-  try {
-    form = await request.formData();
-  } catch {
-    return badRequest("Expected multipart/form-data");
-  }
+  const form = await parseMultipart(request, MAX_TOTAL_BYTES + 128 * 1024);
+  if (form instanceof Response) return form;
 
   const parsed = intakeFields.safeParse({
     projectName: formString(form, "projectName"),
@@ -131,6 +136,13 @@ export async function POST(request: Request) {
 
   const fields = parsed.data;
   const files = collectFiles(form);
+  if (
+    files.length > MAX_ATTACHMENTS ||
+    files.some((file) => file.size > MAX_UPLOAD_BYTES) ||
+    files.reduce((sum, file) => sum + file.size, 0) > MAX_TOTAL_BYTES
+  ) {
+    return badRequest("Use at most 8 attachments, 25 MiB each and 30 MiB total");
+  }
 
   const [profile] = await db()
     .select({ company: user.company })
@@ -157,8 +169,8 @@ export async function POST(request: Request) {
         status: "new",
         source: "portal_intake",
       });
-  } catch (error) {
-    console.error("POST /api/portal/intake — lead insert failed", error);
+  } catch {
+    securityEvent("intake_write_failed");
     return badRequest("Could not save your intake");
   }
 
@@ -189,13 +201,9 @@ export async function POST(request: Request) {
           contentType: uploaded.contentType,
         });
       uploadedKeys.push(key);
-    } catch (error) {
-      console.error(
-        "POST /api/portal/intake — attachment insert failed, rolling back",
-        error
-      );
-      await filesBucket().delete(key);
-      await rollbackIntake(leadId, uploadedKeys);
+    } catch {
+      securityEvent("intake_attachment_record_failed");
+      await rollbackIntake(leadId, [...uploadedKeys, key]);
       return badRequest("Could not record an attachment");
     }
   }
@@ -218,24 +226,24 @@ export async function POST(request: Request) {
           googleEventId: null,
           provider: "google_meet",
         });
-    } catch (error) {
-      console.error(
-        "POST /api/portal/intake — meeting insert failed, rolling back",
-        error
-      );
+    } catch {
+      securityEvent("intake_meeting_write_failed");
       await rollbackIntake(leadId, uploadedKeys);
       return badRequest("Could not request an intro call");
     }
   }
 
   return json({ leadId }, 201);
-}
+});
 
 async function rollbackIntake(leadId: string, r2Keys: string[]) {
-  await Promise.allSettled(r2Keys.map((key) => filesBucket().delete(key)));
+  const outcomes = await Promise.allSettled(r2Keys.map((key) => filesBucket().delete(key)));
+  if (outcomes.some((outcome) => outcome.status === "rejected")) {
+    securityEvent("intake_attachment_cleanup_failed");
+  }
   try {
     await db().delete(lead).where(eq(lead.id, leadId));
-  } catch (error) {
-    console.error("rollbackIntake — lead delete failed", error);
+  } catch {
+    securityEvent("intake_lead_cleanup_failed");
   }
 }

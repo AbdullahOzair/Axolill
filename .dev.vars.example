@@ -6,3 +6,5 @@ GOOGLE_CLIENT_SECRET=your-google-oauth-client-secret
 
 # Cal.com webhook signing secret (Cal dashboard > Webhooks)
 CAL_WEBHOOK_SECRET=your-cal-webhook-secret
+# Optional. Generate a separate 32-byte random key encoded as 64 hexadecimal characters.
+# GOOGLE_CALENDAR_TOKEN_KEY=

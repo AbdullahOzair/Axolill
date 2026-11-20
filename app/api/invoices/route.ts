@@ -1,9 +1,11 @@
+import { withApiErrors } from "@/lib/http-security";
 import { desc, eq } from "drizzle-orm";
 import { z } from "zod";
 
 import {
   db,
   json,
+  mutationJson,
   loadProject,
   newId,
   parseBody,
@@ -29,7 +31,7 @@ const createInvoice = z.object({
  * projects (joined through project.clientId).
  * Optional ?projectId= filter.
  */
-export async function GET(request: Request) {
+export const GET = withApiErrors("GET /api/invoices", async function GET(request: Request) {
   const auth = await requireSession();
   if (auth instanceof Response) return auth;
 
@@ -59,11 +61,11 @@ export async function GET(request: Request) {
     .filter((i) => (projectId ? i.projectId === projectId : true));
 
   return json({ invoices });
-}
+});
 
 /** POST — admin only. */
-export async function POST(request: Request) {
-  const auth = await requireAdmin();
+export const POST = withApiErrors("POST /api/invoices", async function POST(request: Request) {
+  const auth = await requireAdmin(request);
   if (auth instanceof Response) return auth;
 
   const body = await parseBody(request, createInvoice);
@@ -86,5 +88,5 @@ export async function POST(request: Request) {
     })
     .returning();
 
-  return json({ invoice: created }, 201);
-}
+  return mutationJson(auth.user, "POST /api/invoices", { invoice: created }, 201);
+});

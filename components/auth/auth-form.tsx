@@ -15,6 +15,7 @@ import { motion, useReducedMotion } from "framer-motion";
 
 import { cn } from "@/lib/utils";
 import { signIn, signUp } from "@/lib/auth-client";
+import { authRedirect } from "@/lib/auth-redirect";
 import { BrandMark } from "@/components/brand-mark";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +33,19 @@ type Values = {
 type Errors = Partial<Record<keyof Values, string>>;
 
 const EMPTY: Values = { name: "", email: "", password: "", confirm: "" };
+
+const GOOGLE_ERRORS: Record<string, string> = {
+  account_not_linked: "Sign in with your existing email and password.",
+  oauth_account_not_linked: "Sign in with your existing email and password.",
+  access_denied: "Google sign-in was cancelled.",
+  admin_password_required: "Use the admin sign-in page for this account.",
+  google_email_unverified: "Verify your email with Google before signing in.",
+};
+
+function googleError(code: string | null) {
+  if (!code) return null;
+  return Object.hasOwn(GOOGLE_ERRORS, code) ? GOOGLE_ERRORS[code] : "Google sign-in could not be completed.";
+}
 
 const COPY = {
   login: {
@@ -80,32 +94,20 @@ export function AuthForm({ mode }: { mode: Mode }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   // Where to land after auth — set by requireUser()/requireAdmin() redirects.
-  const next = searchParams.get("next") ?? "/portal";
+  const next = authRedirect(searchParams.get("next"), "/portal");
 
   const copy = COPY[mode];
   const [values, setValues] = React.useState<Values>(EMPTY);
   const [errors, setErrors] = React.useState<Errors>({});
-  const [formError, setFormError] = React.useState<string | null>(null);
+  const [formError, setFormError] = React.useState(() => googleError(searchParams.get("error")));
   const [status, setStatus] = React.useState<"idle" | "submitting" | "success">(
     "idle"
   );
   const [showPassword, setShowPassword] = React.useState(false);
   const [showConfirm, setShowConfirm] = React.useState(false);
 
-  // Catch better-auth error redirects like ?error=account_not_linked so the
-  // user sees a readable message instead of a broken crash page.
   React.useEffect(() => {
-    const errorCode = searchParams.get("error");
-    if (!errorCode) return;
-    const messages: Record<string, string> = {
-      account_not_linked:
-        "This email is already registered with a password. Please sign in with your email and password instead.",
-      oauth_account_not_linked:
-        "This email is already registered with a password. Please sign in with your email and password instead.",
-      access_denied: "Google sign-in was cancelled.",
-    };
-    setFormError(messages[errorCode] ?? `Sign-in error: ${errorCode}`);
-    // Clean the URL so refreshing doesn't re-show the error.
+    if (!searchParams.has("error")) return;
     const clean = new URL(window.location.href);
     clean.searchParams.delete("error");
     window.history.replaceState({}, "", clean.toString());
@@ -153,6 +155,11 @@ export function AuthForm({ mode }: { mode: Mode }) {
           "Something went wrong. Please check your details and try again."
       );
       setStatus("idle");
+      return;
+    }
+
+    if (mode === "login" && (result.data as { twoFactorRedirect?: boolean } | null)?.twoFactorRedirect) {
+      router.replace("/admin/login?verify=1");
       return;
     }
 

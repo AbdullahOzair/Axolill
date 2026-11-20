@@ -1,10 +1,12 @@
 import { eq } from "drizzle-orm";
 import { z } from "zod";
+import { securityEvent, withApiErrors } from "@/lib/http-security";
 
 import {
   badRequest,
   db,
   json,
+  mutationJson,
   newId,
   parseBody,
   requireAdmin,
@@ -32,8 +34,8 @@ const scheduleMeet = z.object({
  * Because the row carries clientId/projectId, the client sees it in /portal
  * without any extra step.
  */
-export async function POST(request: Request) {
-  const auth = await requireAdmin();
+export const POST = withApiErrors("POST /api/meetings/google", async function POST(request: Request) {
+  const auth = await requireAdmin(request);
   if (auth instanceof Response) return auth;
 
   const body = await parseBody(request, scheduleMeet);
@@ -105,15 +107,15 @@ export async function POST(request: Request) {
       })
       .returning();
 
-    return json({ meeting: created }, 201);
-  } catch (error) {
+    return mutationJson(auth.user, "POST /api/meetings/google", { meeting: created }, 201);
+  } catch {
     // The event exists at Google but we can't record it — roll it back rather
     // than leave a Meet on the calendar that the app has no knowledge of.
-    console.error("[google-calendar] persist failed, rolling back event", error);
+    securityEvent("calendar_event_write_failed", { actorId: auth.user.id });
     await rollbackMeet(meet.accessToken, meet.eventId);
     return json(
       { error: "Couldn't save the meeting. The calendar event was removed." },
       500
     );
   }
-}
+});

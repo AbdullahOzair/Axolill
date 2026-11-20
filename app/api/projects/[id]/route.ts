@@ -1,9 +1,11 @@
+import { withApiErrors } from "@/lib/http-security";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 
 import {
   db,
   json,
+  mutationJson,
   loadProject,
   parseBody,
   requireAdmin,
@@ -37,7 +39,7 @@ const updateProject = z
   .partial();
 
 /** GET — owner or admin. */
-export async function GET(_request: Request, { params }: Ctx) {
+export const GET = withApiErrors("GET /api/projects/[id]", async function GET(_request: Request, { params }: Ctx) {
   const auth = await requireSession();
   if (auth instanceof Response) return auth;
 
@@ -46,11 +48,11 @@ export async function GET(_request: Request, { params }: Ctx) {
   if (found instanceof Response) return found;
 
   return json({ project: found });
-}
+});
 
 /** PATCH — admin only. */
-export async function PATCH(request: Request, { params }: Ctx) {
-  const auth = await requireAdmin();
+export const PATCH = withApiErrors("PATCH /api/projects/[id]", async function PATCH(request: Request, { params }: Ctx) {
+  const auth = await requireAdmin(request);
   if (auth instanceof Response) return auth;
 
   const { id } = await params;
@@ -73,12 +75,12 @@ export async function PATCH(request: Request, { params }: Ctx) {
     .where(eq(project.id, id))
     .returning();
 
-  return json({ project: updated });
-}
+  return mutationJson(auth.user, "PATCH /api/projects/[id]", { project: updated });
+});
 
 /** DELETE — admin only. Cascades to milestones/files/invoices via FKs. */
-export async function DELETE(_request: Request, { params }: Ctx) {
-  const auth = await requireAdmin();
+export const DELETE = withApiErrors("DELETE /api/projects/[id]", async function DELETE(request: Request, { params }: Ctx) {
+  const auth = await requireAdmin(request);
   if (auth instanceof Response) return auth;
 
   const { id } = await params;
@@ -86,5 +88,5 @@ export async function DELETE(_request: Request, { params }: Ctx) {
   if (found instanceof Response) return found;
 
   await db().delete(project).where(eq(project.id, id));
-  return json({ deleted: id });
-}
+  return mutationJson(auth.user, "DELETE /api/projects/[id]", { deleted: id });
+});

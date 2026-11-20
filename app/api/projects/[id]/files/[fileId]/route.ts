@@ -1,9 +1,10 @@
+import { withApiErrors } from "@/lib/http-security";
 import { and, eq } from "drizzle-orm";
 
 import {
   db,
   filesBucket,
-  json,
+  mutationJson,
   loadProject,
   notFound,
   requireAdmin,
@@ -27,7 +28,7 @@ async function findFile(projectId: string, fileId: string) {
 }
 
 /** GET — stream the object out of R2 (owner or admin). */
-export async function GET(_request: Request, { params }: Ctx) {
+export const GET = withApiErrors("GET /api/projects/[id]/files/[fileId]", async function GET(_request: Request, { params }: Ctx) {
   const auth = await requireSession();
   if (auth instanceof Response) return auth;
 
@@ -44,10 +45,8 @@ export async function GET(_request: Request, { params }: Ctx) {
   // NOTE: don't use object.writeHttpMetadata(headers) here — it rejects Next's
   // Headers instance (different realm). Set the fields explicitly instead.
   const headers = new Headers();
-  headers.set(
-    "content-type",
-    object.httpMetadata?.contentType ?? "application/octet-stream"
-  );
+  headers.set("content-type", "application/octet-stream");
+  headers.set("x-content-type-options", "nosniff");
   headers.set("etag", object.httpEtag);
   headers.set(
     "content-disposition",
@@ -57,11 +56,11 @@ export async function GET(_request: Request, { params }: Ctx) {
   headers.set("cache-control", "private, no-store");
 
   return new Response(object.body, { headers });
-}
+});
 
 /** DELETE — admin only. Removes the R2 object and the row. */
-export async function DELETE(_request: Request, { params }: Ctx) {
-  const auth = await requireAdmin();
+export const DELETE = withApiErrors("DELETE /api/projects/[id]/files/[fileId]", async function DELETE(request: Request, { params }: Ctx) {
+  const auth = await requireAdmin(request);
   if (auth instanceof Response) return auth;
 
   const { id, fileId } = await params;
@@ -74,5 +73,5 @@ export async function DELETE(_request: Request, { params }: Ctx) {
   await filesBucket().delete(record.fileUrl);
   await db().delete(projectFile).where(eq(projectFile.id, fileId));
 
-  return json({ deleted: fileId });
-}
+  return mutationJson(auth.user, "DELETE /api/projects/[id]/files/[fileId]", { deleted: fileId });
+});

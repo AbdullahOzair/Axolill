@@ -1,9 +1,11 @@
+import { withApiErrors } from "@/lib/http-security";
 import { desc, eq } from "drizzle-orm";
 import { z } from "zod";
 
 import {
   db,
   json,
+  mutationJson,
   newId,
   parseBody,
   requireAdmin,
@@ -36,7 +38,7 @@ const createProject = z.object({
 });
 
 /** GET — admins see every project; clients see only their own. */
-export async function GET() {
+export const GET = withApiErrors("GET /api/projects", async function GET() {
   const auth = await requireSession();
   if (auth instanceof Response) return auth;
 
@@ -49,11 +51,11 @@ export async function GET() {
           .orderBy(desc(project.createdAt));
 
   return json({ projects: rows });
-}
+});
 
 /** POST — admin only. */
-export async function POST(request: Request) {
-  const auth = await requireAdmin();
+export const POST = withApiErrors("POST /api/projects", async function POST(request: Request) {
+  const auth = await requireAdmin(request);
   if (auth instanceof Response) return auth;
 
   const body = await parseBody(request, createProject);
@@ -74,5 +76,5 @@ export async function POST(request: Request) {
     })
     .returning();
 
-  return json({ project: created }, 201);
-}
+  return mutationJson(auth.user, "POST /api/projects", { project: created }, 201);
+});

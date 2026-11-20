@@ -20,6 +20,8 @@ declare global {
     GOOGLE_CLIENT_SECRET: string;
     /** HMAC secret for the Cal.com webhook (POST /api/meetings). */
     CAL_WEBHOOK_SECRET: string;
+    /** Optional AES-256 key for Calendar tokens, encoded as 64 hex characters. */
+    GOOGLE_CALENDAR_TOKEN_KEY?: string;
   }
 }
 

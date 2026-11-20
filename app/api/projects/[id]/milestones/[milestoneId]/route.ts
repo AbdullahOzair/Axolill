@@ -1,3 +1,4 @@
+import { withApiErrors } from "@/lib/http-security";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 
@@ -5,6 +6,7 @@ import {
   db,
   forbidden,
   json,
+  mutationJson,
   loadProject,
   notFound,
   parseBody,
@@ -41,8 +43,8 @@ const patchMilestone = z
   })
   .partial();
 
-export async function PATCH(request: Request, { params }: Ctx) {
-  const auth = await requireSession();
+export const PATCH = withApiErrors("PATCH /api/projects/[id]/milestones/[milestoneId]", async function PATCH(request: Request, { params }: Ctx) {
+  const auth = await requireSession(request);
   if (auth instanceof Response) return auth;
 
   const { id, milestoneId } = await params;
@@ -60,9 +62,10 @@ export async function PATCH(request: Request, { params }: Ctx) {
 
   const body = await parseBody(request, patchMilestone);
   if (body instanceof Response) return body;
+  const isAdmin = auth.user.role === "admin";
 
   // Enforce the client approval rules.
-  if (auth.user.role !== "admin") {
+  if (!isAdmin) {
     const keys = Object.keys(body);
     const onlyStatus = keys.length === 1 && keys[0] === "status";
     const allowedTarget =
@@ -88,15 +91,20 @@ export async function PATCH(request: Request, { params }: Ctx) {
       ...(dueDate ? { dueDate: toDate(dueDate) } : {}),
       updatedAt: new Date(),
     })
-    .where(eq(milestone.id, milestoneId))
+    .where(and(
+      eq(milestone.id, milestoneId),
+      eq(milestone.projectId, id),
+      isAdmin ? undefined : eq(milestone.status, "awaiting_approval")
+    ))
     .returning();
 
-  return json({ milestone: updated });
-}
+  if (!updated) return json({ error: "The milestone changed. Refresh and try again." }, 409);
+  return mutationJson(auth.user, "PATCH /api/projects/[id]/milestones/[milestoneId]", { milestone: updated });
+});
 
 /** DELETE — admin only. */
-export async function DELETE(_request: Request, { params }: Ctx) {
-  const auth = await requireAdmin();
+export const DELETE = withApiErrors("DELETE /api/projects/[id]/milestones/[milestoneId]", async function DELETE(request: Request, { params }: Ctx) {
+  const auth = await requireAdmin(request);
   if (auth instanceof Response) return auth;
 
   const { id, milestoneId } = await params;
@@ -107,5 +115,5 @@ export async function DELETE(_request: Request, { params }: Ctx) {
     .delete(milestone)
     .where(and(eq(milestone.id, milestoneId), eq(milestone.projectId, id)));
 
-  return json({ deleted: milestoneId });
-}
+  return mutationJson(auth.user, "DELETE /api/projects/[id]/milestones/[milestoneId]", { deleted: milestoneId });
+});

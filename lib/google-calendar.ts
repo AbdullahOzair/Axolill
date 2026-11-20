@@ -24,7 +24,17 @@ const TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token";
 const REVOKE_ENDPOINT = "https://oauth2.googleapis.com/revoke";
 
 export const callbackUrl = (baseUrl: string) =>
-  `${baseUrl.replace(/\/$/, "")}/api/admin/google-calendar/callback`;
+  new URL("/api/admin/google-calendar/callback", baseUrl).href;
+
+export const CALENDAR_STATE_COOKIE = "axonill_calendar_state";
+export const CALENDAR_STATE_TTL_SECONDS = 10 * 60;
+
+export const calendarStateCookieOptions = (baseUrl: string) => ({
+  httpOnly: true,
+  secure: new URL(baseUrl).protocol === "https:",
+  sameSite: "lax" as const,
+  path: "/api/admin/google-calendar/callback",
+});
 
 /* ---------------------------------- state ---------------------------------- */
 
@@ -57,7 +67,7 @@ function timingSafeEqual(a: string, b: string) {
   return diff === 0;
 }
 
-const STATE_TTL_MS = 10 * 60 * 1000;
+const STATE_TTL_MS = CALENDAR_STATE_TTL_SECONDS * 1000;
 
 /**
  * The `state` param is a signed `{adminUserId, issuedAt, nonce}`. Google echoes
@@ -81,9 +91,9 @@ export async function verifyState(
   secret: string,
   state: string | null
 ): Promise<{ uid: string } | null> {
-  if (!state) return null;
-  const [payload, mac] = state.split(".");
-  if (!payload || !mac) return null;
+  if (!state || state.length > 512) return null;
+  const [payload, mac, extra] = state.split(".");
+  if (!payload || !mac || extra !== undefined) return null;
 
   const expected = await hmac(secret, payload);
   if (!timingSafeEqual(mac, expected)) return null;
@@ -98,8 +108,9 @@ export async function verifyState(
       )
     ) as { uid?: string; ts?: number };
 
-    if (!json.uid || typeof json.ts !== "number") return null;
-    if (Date.now() - json.ts > STATE_TTL_MS) return null;
+    if (typeof json.uid !== "string" || typeof json.ts !== "number" || !Number.isFinite(json.ts)) return null;
+    const age = Date.now() - json.ts;
+    if (age < 0 || age > STATE_TTL_MS) return null;
     return { uid: json.uid };
   } catch {
     return null;

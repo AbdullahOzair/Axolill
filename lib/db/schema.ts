@@ -34,6 +34,9 @@ export const user = sqliteTable("user", {
     .notNull()
     .default(false),
   image: text("image"),
+  twoFactorEnabled: integer("twoFactorEnabled", { mode: "boolean" })
+    .notNull()
+    .default(false),
   createdAt: integer("createdAt", { mode: "timestamp" })
     .notNull()
     .default(sql`(unixepoch())`),
@@ -48,6 +51,20 @@ export const user = sqliteTable("user", {
   company: text("company"),
   phone: text("phone"),
 });
+
+export const twoFactor = sqliteTable(
+  "twoFactor",
+  {
+    id: text("id").primaryKey(),
+    secret: text("secret").notNull(),
+    backupCodes: text("backupCodes").notNull(),
+    userId: text("userId").notNull().references(() => user.id, { onDelete: "cascade" }),
+    verified: integer("verified", { mode: "boolean" }).notNull().default(true),
+    failedVerificationCount: integer("failedVerificationCount").notNull().default(0),
+    lockedUntil: integer("lockedUntil", { mode: "timestamp" }),
+  },
+  (t) => [uniqueIndex("twoFactor_userId_idx").on(t.userId)]
+);
 
 export const session = sqliteTable(
   "session",
