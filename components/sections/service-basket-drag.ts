@@ -25,7 +25,7 @@ export function enableBasketDrag(tray: HTMLElement) {
 
   function onDown(event: PointerEvent) {
     if (drag) return;
-    if (event.button !== 0 || event.pointerType === "touch" || tray.dataset.drop ||
+    if (!event.isPrimary || event.button !== 0 || tray.dataset.drop ||
       event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
     const ball = event.target instanceof Element && event.target.closest<HTMLElement>("[data-service-pill]");
     if (!ball || !tray.contains(ball)) return;
@@ -55,6 +55,11 @@ export function enableBasketDrag(tray: HTMLElement) {
     const dy = event.clientY - current.pointer.y;
     if (!current.moving) {
       if (Math.hypot(dx, dy) < DRAG_THRESHOLD) return;
+      // A horizontal start moves the ball. Vertical swipes still scroll the page.
+      if (event.pointerType === "touch" && Math.abs(dy) > Math.abs(dx)) {
+        stop();
+        return;
+      }
       tray.setPointerCapture(event.pointerId);
       current.moving = true;
       current.ball.dataset.dragging = "";
@@ -91,6 +96,11 @@ export function enableBasketDrag(tray: HTMLElement) {
     if (drag?.pointerId === event.pointerId) stop();
   }
 
+  function onLostCapture(event: PointerEvent) {
+    // Transferring implicit touch capture from the ball to the tray also bubbles this event.
+    if (event.target === tray) onEnd(event);
+  }
+
   function reset() {
     stop();
     for (const ball of moved) {
@@ -104,11 +114,11 @@ export function enableBasketDrag(tray: HTMLElement) {
   resize?.observe(tray);
   tray.querySelectorAll("[data-service-pill]").forEach((ball) => resize?.observe(ball));
   tray.addEventListener("pointerdown", onDown);
-  tray.addEventListener("lostpointercapture", onEnd);
+  tray.addEventListener("lostpointercapture", onLostCapture);
   return () => {
     reset();
     resize?.disconnect();
     tray.removeEventListener("pointerdown", onDown);
-    tray.removeEventListener("lostpointercapture", onEnd);
+    tray.removeEventListener("lostpointercapture", onLostCapture);
   };
 }

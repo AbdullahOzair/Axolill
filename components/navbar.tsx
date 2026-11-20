@@ -45,7 +45,7 @@ function useHashScroll() {
     if (!hash) return;
     const id = hash.slice(1); // strip the leading "#"
     const raf = requestAnimationFrame(() => {
-      document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+      document.getElementById(id)?.scrollIntoView();
     });
     return () => cancelAnimationFrame(raf);
   }, [pathname]);
@@ -63,7 +63,7 @@ function useSectionClick(hash: string, afterClick?: () => void) {
       if (pathname === "/") {
         e.preventDefault();
         const id = hash.replace(/^#/, "");
-        document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+        document.getElementById(id)?.scrollIntoView();
       }
       afterClick?.();
     },

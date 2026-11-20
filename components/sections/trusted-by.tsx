@@ -32,13 +32,15 @@ export function TrustedBy() {
       </Reveal>
 
       {/* group enables pause-on-hover; edges fade via mask */}
-      <div className="group relative overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
-        <div className="flex w-max animate-marquee items-center gap-16 pr-16 group-hover:[animation-play-state:paused] motion-reduce:animate-none">
+      <div className="group relative overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)] motion-reduce:[mask-image:none]">
+        <div className="flex w-max animate-marquee items-center gap-16 pr-16 group-hover:[animation-play-state:paused] motion-reduce:w-full motion-reduce:animate-none motion-reduce:pr-0">
           {/* Two identical copies for a seamless -50% loop */}
           {[0, 1].map((copy) => (
             <div
               key={copy}
-              className="flex shrink-0 items-center gap-16 pr-16"
+              className={copy === 1
+                ? "flex shrink-0 items-center gap-16 pr-16 motion-reduce:hidden"
+                : "flex shrink-0 items-center gap-16 pr-16 motion-reduce:w-full motion-reduce:flex-wrap motion-reduce:justify-center motion-reduce:gap-x-6 motion-reduce:gap-y-3 motion-reduce:px-4"}
               aria-hidden={copy === 1}
             >
               {CLIENTS.map((name) => (
