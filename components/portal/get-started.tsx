@@ -369,7 +369,7 @@ export function GetStarted() {
               "group relative overflow-hidden"
             )}
           >
-            <span className="absolute inset-0 bg-gradient-to-r from-brand-secondary to-accent-cyan opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+            <span className="absolute inset-0 button-hover-gradient opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
             <span className="relative z-10 flex items-center gap-2">
               <Video className="size-4" />
               Book a Google Meet
@@ -674,7 +674,7 @@ export function GetStarted() {
             disabled={status === "submitting" || !selectedTier}
             className="group relative h-11 w-full gap-2 overflow-hidden sm:w-auto sm:min-w-48"
           >
-            <span className="absolute inset-0 bg-gradient-to-r from-brand-secondary to-accent-cyan opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+            <span className="absolute inset-0 button-hover-gradient opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
             <span className="relative z-10 inline-flex items-center gap-2">
               {status === "submitting" ? (
                 <>
@@ -1006,7 +1006,7 @@ function PortalPromiseStrip() {
           <div className="h-full w-full bg-border/60" />
           {/* Animated fill */}
           <motion.div
-            className="absolute inset-0 origin-top bg-gradient-to-b from-brand-secondary to-accent-cyan"
+            className="absolute inset-0 origin-top brand-gradient"
             style={{ scaleY: reduce ? 1 : drawn }}
           />
         </div>
@@ -1018,7 +1018,7 @@ function PortalPromiseStrip() {
         >
           <div className="h-full w-full bg-border/60" />
           <motion.div
-            className="absolute inset-0 origin-left bg-gradient-to-r from-brand-secondary to-accent-cyan"
+            className="absolute inset-0 origin-left brand-gradient"
             style={{ scaleX: reduce ? 1 : drawn }}
           />
         </div>
@@ -1043,7 +1043,7 @@ function PortalPromiseStrip() {
                 <span
                   className={cn(
                     "grid size-10 place-items-center rounded-full ring-4 ring-background",
-                    "bg-gradient-to-br from-brand-secondary to-accent-cyan text-white shadow-md",
+                    "brand-action text-white shadow-md",
                     "sm:size-12"
                   )}
                 >
@@ -1114,9 +1114,9 @@ function SelectableTierCard({
               aria-hidden
               className="pointer-events-none absolute -top-16 left-1/2 -z-10 size-48 -translate-x-1/2 rounded-full bg-brand-secondary/15 blur-3xl"
             />
-            <span className="absolute top-0 right-0 left-0 h-1 bg-gradient-to-r from-brand-secondary to-accent-cyan" />
+            <span className="absolute top-0 right-0 left-0 h-1 brand-gradient" />
             <div className="absolute top-4 right-4">
-              <Badge className="gap-1 rounded-full bg-brand-secondary text-white shadow-sm">
+              <Badge className="gap-1 rounded-full bg-brand text-white shadow-sm">
                 <Sparkles className="size-3" />
                 Most Popular
               </Badge>
@@ -1125,7 +1125,7 @@ function SelectableTierCard({
         )}
 
         {selected && (
-          <span className="absolute top-4 left-4 grid size-6 place-items-center rounded-full bg-brand-secondary text-white shadow-sm">
+          <span className="absolute top-4 left-4 grid size-6 place-items-center rounded-full bg-brand text-white shadow-sm">
             <Check className="size-3.5" />
           </span>
         )}
@@ -1177,7 +1177,7 @@ function SelectableTierCard({
                   }}
                   className="group relative h-11 w-full overflow-hidden"
                 >
-                  <span className="absolute inset-0 bg-gradient-to-r from-brand-secondary to-accent-cyan opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+                  <span className="absolute inset-0 button-hover-gradient opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
                   <span className="relative z-10">Get Started with {tier.name}</span>
                 </Button>
               </motion.div>

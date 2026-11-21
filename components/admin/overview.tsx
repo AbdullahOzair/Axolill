@@ -79,7 +79,7 @@ async function loadOverview(): Promise<OverviewData> {
 /* -------------------------------- overview -------------------------------- */
 
 const LEAD_STATUS: Record<LeadStatus, string> = {
-  new: "bg-brand-secondary/10 text-brand-secondary dark:text-blue-400",
+  new: "bg-info/10 text-info",
   contacted: "bg-accent-cyan/10 text-cyan-700 dark:text-cyan-400",
   qualified: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
   won: "bg-success/10 text-success",

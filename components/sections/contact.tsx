@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Reveal } from "@/components/reveal";
+import { ScrollReveal } from "@/components/reveal";
 
 const SERVICES = [
   "Web Development",
@@ -162,7 +162,7 @@ export function Contact() {
     <section id="contact" className="relative py-24 sm:py-32">
       <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
         {/* Header */}
-        <Reveal className="mx-auto max-w-2xl text-center">
+        <ScrollReveal as="header" effect="text" className="mx-auto max-w-2xl text-center">
           <p className="text-xs font-medium tracking-wider text-brand-secondary uppercase dark:text-blue-400">
             Contact
           </p>
@@ -173,11 +173,11 @@ export function Contact() {
             Tell us about your project and we&apos;ll get back to you within one
             business day.
           </p>
-        </Reveal>
+        </ScrollReveal>
 
-        <Reveal delay={0.1} className="mt-16 grid gap-8 lg:grid-cols-2">
+        <div className="mt-16 grid gap-8 lg:grid-cols-2">
           {/* Form */}
-          <div className="rounded-2xl border border-border/60 bg-background/60 p-6 shadow-sm backdrop-blur sm:p-8">
+          <ScrollReveal effect="from-left" className="rounded-2xl border border-border/60 bg-background/60 p-6 shadow-sm backdrop-blur sm:p-8">
             <AnimatePresence mode="wait" initial={false}>
               {status === "success" ? (
                 <motion.div
@@ -196,7 +196,7 @@ export function Contact() {
                       damping: 15,
                       delay: 0.1,
                     }}
-                    className="grid size-16 place-items-center rounded-full bg-gradient-to-br from-brand-secondary to-accent-cyan text-white shadow-lg"
+                    className="grid size-16 place-items-center rounded-full brand-action text-white shadow-lg"
                   >
                     <CheckCircle2 className="size-8" />
                   </motion.span>
@@ -349,10 +349,10 @@ export function Contact() {
                 </motion.form>
               )}
             </AnimatePresence>
-          </div>
+          </ScrollReveal>
 
           {/* Info + map */}
-          <div className="flex flex-col gap-6">
+          <ScrollReveal effect="from-right" className="flex flex-col gap-6">
             <div className="grid gap-4 sm:grid-cols-2">
               <ContactLink
                 href="mailto:info@axonill.com"
@@ -393,8 +393,8 @@ export function Contact() {
                 referrerPolicy="no-referrer-when-downgrade"
               />
             </div>
-          </div>
-        </Reveal>
+          </ScrollReveal>
+        </div>
       </div>
     </section>
   );

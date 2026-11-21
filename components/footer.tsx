@@ -9,6 +9,7 @@ import {
 } from "@/components/brand-icons";
 
 import { BrandMark } from "@/components/brand-mark";
+import { ScrollReveal } from "@/components/reveal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
@@ -62,19 +63,21 @@ function FooterLink({ href, label }: { href: string; label: string }) {
 function FooterColumn({
   title,
   links,
+  index,
 }: {
   title: string;
   links: { label: string; href: string }[];
+  index: number;
 }) {
   return (
-    <div>
+    <ScrollReveal index={index}>
       <h3 className="text-sm font-semibold text-foreground">{title}</h3>
       <ul className="mt-4 space-y-3">
         {links.map((link) => (
           <FooterLink key={link.label} {...link} />
         ))}
       </ul>
-    </div>
+    </ScrollReveal>
   );
 }
 
@@ -84,7 +87,7 @@ export function Footer() {
       <div className="mx-auto w-full max-w-6xl px-4 py-14 sm:px-6">
         <div className="grid grid-cols-2 gap-8 md:grid-cols-4 lg:grid-cols-5">
           {/* Brand + newsletter — spans wider on large screens */}
-          <div className="col-span-2 lg:col-span-1">
+          <ScrollReveal className="col-span-2 lg:col-span-1">
             <Link
               href="/"
               aria-label="Axonill home"
@@ -98,14 +101,14 @@ export function Footer() {
             <p className="mt-4 max-w-xs text-sm text-muted-foreground">
               Innovating Digital Experiences.
             </p>
-          </div>
+          </ScrollReveal>
 
-          <FooterColumn title="Quick Links" links={QUICK_LINKS} />
-          <FooterColumn title="Services" links={SERVICES} />
-          <FooterColumn title="Resources" links={RESOURCES} />
+          <FooterColumn title="Quick Links" links={QUICK_LINKS} index={1} />
+          <FooterColumn title="Services" links={SERVICES} index={2} />
+          <FooterColumn title="Resources" links={RESOURCES} index={3} />
 
           {/* Social Media column */}
-          <div className="col-span-2 md:col-span-1">
+          <ScrollReveal index={4} className="col-span-2 md:col-span-1">
             <h3 className="text-sm font-semibold text-foreground">
               Social Media
             </h3>
@@ -142,7 +145,7 @@ export function Footer() {
                 Subscribe
               </Button>
             </form>
-          </div>
+          </ScrollReveal>
         </div>
 
         <Separator className="my-8" />

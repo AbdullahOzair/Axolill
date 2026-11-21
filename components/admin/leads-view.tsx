@@ -83,7 +83,7 @@ import {
 const LEAD_STATUS: Record<LeadStatus, { label: string; className: string }> = {
   new: {
     label: "New",
-    className: "bg-brand-secondary/10 text-brand-secondary dark:text-blue-400",
+    className: "bg-info/10 text-info",
   },
   contacted: {
     label: "Contacted",

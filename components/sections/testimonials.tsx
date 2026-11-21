@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { ChevronLeft, ChevronRight, Pause, Play, Quote, Star } from "lucide-react";
+import { ScrollReveal } from "@/components/reveal";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -22,12 +23,12 @@ export function Testimonials() {
   return (
     <section id="testimonials" aria-labelledby="testimonials-heading" aria-busy={loading} className={`${styles.section} scroll-mt-16 py-14 font-sans sm:py-18`}>
       <div className="mx-auto w-full max-w-5xl px-4 sm:px-6 lg:px-8">
-        <header>
+        <ScrollReveal as="header" effect="text">
           <p className={styles.eyebrow}>Testimonials</p>
           <h2 id="testimonials-heading" className="mt-3 font-heading text-3xl leading-[1.1] font-semibold tracking-tight text-balance sm:text-4xl lg:text-5xl">
             What our <span className={styles.accent}>clients say</span>
           </h2>
-        </header>
+        </ScrollReveal>
 
         <div className="mt-6">
           {loading && !data ? (
@@ -43,7 +44,7 @@ export function Testimonials() {
           ) : !data?.length ? (
             <EmptyState title="No testimonials yet" description="Client stories will appear here once they're published." />
           ) : data.length === 1 ? (
-            <div className={styles.single}><TestimonialCard testimonial={data[0]} /></div>
+            <ScrollReveal className={styles.single}><TestimonialCard testimonial={data[0]} /></ScrollReveal>
           ) : (
             <TestimonialCarousel testimonials={data} />
           )}

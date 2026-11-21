@@ -24,10 +24,12 @@ export function BookCall() {
     if (!mounted) return;
 
     (async () => {
+      const palette = getComputedStyle(document.documentElement);
+      const buttonBlue = palette.getPropertyValue("--hero-dark-blue").trim();
       const cal = await getCalApi({ namespace: CAL_NAMESPACE });
       cal("ui", {
         theme: calTheme,
-        // Map the Axonill palette onto Cal's theme variables (CLAUDE.md).
+        // The embedded calendar needs concrete theme colors across the iframe boundary.
         cssVarsPerTheme: {
           light: {
             "cal-brand": "#0F172A",
@@ -36,16 +38,16 @@ export function BookCall() {
             "cal-bg": "#FFFFFF",
             "cal-bg-emphasis": "#F1F5F9",
             "cal-border": "#E2E8F0",
-            "cal-border-emphasis": "#2563EB",
+            "cal-border-emphasis": buttonBlue,
           },
           dark: {
-            "cal-brand": "#2563EB",
+            "cal-brand": buttonBlue,
             "cal-text": "#F8FAFC",
             "cal-text-emphasis": "#F8FAFC",
             "cal-bg": "#0F172A",
             "cal-bg-emphasis": "#1E293B",
             "cal-border": "#1E293B",
-            "cal-border-emphasis": "#2563EB",
+            "cal-border-emphasis": buttonBlue,
           },
         },
         hideEventTypeDetails: false,

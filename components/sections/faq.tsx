@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { ScrollReveal } from "@/components/reveal";
 
 import {
   Accordion,
@@ -49,13 +49,11 @@ const FAQS: FaqItem[] = [
 ];
 
 export function Faq() {
-  const reduce = useReducedMotion();
-
   return (
     <section id="faq" className="relative py-24 sm:py-32">
       <div className="mx-auto w-full max-w-3xl px-4 sm:px-6">
         {/* Header */}
-        <div className="mx-auto max-w-2xl text-center">
+        <ScrollReveal as="header" effect="text" className="mx-auto max-w-2xl text-center">
           <p className="text-xs font-medium tracking-wider text-brand-secondary uppercase dark:text-blue-400">
             FAQ
           </p>
@@ -66,15 +64,9 @@ export function Faq() {
             Everything you need to know before we get started. Still curious?
             Book a call and ask us anything.
           </p>
-        </div>
+        </ScrollReveal>
 
-        <motion.div
-          initial={reduce ? { opacity: 0 } : { opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-80px" }}
-          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          className="mt-12"
-        >
+        <ScrollReveal className="mt-12">
           {/* single-open: `multiple` defaults to false */}
           <Accordion className="w-full">
             {FAQS.map((faq, i) => (
@@ -92,7 +84,7 @@ export function Faq() {
               </AccordionItem>
             ))}
           </Accordion>
-        </motion.div>
+        </ScrollReveal>
       </div>
     </section>
   );

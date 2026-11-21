@@ -34,9 +34,9 @@ export function BackToTop() {
           transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
           whileHover={{ y: -2 }}
           whileTap={{ scale: 0.94 }}
-          className="group fixed right-5 bottom-5 z-50 grid size-11 place-items-center overflow-hidden rounded-full bg-primary text-primary-foreground shadow-lg ring-1 ring-black/5 transition-shadow hover:shadow-brand-secondary/25 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none sm:right-8 sm:bottom-8"
+          className="group fixed right-5 bottom-5 z-50 grid size-11 place-items-center overflow-hidden rounded-full bg-primary text-primary-foreground shadow-lg ring-1 ring-black/5 transition-shadow hover:shadow-button-accent/25 focus-visible:ring-3 focus-visible:ring-button-accent/50 focus-visible:outline-none sm:right-8 sm:bottom-8"
         >
-          <span className="absolute inset-0 bg-gradient-to-br from-brand-secondary to-accent-cyan opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+          <span className="absolute inset-0 button-hover-gradient [--button-gradient-direction:to_bottom_right] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
           <ArrowUp className="relative z-10 size-5" />
         </motion.button>
       )}

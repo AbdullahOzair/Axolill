@@ -66,7 +66,7 @@ const MILESTONE_STATUSES: MilestoneStatus[] = [
 const MILESTONE_STATUS_CLASS: Record<MilestoneStatus, string> = {
   pending: "bg-muted text-muted-foreground",
   in_progress:
-    "bg-brand-secondary/10 text-brand-secondary dark:text-blue-400",
+    "bg-info/10 text-info",
   awaiting_approval: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
   approved: "bg-success/10 text-success",
   changes_requested: "bg-destructive/10 text-destructive",
@@ -81,7 +81,7 @@ const INVOICE_STATUSES: Invoice["status"][] = [
 
 const INVOICE_STATUS_CLASS: Record<Invoice["status"], string> = {
   draft: "bg-muted text-muted-foreground",
-  sent: "bg-brand-secondary/10 text-brand-secondary dark:text-blue-400",
+  sent: "bg-info/10 text-info",
   paid: "bg-success/10 text-success",
   overdue: "bg-destructive/10 text-destructive",
 };
@@ -345,7 +345,7 @@ function OverviewPanel({
         />
         <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-brand-secondary to-accent-cyan transition-[width] duration-300"
+            className="h-full rounded-full brand-gradient transition-[width] duration-300"
             style={{ width: `${progress}%` }}
           />
         </div>

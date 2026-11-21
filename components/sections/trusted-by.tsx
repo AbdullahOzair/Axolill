@@ -1,4 +1,4 @@
-import { Reveal } from "@/components/reveal";
+import { ScrollReveal } from "@/components/reveal";
 
 const CLIENTS = [
   "Nimbus",
@@ -25,11 +25,11 @@ export function TrustedBy() {
       aria-label="Trusted by"
       className="border-y border-border/60 bg-background py-12"
     >
-      <Reveal>
+      <ScrollReveal effect="text">
         <p className="mb-8 text-center text-xs font-medium tracking-wider text-muted-foreground uppercase">
           Trusted by teams building the future
         </p>
-      </Reveal>
+      </ScrollReveal>
 
       {/* group enables pause-on-hover; edges fade via mask */}
       <div className="group relative overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)] motion-reduce:[mask-image:none]">

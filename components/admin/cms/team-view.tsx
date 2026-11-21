@@ -71,7 +71,7 @@ export function TeamView() {
                 {m.photoUrl && (
                   <AvatarImage src={`/api/media/${m.photoUrl}`} alt="" />
                 )}
-                <AvatarFallback className="bg-gradient-to-br from-brand-secondary to-accent-cyan text-xs font-semibold text-white">
+                <AvatarFallback className="brand-action text-xs font-semibold text-white">
                   {initials(m.name)}
                 </AvatarFallback>
               </Avatar>

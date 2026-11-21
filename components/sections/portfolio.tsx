@@ -3,6 +3,7 @@
 import * as React from "react";
 import Image from "next/image";
 import { ArrowUpRight, PanelsTopLeft, X } from "lucide-react";
+import { ScrollReveal } from "@/components/reveal";
 
 import {
   Dialog,
@@ -56,7 +57,7 @@ export function Portfolio() {
   return (
     <section id="work" aria-labelledby="portfolio-heading" aria-busy={loading} className={`${styles.section} scroll-mt-16 py-14 font-sans sm:py-18`}>
       <div className="mx-auto w-full max-w-5xl px-4 sm:px-6 lg:px-8">
-        <header className="max-w-2xl">
+        <ScrollReveal as="header" effect="text" className="max-w-2xl">
           <p className={styles.eyebrow}>Our work</p>
           <h2 id="portfolio-heading" className="mt-3 font-heading text-3xl leading-[1.1] font-semibold tracking-tight text-balance sm:text-4xl lg:text-5xl">
             Selected <span className={styles.accent}>projects</span>
@@ -64,7 +65,7 @@ export function Portfolio() {
           <p className="mt-3 max-w-xl text-sm leading-relaxed text-pretty text-muted-foreground sm:text-base">
             A cross-section of what we&apos;ve shipped. Explore the work by category.
           </p>
-        </header>
+        </ScrollReveal>
 
         <div className="mt-7">
           {loading && !data ? (
@@ -89,7 +90,7 @@ export function Portfolio() {
                 onPageChange={setPage}
               />
               <ul className={styles.gallery}>
-                {visible.map((project) => <ProjectCard key={project.id} project={project} lead={matching.length === 1} />)}
+                {visible.map((project, index) => <ProjectCard key={project.id} project={project} lead={matching.length === 1} index={index} />)}
               </ul>
             </div>
           )}
@@ -99,11 +100,11 @@ export function Portfolio() {
   );
 }
 
-function ProjectCard({ project, lead }: { project: PortfolioItem; lead: boolean }) {
+function ProjectCard({ project, lead, index }: { project: PortfolioItem; lead: boolean; index: number }) {
   const { title, category, description, tags, coverImage } = project;
 
   return (
-    <li className={styles.galleryItem} data-lead={lead || undefined}>
+    <ScrollReveal as="li" effect="scale" index={index} className={styles.galleryItem} data-lead={lead || undefined}>
       <Dialog>
         <article className={styles.card}>
           <ProjectCover key={coverImage} cover={coverImage} />
@@ -150,7 +151,7 @@ function ProjectCard({ project, lead }: { project: PortfolioItem; lead: boolean 
           </div>
         </DialogContent>
       </Dialog>
-    </li>
+    </ScrollReveal>
   );
 }
 

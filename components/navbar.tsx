@@ -99,7 +99,7 @@ function DesktopNavLink({ label, href }: { label: string; href: string }) {
     <Link
       href={resolvedHref}
       onClick={handleClick}
-      className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors outline-none hover:text-brand-secondary focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background aria-[current=page]:text-brand-secondary"
     >
       {label}
     </Link>
@@ -127,7 +127,7 @@ function MobileNavLink({
         <Link
           href={resolvedHref}
           onClick={handleClick}
-          className="rounded-lg px-3 py-2.5 text-base font-medium text-foreground/80 transition-colors outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className="rounded-lg px-3 py-2.5 text-base font-medium text-foreground/80 transition-colors outline-none hover:bg-muted hover:text-brand-secondary focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background aria-[current=page]:text-brand-secondary"
         >
           {label}
         </Link>
@@ -147,11 +147,11 @@ function BookCallButton({
     <BookingLink
       onNavigate={onClose}
       className={cn(
-        "group relative inline-flex h-10 items-center justify-center gap-2 overflow-hidden rounded-lg bg-primary px-5 text-sm font-medium text-primary-foreground shadow-sm transition-all duration-300 hover:shadow-md hover:shadow-brand-secondary/25 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
+        "group relative inline-flex h-10 items-center justify-center gap-2 overflow-hidden rounded-lg bg-primary px-5 text-sm font-medium text-primary-foreground shadow-sm transition-all duration-300 hover:shadow-md hover:shadow-button-accent/25 focus-visible:ring-3 focus-visible:ring-button-accent/50 focus-visible:outline-none",
         className
       )}
     >
-      <span className="absolute inset-0 bg-gradient-to-r from-brand-secondary to-accent-cyan opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+      <span className="absolute inset-0 button-hover-gradient opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
       <span className="relative z-10 flex items-center gap-2">
         Book a Call
         <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5" />

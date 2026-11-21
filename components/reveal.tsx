@@ -1,37 +1,76 @@
 "use client";
 
-import * as React from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { useCallback, useEffect, useRef, type CSSProperties, type HTMLAttributes } from "react";
+import styles from "./reveal.module.css";
 
-/**
- * Scroll-triggered fade / slide-up reveal. Fires once when the element enters
- * the viewport; collapses to a plain fade under prefers-reduced-motion.
- */
-export function Reveal({
-  children,
+type RevealEffect = "up" | "from-left" | "from-right" | "scale" | "text" | "fade";
+
+const waiting = new Map<Element, () => void>();
+let observer: IntersectionObserver | undefined;
+
+function observeReveal(element: HTMLElement) {
+  if (typeof IntersectionObserver !== "function" || element.getBoundingClientRect().top < window.innerHeight) return;
+
+  observer ??= new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (entry.isIntersecting && entry.intersectionRatio >= 0.12) waiting.get(entry.target)?.();
+    }
+  }, { threshold: 0.12 });
+
+  const intersection = observer;
+  function stop() {
+    intersection.unobserve(element);
+    waiting.delete(element);
+    element.removeEventListener("focusin", reveal);
+    if (waiting.size === 0) {
+      intersection.disconnect();
+      observer = undefined;
+    }
+  }
+  function reveal() {
+    element.dataset.scrollReveal = "shown";
+    stop();
+  }
+
+  waiting.set(element, reveal);
+  element.dataset.scrollReveal = "waiting";
+  intersection.observe(element);
+  element.addEventListener("focusin", reveal);
+
+  return () => {
+    if (waiting.has(element)) {
+      stop();
+      delete element.dataset.scrollReveal;
+    }
+  };
+}
+
+export function ScrollReveal({
+  as: Tag = "div",
+  effect = "up",
+  index = 0,
   className,
-  delay = 0,
-  y = 24,
-}: {
-  children: React.ReactNode;
-  className?: string;
-  delay?: number;
-  y?: number;
+  style,
+  ...props
+}: HTMLAttributes<HTMLElement> & {
+  as?: "div" | "header" | "li" | "article" | "dl";
+  effect?: RevealEffect;
+  index?: number;
 }) {
-  const reduce = useReducedMotion();
+  const target = useRef<HTMLElement | null>(null);
+  const setTarget = useCallback((element: HTMLElement | null) => { target.current = element; }, []);
+
+  useEffect(() => {
+    if (target.current) return observeReveal(target.current);
+  }, []);
+
   return (
-    <motion.div
-      className={className}
-      initial={reduce ? { opacity: 0 } : { opacity: 0, y }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-80px" }}
-      transition={{
-        duration: reduce ? 0.4 : 0.6,
-        delay: reduce ? 0 : delay,
-        ease: [0.22, 1, 0.36, 1],
-      }}
-    >
-      {children}
-    </motion.div>
+    <Tag
+      {...props}
+      ref={setTarget}
+      className={className ? `${styles.reveal} ${className}` : styles.reveal}
+      data-scroll-effect={effect}
+      style={{ ...style, "--reveal-delay": `${Math.min(index, 4) * 75}ms` } as CSSProperties}
+    />
   );
 }

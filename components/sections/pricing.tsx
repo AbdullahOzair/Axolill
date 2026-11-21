@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { CheckCircle2, Sparkles } from "lucide-react";
-import { motion, useReducedMotion, type Variants } from "framer-motion";
+import { ScrollReveal } from "@/components/reveal";
 
 import { PRICING_TIERS } from "@/lib/pricing-tiers";
 import { cn } from "@/lib/utils";
@@ -18,26 +18,11 @@ import {
 } from "@/components/ui/card";
 
 export function Pricing() {
-  const reduce = useReducedMotion();
-
-  const container: Variants = {
-    hidden: {},
-    show: { transition: { staggerChildren: reduce ? 0 : 0.12 } },
-  };
-  const item: Variants = {
-    hidden: reduce ? { opacity: 0 } : { opacity: 0, y: 24 },
-    show: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] },
-    },
-  };
-
   return (
     <section id="pricing" className="relative py-24 sm:py-32">
       <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
         {/* Header */}
-        <div className="mx-auto max-w-2xl text-center">
+        <ScrollReveal as="header" effect="text" className="mx-auto max-w-2xl text-center">
           <p className="text-xs font-medium tracking-wider text-brand-secondary uppercase dark:text-blue-400">
             Pricing
           </p>
@@ -48,18 +33,12 @@ export function Pricing() {
             Pick the engagement that fits where you are — every tier is a fixed,
             upfront quote with no surprises.
           </p>
-        </div>
+        </ScrollReveal>
 
         {/* Tiers */}
-        <motion.div
-          variants={container}
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, margin: "-80px" }}
-          className="mt-16 grid items-center gap-6 lg:grid-cols-3 lg:gap-8"
-        >
-          {PRICING_TIERS.map((tier) => (
-            <motion.div key={tier.name} variants={item}>
+        <div className="mt-16 grid items-center gap-6 lg:grid-cols-3 lg:gap-8">
+          {PRICING_TIERS.map((tier, index) => (
+            <ScrollReveal key={tier.name} effect={tier.featured ? "scale" : "up"} index={index}>
               <Card
                 className={cn(
                   "relative h-full overflow-hidden transition-all duration-300",
@@ -75,9 +54,9 @@ export function Pricing() {
                       aria-hidden
                       className="pointer-events-none absolute -top-16 left-1/2 -z-10 size-48 -translate-x-1/2 rounded-full bg-brand-secondary/20 blur-3xl"
                     />
-                    <span className="absolute top-0 right-0 left-0 h-1 bg-gradient-to-r from-brand-secondary to-accent-cyan" />
+                    <span className="absolute top-0 right-0 left-0 h-1 brand-gradient" />
                     <div className="absolute top-4 right-4">
-                      <Badge className="gap-1 rounded-full bg-brand-secondary text-white shadow-sm">
+                      <Badge className="gap-1 rounded-full bg-brand text-white shadow-sm">
                         <Sparkles className="size-3" />
                         Most Popular
                       </Badge>
@@ -111,7 +90,7 @@ export function Pricing() {
                             "mt-0.5 size-4.5 shrink-0",
                             tier.featured
                               ? "text-brand-secondary"
-                              : "text-brand-success"
+                              : "text-success"
                           )}
                         />
                         <span className="text-sm text-muted-foreground">
@@ -126,9 +105,9 @@ export function Pricing() {
                   {tier.featured ? (
                     <Link
                       href="#contact"
-                      className="group relative inline-flex h-11 w-full items-center justify-center gap-2 overflow-hidden rounded-lg bg-primary px-6 text-sm font-medium text-primary-foreground shadow-sm transition-all duration-300 hover:shadow-md hover:shadow-brand-secondary/25 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                      className="group relative inline-flex h-11 w-full items-center justify-center gap-2 overflow-hidden rounded-lg bg-primary px-6 text-sm font-medium text-primary-foreground shadow-sm transition-all duration-300 hover:shadow-md hover:shadow-button-accent/25 focus-visible:ring-3 focus-visible:ring-button-accent/50 focus-visible:outline-none"
                     >
-                      <span className="absolute inset-0 bg-gradient-to-r from-brand-secondary to-accent-cyan opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                      <span className="absolute inset-0 button-hover-gradient opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                       <span className="relative z-10">{tier.cta}</span>
                     </Link>
                   ) : (
@@ -141,9 +120,9 @@ export function Pricing() {
                   )}
                 </CardFooter>
               </Card>
-            </motion.div>
+            </ScrollReveal>
           ))}
-        </motion.div>
+        </div>
       </div>
     </section>
   );

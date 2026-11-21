@@ -51,7 +51,7 @@ import {
 
 const STATUS_CLASS: Record<MeetingStatus, string> = {
   requested: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
-  scheduled: "bg-brand-secondary/10 text-brand-secondary dark:text-blue-400",
+  scheduled: "bg-info/10 text-info",
   completed: "bg-success/10 text-success",
   cancelled: "bg-muted text-muted-foreground",
 };

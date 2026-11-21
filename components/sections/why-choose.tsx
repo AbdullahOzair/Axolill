@@ -11,6 +11,7 @@ import {
   Zap,
   type LucideIcon,
 } from "lucide-react";
+import { ScrollReveal } from "@/components/reveal";
 import styles from "./why-choose.module.css";
 
 type Differentiator = {
@@ -81,7 +82,7 @@ export function WhyChoose() {
   return (
     <section id="why-choose" aria-labelledby="why-choose-heading" className={`${styles.section} scroll-mt-16 py-14 font-sans sm:py-18`}>
       <div className="mx-auto w-full max-w-5xl px-4 sm:px-6 lg:px-8">
-        <header className="max-w-2xl">
+        <ScrollReveal as="header" effect="text" className="max-w-2xl">
           <p className={styles.eyebrow}>Why Axonill</p>
           <h2 id="why-choose-heading" className="mt-3 font-heading text-3xl leading-[1.1] font-semibold tracking-tight text-balance sm:text-4xl lg:text-5xl">
             Ten reasons <span className={styles.accent}>teams choose us</span>
@@ -89,11 +90,11 @@ export function WhyChoose() {
           <p className="mt-3 max-w-xl text-sm leading-relaxed text-pretty text-muted-foreground sm:text-base">
             The advantages that make Axonill a partner worth betting your product on.
           </p>
-        </header>
+        </ScrollReveal>
 
         <div className={styles.groups}>
-          {GROUPS.map(({ id, heading, reasons }) => (
-            <div key={id} className={styles.group} data-group={id}>
+          {GROUPS.map(({ id, heading, reasons }, index) => (
+            <ScrollReveal key={id} effect={index === 0 ? "from-left" : "from-right"} className={styles.group} data-group={id}>
               <div className={styles.groupHeader}>
                 <h3 id={`why-choose-${id}`} className="font-heading text-lg font-semibold tracking-tight sm:text-xl">{heading}</h3>
               </div>
@@ -108,7 +109,7 @@ export function WhyChoose() {
                   </li>
                 ))}
               </ul>
-            </div>
+            </ScrollReveal>
           ))}
         </div>
       </div>

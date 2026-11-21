@@ -88,9 +88,9 @@ export function UserMenu() {
         </Link>
         <Link
           href="/signup"
-          className="group relative inline-flex h-9 items-center justify-center overflow-hidden rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground shadow-sm transition-all duration-300 hover:shadow-md hover:shadow-brand-secondary/25 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className="group relative inline-flex h-9 items-center justify-center overflow-hidden rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground shadow-sm transition-all duration-300 hover:shadow-md hover:shadow-button-accent/25 focus-visible:ring-2 focus-visible:ring-button-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
-          <span className="absolute inset-0 bg-gradient-to-r from-brand-secondary to-accent-cyan opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+          <span className="absolute inset-0 button-hover-gradient opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
           <span className="relative z-10">Sign up</span>
         </Link>
       </div>
@@ -115,7 +115,7 @@ export function UserMenu() {
       >
         <Avatar className="size-7">
           {user.image && <AvatarImage src={user.image} alt="" />}
-          <AvatarFallback className="bg-gradient-to-br from-brand-secondary to-accent-cyan text-xs font-semibold text-white">
+          <AvatarFallback className="brand-action text-xs font-semibold text-white">
             {initials(user.name, user.email)}
           </AvatarFallback>
         </Avatar>
@@ -182,9 +182,9 @@ export function MobileAuth({ onNavigate }: { onNavigate?: () => void }) {
         <Link
           href="/signup"
           onClick={onNavigate}
-          className="group relative inline-flex h-10 w-full items-center justify-center overflow-hidden rounded-lg bg-primary text-sm font-medium text-primary-foreground shadow-sm transition-all duration-300 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className="group relative inline-flex h-10 w-full items-center justify-center overflow-hidden rounded-lg bg-primary text-sm font-medium text-primary-foreground shadow-sm transition-all duration-300 focus-visible:ring-2 focus-visible:ring-button-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
-          <span className="absolute inset-0 bg-gradient-to-r from-brand-secondary to-accent-cyan opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+          <span className="absolute inset-0 button-hover-gradient opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
           <span className="relative z-10">Sign up</span>
         </Link>
       </div>
@@ -200,7 +200,7 @@ export function MobileAuth({ onNavigate }: { onNavigate?: () => void }) {
       <div className="flex items-center gap-3">
         <Avatar className="size-9">
           {user.image && <AvatarImage src={user.image} alt="" />}
-          <AvatarFallback className="bg-gradient-to-br from-brand-secondary to-accent-cyan text-xs font-semibold text-white">
+          <AvatarFallback className="brand-action text-xs font-semibold text-white">
             {initials(user.name, user.email)}
           </AvatarFallback>
         </Avatar>

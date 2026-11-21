@@ -347,9 +347,9 @@ export function AuthForm({ mode }: { mode: Mode }) {
                 <button
                   type="submit"
                   disabled={status === "submitting"}
-                  className="group relative inline-flex h-11 w-full items-center justify-center gap-2 overflow-hidden rounded-lg bg-primary px-6 text-sm font-medium text-primary-foreground shadow-sm outline-none transition-all duration-300 hover:shadow-md hover:shadow-brand-secondary/25 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-70"
+                  className="group relative inline-flex h-11 w-full items-center justify-center gap-2 overflow-hidden rounded-lg bg-primary px-6 text-sm font-medium text-primary-foreground shadow-sm outline-none transition-all duration-300 hover:shadow-md hover:shadow-button-accent/25 focus-visible:ring-2 focus-visible:ring-button-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-70"
                 >
-                  <span className="absolute inset-0 bg-gradient-to-r from-brand-secondary to-accent-cyan opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                  <span className="absolute inset-0 button-hover-gradient opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                   <span className="relative z-10 flex items-center gap-2">
                     {status === "submitting" ? (
                       <>
@@ -406,7 +406,7 @@ function SuccessState({ mode, reduce, booking }: { mode: Mode; reduce: boolean; 
         initial={reduce ? { opacity: 0 } : { scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: reduce ? "tween" : "spring", stiffness: 200, damping: 15 }}
-        className="grid size-16 place-items-center rounded-full bg-gradient-to-br from-brand-secondary to-accent-cyan text-white shadow-lg"
+        className="grid size-16 place-items-center rounded-full brand-action text-white shadow-lg"
       >
         <CheckCircle2 className="size-8" />
       </motion.span>

@@ -6,9 +6,7 @@
 
 /* ------------------------------------------------------------------ *
  * Axonill theme tokens
- * Brand palette (source of truth — see CLAUDE.md):
- *   primary   #0F172A   secondary #2563EB   accent  #06B6D4
- *   success   #10B981   bg        #F8FAFC   dark bg #020617
+ * Axonill logo palette and theme-aware accents.
  * Fonts: Poppins (headings), Inter (body)
  * ------------------------------------------------------------------ */
 
@@ -26,6 +24,8 @@
   --color-brand-secondary: var(--brand-secondary);
   --color-accent-cyan: var(--brand-accent);
   --color-success: var(--brand-success);
+  --color-info: var(--status-info);
+  --color-button-accent: var(--hero-dark-blue);
 
   /* shadcn semantic tokens */
   --color-sidebar-ring: var(--sidebar-ring);
@@ -82,22 +82,30 @@
 :root {
   --radius: 0.75rem;
 
-  /* Brand constants — identical across light/dark */
+  --brand-purple: #6b2684;
+  --brand-magenta: #bf4995;
+  --brand-cyan: #09aace;
+  --brand-gradient: linear-gradient(110deg, var(--brand-purple) 0%, var(--brand-magenta) 48%, var(--brand-cyan) 100%);
   --brand-primary: #0f172a;
-  --brand-secondary: #2563eb;
-  --brand-accent: #06b6d4;
+  --brand-secondary: var(--hero-dark-blue);
+  --brand-accent: var(--hero-dark-cyan);
   --brand-success: #10b981;
+  --status-info: #2563eb;
+  --hero-dark-blue: #2563eb;
+  --hero-dark-cyan: #06b6d4;
+  --backdrop-blue: var(--hero-dark-blue);
+  --backdrop-cyan: var(--hero-dark-cyan);
 
   /* Light theme */
   --background: #f8fafc; /* brand background */
-  --foreground: #0f172a; /* brand primary as ink */
+  --foreground: #0f172a;
 
   --card: #ffffff;
   --card-foreground: #0f172a;
   --popover: #ffffff;
   --popover-foreground: #0f172a;
 
-  --primary: #0f172a; /* premium dark buttons */
+  --primary: #0f172a;
   --primary-foreground: #f8fafc;
 
   --secondary: #f1f5f9; /* slate-100 surface */
@@ -106,17 +114,17 @@
   --muted: #f1f5f9;
   --muted-foreground: #64748b; /* slate-500 */
 
-  --accent: #e0f2fe; /* soft cyan-tinted hover surface */
+  --accent: #e0f2fe;
   --accent-foreground: #0f172a;
 
   --destructive: #ef4444;
 
   --border: #e2e8f0; /* slate-200 */
   --input: #e2e8f0;
-  --ring: #2563eb; /* brand secondary as focus ring */
+  --ring: var(--brand-secondary);
 
-  --chart-1: #2563eb;
-  --chart-2: #06b6d4;
+  --chart-1: var(--brand-secondary);
+  --chart-2: var(--brand-accent);
   --chart-3: #10b981;
   --chart-4: #0f172a;
   --chart-5: #64748b;
@@ -128,23 +136,28 @@
   --sidebar-accent: #f1f5f9;
   --sidebar-accent-foreground: #0f172a;
   --sidebar-border: #e2e8f0;
-  --sidebar-ring: #2563eb;
+  --sidebar-ring: var(--ring);
 }
 
 .dark {
+  --status-info: #60a5fa;
+  --backdrop-blue: #60a5fa;
+  --backdrop-cyan: #22d3ee;
+  --brand-gradient: linear-gradient(to right in oklab, var(--brand-secondary), var(--brand-accent));
+
   /* Dark theme */
   --background: #020617; /* brand dark background */
   --foreground: #f8fafc;
 
-  --card: #0f172a; /* brand primary as elevated surface */
+  --card: #0f172a;
   --card-foreground: #f8fafc;
   --popover: #0f172a;
   --popover-foreground: #f8fafc;
 
-  --primary: #2563eb; /* brand blue pops on dark */
+  --primary: var(--hero-dark-blue);
   --primary-foreground: #f8fafc;
 
-  --secondary: #1e293b; /* slate-800 */
+  --secondary: #1e293b;
   --secondary-foreground: #f8fafc;
 
   --muted: #1e293b;
@@ -157,22 +170,34 @@
 
   --border: #1e293b;
   --input: #1e293b;
-  --ring: #2563eb;
+  --ring: var(--hero-dark-blue);
 
-  --chart-1: #60a5fa;
-  --chart-2: #22d3ee;
+  --chart-1: var(--backdrop-blue);
+  --chart-2: var(--backdrop-cyan);
   --chart-3: #34d399;
   --chart-4: #f8fafc;
   --chart-5: #94a3b8;
 
-  --sidebar: #0f172a;
+  --sidebar: var(--card);
   --sidebar-foreground: #f8fafc;
-  --sidebar-primary: #2563eb;
+  --sidebar-primary: var(--hero-dark-blue);
   --sidebar-primary-foreground: #f8fafc;
-  --sidebar-accent: #1e293b;
+  --sidebar-accent: var(--accent);
   --sidebar-accent-foreground: #f8fafc;
-  --sidebar-border: #1e293b;
-  --sidebar-ring: #2563eb;
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+}
+
+@utility brand-gradient {
+  background-image: var(--brand-gradient);
+}
+
+@utility brand-action {
+  background-image: linear-gradient(to bottom right in oklab, var(--brand-secondary) 0%, var(--brand-accent) 100%);
+}
+
+@utility button-hover-gradient {
+  background-image: linear-gradient(var(--button-gradient-direction, to right) in oklab, var(--hero-dark-blue) 0%, var(--hero-dark-cyan) 100%);
 }
 
 @layer base {
@@ -242,7 +267,7 @@
    above it — this is what separates sidebar from content. */
 .dark {
   --admin-canvas: var(--background); /* #020617 */
-  --admin-chrome: var(--card); /* #0F172A — one step up */
+  --admin-chrome: var(--card);
   --admin-hover: color-mix(in oklch, var(--brand-secondary) 12%, transparent);
 }
 

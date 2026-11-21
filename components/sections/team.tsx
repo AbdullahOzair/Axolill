@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { motion, useReducedMotion, type Variants } from "framer-motion";
+import { ScrollReveal } from "@/components/reveal";
 
 import { fetchJson, useLoader } from "@/lib/use-api";
 import type { TeamMember } from "@/lib/data-model";
@@ -31,30 +31,14 @@ async function loadTeam(): Promise<TeamMember[]> {
 }
 
 export function Team() {
-  const reduce = useReducedMotion();
   const { data, error, loading, reload } = useLoader<TeamMember[]>(loadTeam);
   const team = data ?? [];
-
-  const container: Variants = {
-    hidden: {},
-    show: {
-      transition: { staggerChildren: reduce ? 0 : 0.1, delayChildren: 0.05 },
-    },
-  };
-  const item: Variants = {
-    hidden: reduce ? { opacity: 0 } : { opacity: 0, y: 24 },
-    show: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] },
-    },
-  };
 
   return (
     <section id="team" className="relative py-24 sm:py-32">
       <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
         {/* Header */}
-        <div className="mx-auto max-w-2xl text-center">
+        <ScrollReveal as="header" effect="text" className="mx-auto max-w-2xl text-center">
           <p className="text-xs font-medium tracking-wider text-brand-secondary uppercase dark:text-blue-400">
             Meet the team
           </p>
@@ -65,7 +49,7 @@ export function Team() {
             No account managers, no hand-offs — you work directly with the people
             designing and building your product.
           </p>
-        </div>
+        </ScrollReveal>
 
         {loading ? (
           <GridSkeleton />
@@ -78,15 +62,9 @@ export function Team() {
             className="mt-16"
           />
         ) : (
-          <motion.div
-            variants={container}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, margin: "-80px" }}
-            className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
-          >
-            {team.map((member) => (
-              <motion.div key={member.id} variants={item}>
+          <div className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {team.map((member, index) => (
+              <ScrollReveal key={member.id} index={index % 3}>
                 <Card className="group relative h-full overflow-hidden border-border/60 bg-background/60 backdrop-blur transition-all duration-300 hover:-translate-y-1.5 hover:border-brand-secondary/40 hover:shadow-xl hover:shadow-brand-secondary/10">
                   {/* Glow */}
                   <div
@@ -103,7 +81,7 @@ export function Team() {
                             alt=""
                           />
                         )}
-                        <AvatarFallback className="bg-gradient-to-br from-brand-secondary to-accent-cyan text-base font-semibold text-white">
+                        <AvatarFallback className="brand-action text-base font-semibold text-white">
                           {initials(member.name)}
                         </AvatarFallback>
                       </Avatar>
@@ -140,9 +118,9 @@ export function Team() {
                     )}
                   </CardContent>
                 </Card>
-              </motion.div>
+              </ScrollReveal>
             ))}
-          </motion.div>
+          </div>
         )}
       </div>
     </section>

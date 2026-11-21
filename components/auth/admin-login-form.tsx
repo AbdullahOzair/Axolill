@@ -95,7 +95,7 @@ export function AdminLoginForm() {
         <div className="rounded-2xl border border-border/60 bg-background/70 p-6 shadow-xl shadow-black/5 backdrop-blur-xl sm:p-8">
           {/* Header */}
           <div className="flex flex-col items-center text-center">
-            <span className="grid size-11 place-items-center rounded-xl bg-gradient-to-br from-brand-secondary to-accent-cyan text-white shadow-sm">
+            <span className="grid size-11 place-items-center rounded-xl brand-action text-white shadow-sm">
               <Shield className="size-5" />
             </span>
             <h1 className="mt-4 font-heading text-2xl font-bold tracking-tight">
@@ -182,9 +182,9 @@ export function AdminLoginForm() {
             <button
               type="submit"
               disabled={status === "submitting"}
-              className="group relative inline-flex h-11 w-full items-center justify-center gap-2 overflow-hidden rounded-lg bg-primary px-6 text-sm font-medium text-primary-foreground shadow-sm outline-none transition-all duration-300 hover:shadow-md hover:shadow-brand-secondary/25 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-70"
+              className="group relative inline-flex h-11 w-full items-center justify-center gap-2 overflow-hidden rounded-lg bg-primary px-6 text-sm font-medium text-primary-foreground shadow-sm outline-none transition-all duration-300 hover:shadow-md hover:shadow-button-accent/25 focus-visible:ring-2 focus-visible:ring-button-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-70"
             >
-              <span className="absolute inset-0 bg-gradient-to-r from-brand-secondary to-accent-cyan opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+              <span className="absolute inset-0 button-hover-gradient opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
               <span className="relative z-10 flex items-center gap-2">
                 {status === "submitting" ? (
                   <>

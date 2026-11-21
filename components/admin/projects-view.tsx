@@ -171,7 +171,7 @@ export function ProjectsView() {
             aria-label={`${p.name} progress`}
           >
             <div
-              className="h-full rounded-full bg-gradient-to-r from-brand-secondary to-accent-cyan"
+              className="h-full rounded-full brand-gradient"
               style={{ width: `${p.progress}%` }}
             />
           </div>

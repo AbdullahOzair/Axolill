@@ -58,7 +58,7 @@ export function CursorSpotlight() {
           // Transition only opacity (for fade-in), not transform (rAF handles that)
           transition: "opacity 1s ease",
           background:
-            "radial-gradient(circle at center, color-mix(in oklch, var(--color-brand-secondary) 18%, transparent) 0%, color-mix(in oklch, var(--color-accent-cyan) 8%, transparent) 40%, transparent 70%)",
+            "radial-gradient(circle at center, color-mix(in oklch, var(--hero-dark-blue) 18%, transparent) 0%, color-mix(in oklch, var(--hero-dark-cyan) 8%, transparent) 40%, transparent 70%)",
           filter: "blur(40px)",
         }}
         onMouseEnter={(e) => {
@@ -127,7 +127,7 @@ export function CursorSpotlightProvider() {
           opacity: 0,
           transition: "opacity 0.8s ease",
           background:
-            "radial-gradient(circle at center, color-mix(in oklch, var(--color-brand-secondary) 20%, transparent) 0%, color-mix(in oklch, var(--color-accent-cyan) 10%, transparent) 45%, transparent 70%)",
+            "radial-gradient(circle at center, color-mix(in oklch, var(--hero-dark-blue) 20%, transparent) 0%, color-mix(in oklch, var(--hero-dark-cyan) 10%, transparent) 45%, transparent 70%)",
           filter: "blur(48px)",
         }}
       />

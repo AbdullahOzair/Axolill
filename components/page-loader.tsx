@@ -141,7 +141,7 @@ export function PageLoader() {
 
             {/* progress bar */}
             <motion.span
-              className="mt-1 h-0.5 w-24 origin-left rounded-full bg-gradient-to-r from-brand-secondary to-accent-cyan"
+              className="mt-1 h-0.5 w-24 origin-left rounded-full brand-gradient"
               initial={{ scaleX: 0 }}
               animate={{ scaleX: 1 }}
               transition={{ duration: 1.1, ease: "easeInOut" }}

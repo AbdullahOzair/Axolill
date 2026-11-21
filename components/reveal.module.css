@@ -1,0 +1,56 @@
+@media (prefers-reduced-motion: no-preference) {
+  .reveal {
+    --reveal-x: 0px;
+    --reveal-y: 24px;
+    --reveal-scale: 1;
+  }
+
+  .reveal[data-scroll-effect="from-left"] {
+    --reveal-x: -20px;
+    --reveal-y: 0px;
+  }
+
+  .reveal[data-scroll-effect="from-right"] {
+    --reveal-x: 20px;
+    --reveal-y: 0px;
+  }
+
+  .reveal[data-scroll-effect="scale"] {
+    --reveal-y: 12px;
+    --reveal-scale: 0.97;
+  }
+
+  .reveal[data-scroll-effect="text"] {
+    --reveal-y: 10px;
+  }
+
+  .reveal[data-scroll-effect="fade"] {
+    --reveal-y: 0px;
+  }
+
+  .reveal[data-scroll-reveal="waiting"]:not([data-scroll-effect="text"], :focus-within),
+  .reveal[data-scroll-effect="text"][data-scroll-reveal="waiting"]:not(:focus-within) > :is(h1, h2, h3, p) {
+    opacity: 0.4;
+    translate: var(--reveal-x) var(--reveal-y);
+    scale: var(--reveal-scale);
+  }
+
+  .reveal[data-scroll-reveal="shown"]:not([data-scroll-effect="text"], :focus-within),
+  .reveal[data-scroll-effect="text"][data-scroll-reveal="shown"]:not(:focus-within) > :is(h1, h2, h3, p) {
+    transition:
+      opacity 620ms cubic-bezier(.22, 1, .36, 1) var(--reveal-delay, 0ms),
+      translate 620ms cubic-bezier(.22, 1, .36, 1) var(--reveal-delay, 0ms),
+      scale 620ms cubic-bezier(.22, 1, .36, 1) var(--reveal-delay, 0ms);
+  }
+
+  .reveal[data-scroll-effect="text"][data-scroll-reveal="shown"] > :is(h1, h2, h3) + p {
+    --reveal-delay: 75ms;
+  }
+}
+
+@media (max-width: 767px) and (prefers-reduced-motion: no-preference) {
+  .reveal[data-scroll-effect]:not([data-scroll-effect="fade"]) {
+    --reveal-x: 0px;
+    --reveal-y: 12px;
+  }
+}
