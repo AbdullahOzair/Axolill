@@ -1,15 +1,30 @@
 "use client";
 
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { CSSProperties, RefObject } from "react";
+import { ChevronLeft, ChevronRight, Code2, Pause, Play } from "lucide-react";
+
+import { BrandMark } from "@/components/brand-mark";
 import { ScrollReveal } from "@/components/reveal";
 import { EmptyState, ErrorState } from "@/components/ui/states";
-import { Skeleton } from "@/components/ui/skeleton";
 import type { Technology } from "@/lib/data-model";
 import { fetchJson, useLoader } from "@/lib/use-api";
+import { orbitPosition, orbitRadius, startGalaxyMotion } from "./technology-galaxy-motion";
+import { technologyLogoPaths } from "./technology-logo-paths";
 import styles from "./technologies.module.css";
+
+type Group = { category: string; items: Technology[] };
+const RINGS_PER_PAGE = 3;
+const NODES_PER_RING = 7;
+const logoAliases: Record<string, string> = {
+  js: "javascript", ts: "typescript", node: "nodedotjs", nodejs: "nodedotjs",
+  reactjs: "react", next: "nextdotjs", nextjs: "nextdotjs", postgres: "postgresql",
+  tailwind: "tailwindcss", html: "html5", css3: "css", k8s: "kubernetes",
+};
 
 async function loadTechnologies(): Promise<Technology[]> {
   const { technologies } = await fetchJson<{ technologies: Technology[] }>("/api/technologies");
-  return technologies.filter((technology) => technology.published);
+  return technologies.filter((technology) => technology.published).sort((a, b) => a.order - b.order);
 }
 
 export function Technologies() {
@@ -20,73 +35,355 @@ export function Technologies() {
       id="technologies"
       aria-labelledby="technologies-heading"
       aria-busy={loading}
-      className={`${styles.section} scroll-mt-16 py-12 font-sans sm:py-16`}
+      className={styles.section + " scroll-mt-16 font-sans"}
     >
-      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
-        <ScrollReveal as="header" effect="text" className="max-w-2xl">
+      <div className={styles.layout}>
+        <ScrollReveal as="header" effect="text" className={styles.header}>
           <p className={styles.eyebrow}>Our stack</p>
-          <h2 id="technologies-heading" className="mt-2.5 font-heading text-3xl leading-[1.1] font-semibold tracking-tight text-balance sm:text-4xl">
-            Technologies <span className={styles.accent}>we build with</span>
+          <h2 id="technologies-heading" className={styles.heading + " font-heading tracking-tight"}>
+            Technologies <span>we build with</span>
           </h2>
-          <p className="mt-2 max-w-xl text-sm leading-relaxed text-pretty text-muted-foreground sm:text-base">
+          <p className={styles.intro}>
             A modern, battle-tested toolkit across the whole stack — chosen for
             speed, reliability, and long-term maintainability.
           </p>
         </ScrollReveal>
 
-        <div className="mt-5 sm:mt-6">
-          {loading && !data ? (
-            <StackSkeleton />
-          ) : error ? (
-            <ErrorState message={error} onRetry={reload} />
-          ) : !data?.length ? (
+        {loading && !data ? (
+          <div className={styles.visual} role="status">
+            <span className="sr-only">Loading technologies…</span>
+            <GalaxyPlaceholder />
+            <div className={styles.visualFooter} aria-hidden="true" />
+          </div>
+        ) : error ? (
+          <div className={styles.visual}><ErrorState message={error} onRetry={reload} /></div>
+        ) : !data?.length ? (
+          <div className={styles.visual}>
             <EmptyState
               title="No technologies published yet"
               description="Technologies added in the admin will appear here once published."
             />
-          ) : (
-            <StackGrid technologies={data} />
-          )}
-        </div>
+          </div>
+        ) : (
+          <TechnologyGalaxy technologies={data} />
+        )}
       </div>
     </section>
   );
 }
 
-function StackGrid({ technologies }: { technologies: Technology[] }) {
-  return (
-    <ul aria-label="Technologies" className={styles.grid}>
-      {technologies.map(({ id, name }, index) => {
-        // Technology records expose a name, so generate an icon for every CMS entry.
-        const words = name.match(/[\p{L}\p{N}]+/gu) ?? [];
-        const [first = "", second] = words;
-        const initials = second ? [...first][0] + [...second][0] : [...first].slice(0, 2).join("");
-
-        return (
-          <ScrollReveal as="li" key={id} className={styles.item} index={index % 5}>
-            <div className={styles.card}>
-              <span className={styles.icon} aria-hidden="true">{initials || "◇"}</span>
-              <span className={styles.name}>{name}</span>
-            </div>
-          </ScrollReveal>
-        );
-      })}
-    </ul>
-  );
+function buildPages(groups: Group[]) {
+  const pages: Group[][] = [];
+  for (let start = 0; start < groups.length; start += RINGS_PER_PAGE) {
+    const batch = groups.slice(start, start + RINGS_PER_PAGE);
+    const maxCount = Math.max(...batch.map(({ items }) => items.length));
+    for (let offset = 0; offset < maxCount; offset += NODES_PER_RING) {
+      pages.push(batch
+        .map(({ category, items }) => ({ category, items: items.slice(offset, offset + NODES_PER_RING) }))
+        .filter(({ items }) => items.length > 0));
+    }
+  }
+  return pages;
 }
 
-function StackSkeleton() {
+function TechnologyGalaxy({ technologies }: { technologies: Technology[] }) {
+  const groups = useMemo(() => {
+    const byCategory = new Map<string, Technology[]>();
+    for (const technology of technologies) {
+      const items = byCategory.get(technology.category);
+      if (items) items.push(technology);
+      else byCategory.set(technology.category, [technology]);
+    }
+    return Array.from(byCategory, ([category, items]) => ({ category, items }));
+  }, [technologies]);
+  const allPages = useMemo(() => buildPages(groups), [groups]);
+  const [category, setCategory] = useState("");
+  const [page, setPage] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const [showDirectory, setShowDirectory] = useState(false);
+  const [hovered, setHovered] = useState<Technology | null>(null);
+  const [focused, setFocused] = useState<Technology | null>(null);
+  const [selected, setSelected] = useState<Technology | null>(null);
+  const entrance = useRef(false);
+
+  const categoryGroup = groups.find((group) => group.category === category);
+  const activeCategory = categoryGroup?.category ?? "";
+  const pages = activeCategory
+    ? allPages.filter((groups) => groups.some((group) => group.category === activeCategory))
+    : allPages;
+  const currentPage = Math.min(page, pages.length - 1);
+  const pageGroups = pages[currentPage];
+  const displayedIds = new Set(pageGroups.flatMap(({ items }) => items.map(({ id }) => id)));
+  const active = [hovered, focused, selected].find((item) => item && displayedIds.has(item.id));
+  const currentSelection = active ? technologies.find(({ id }) => id === active.id) : null;
+  const categoryTitle = activeCategory || "All technologies";
+  const count = categoryGroup?.items.length ?? technologies.length;
+
+  function resetNode() {
+    setHovered(null);
+    setFocused(null);
+    setSelected(null);
+  }
+
+  function chooseCategory(value: string) {
+    setCategory(value);
+    setPage(0);
+    resetNode();
+  }
+
+  function changePage(value: number) {
+    setPage(value);
+    resetNode();
+  }
+
   return (
-    <div role="status">
-      <span className="sr-only">Loading technologies…</span>
-      <div aria-hidden="true" className={styles.grid}>
-        {Array.from({ length: 5 }, (_, index) => (
-          <div key={index} className={styles.placeholder}>
-            <Skeleton className="size-9 rounded-lg motion-reduce:animate-none" />
-            <Skeleton className="h-3 w-16 max-w-full motion-reduce:animate-none" />
+    <>
+      <div className={styles.controls}>
+        <div className={styles.filters} aria-label="Technology categories" role="group">
+          <button type="button" aria-pressed={!activeCategory} onClick={() => chooseCategory("")}>
+            All technologies
+          </button>
+          {groups.map(({ category }) => (
+            <button type="button" key={category} aria-pressed={activeCategory === category} onClick={() => chooseCategory(category)}>
+              <span className={styles.filterDot} aria-hidden="true" />
+              {category}
+            </button>
+          ))}
+        </div>
+        <div className={styles.controlRow}>
+          <p aria-live="polite" className={styles.count}>
+            {categoryTitle} <span>·</span> {count} {count === 1 ? "technology" : "technologies"}
+          </p>
+          <button
+            type="button"
+            className={styles.motionToggle}
+            aria-label={paused ? "Resume orbital motion" : "Pause orbital motion"}
+            onClick={() => setPaused((value) => !value)}
+          >
+            {paused ? <Play size={15} aria-hidden="true" /> : <Pause size={15} aria-hidden="true" />}
+          </button>
+        </div>
+        <button
+          type="button"
+          className={styles.directoryToggle}
+          aria-expanded={showDirectory}
+          aria-controls="technology-directory"
+          onClick={() => setShowDirectory((value) => !value)}
+        >
+          {showDirectory ? "Hide technology list" : "View technology list"}
+        </button>
+      </div>
+
+      <div className={styles.visual}>
+        <OrbitDisplay
+          key={JSON.stringify(pageGroups.map(({ category, items }) => [category, items.map(({ id }) => id)]))}
+          groups={pageGroups}
+          category={activeCategory}
+          active={currentSelection}
+          selectedId={selected?.id}
+          paused={paused}
+          entrance={entrance}
+          onHover={setHovered}
+          onFocus={setFocused}
+          onSelect={(item) => setSelected((current) => current?.id === item.id ? null : item)}
+        />
+        <div className={styles.visualFooter}>
+          <div className={styles.readout} role="status">
+            {currentSelection ? (
+              <>
+                <strong>{currentSelection.name}</strong>
+                <span>{currentSelection.category}</span>
+              </>
+            ) : (
+              <span>Select a logo to explore the stack</span>
+            )}
+          </div>
+          {pages.length > 1 && (
+            <div className={styles.pagination} aria-label="Galaxy pages" role="group">
+              <button type="button" aria-label="Previous galaxy page" disabled={!currentPage} onClick={() => changePage(currentPage - 1)}>
+                <ChevronLeft size={17} aria-hidden="true" />
+              </button>
+              <span aria-live="polite">{currentPage + 1} / {pages.length}</span>
+              <button type="button" aria-label="Next galaxy page" disabled={currentPage === pages.length - 1} onClick={() => changePage(currentPage + 1)}>
+                <ChevronRight size={17} aria-hidden="true" />
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div id="technology-directory" data-open={showDirectory} className={styles.directory} role="group" aria-label="Technology directory">
+        {groups.map(({ category, items }) => (
+          <div key={category} className={styles.cluster} data-muted={Boolean(activeCategory && activeCategory !== category)}>
+            <h3>{category} <span>{items.length}</span></h3>
+            <ul>
+              {items.map((technology) => (
+                <li key={technology.id}>
+                  <TechnologyLogo name={technology.name} />
+                  <span>{technology.name}</span>
+                </li>
+              ))}
+            </ul>
           </div>
         ))}
       </div>
+    </>
+  );
+}
+
+function OrbitDisplay({
+  groups, category, active, selectedId, paused, entrance, onHover, onFocus, onSelect,
+}: {
+  groups: Group[];
+  category: string;
+  active: Technology | null | undefined;
+  selectedId?: string;
+  paused: boolean;
+  entrance: RefObject<boolean>;
+  onHover: (item: Technology | null) => void;
+  onFocus: (item: Technology | null) => void;
+  onSelect: (item: Technology) => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (ref.current) return startGalaxyMotion(ref.current, entrance);
+  }, [entrance]);
+
+  function renderNode(item: Technology, muted: boolean) {
+    return (
+      <button
+        type="button"
+        className={styles.node}
+        data-muted={muted}
+        aria-label={item.name + ", " + item.category}
+        aria-pressed={selectedId === item.id}
+        onPointerEnter={(event) => { if (event.pointerType === "mouse" || event.pointerType === "pen") onHover(item); }}
+        onPointerLeave={() => onHover(null)}
+        onFocus={() => onFocus(item)}
+        onBlur={() => onFocus(null)}
+        onClick={() => onSelect(item)}
+        onKeyDown={(event) => {
+          if (event.key === "Escape") {
+            if (selectedId === item.id) onSelect(item);
+            onFocus(null);
+          }
+        }}
+      >
+        <TechnologyLogo name={item.name} />
+      </button>
+    );
+  }
+
+  return (
+    <div ref={ref} className={styles.stage} data-paused={paused} data-active-ring={active?.category ?? ""}>
+      <div className={styles.halo} aria-hidden="true" />
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none" className={styles.orbits} aria-hidden="true">
+        <path className={styles.axes} d="M50 4v92M3 50h94" vectorEffect="non-scaling-stroke" />
+        {groups.length === 1 && (
+          <g className={styles.orbitGuides}>
+            <ellipse cx="50" cy="50" rx="21" ry="21" vectorEffect="non-scaling-stroke" />
+            <ellipse cx="50" cy="50" rx="43" ry="43" vectorEffect="non-scaling-stroke" />
+          </g>
+        )}
+        {groups.map(({ category: name }, index) => (
+          <ellipse
+            key={name}
+            className={styles.orbit}
+            data-tone={index}
+            data-highlight={Boolean(name === (active?.category || category))}
+            data-muted={Boolean(category && name !== category && name !== active?.category)}
+            cx="50" cy="50"
+            rx={orbitRadius(index, groups.length)} ry={orbitRadius(index, groups.length)}
+            pathLength="1"
+            vectorEffect="non-scaling-stroke"
+            style={{ "--ring-delay": 70 * index + "ms" } as CSSProperties}
+          />
+        ))}
+      </svg>
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none" className={styles.mobileOrbits} aria-hidden="true">
+        <ellipse cx="50" cy="50" rx="37" ry="34" className={styles.orbit} vectorEffect="non-scaling-stroke" />
+      </svg>
+      <GalaxyHub />
+      <div className={styles.desktopNodes} role="group" aria-label="Technology orbits">
+        {groups.map(({ category: name, items }, ring) => {
+          const radius = orbitRadius(ring, groups.length);
+          return (
+            <div key={name} data-galaxy-ring={name} data-radius={radius} data-tone={ring}>
+              {items.map((item, index) => {
+                const angle = (index / items.length + 0.13 + ring * 0.08) * Math.PI * 2;
+                const [x, y] = orbitPosition(radius, angle);
+                const muted = (category && name !== category) || (active && active.category !== name);
+                return (
+                  <div
+                    key={item.id}
+                    className={styles.nodeAnchor}
+                    data-emphasized={active?.id === item.id}
+                    data-angle={angle}
+                    data-delay={(ring * 3 + index) * 32 + 105}
+                    style={{ left: 50 + x + "%", top: 50 + y + "%" }}
+                  >
+                    {renderNode(item, Boolean(muted && active?.id !== item.id))}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })}
+      </div>
+      <div className={styles.mobileNodes} role="group" aria-label="Technology constellation">
+        {groups.map(({ category: name, items }, index) => {
+          const item = items[0];
+          const angle = [-0.57, -2.54, Math.PI / 2][index];
+          return (
+            <div
+              key={item.id}
+              className={styles.nodeAnchor}
+              data-emphasized={active?.id === item.id}
+              data-tone={index}
+              style={{ left: 50 + 37 * Math.cos(angle) + "%", top: 50 + 34 * Math.sin(angle) + "%" }}
+            >
+              {renderNode(item, Boolean(category && category !== name && active?.id !== item.id))}
+            </div>
+          );
+        })}
+      </div>
     </div>
+  );
+}
+
+function GalaxyHub() {
+  return (
+    <div className={styles.hubAnchor}>
+      <div className={styles.hub} role="img" aria-label="Axonill">
+        <BrandMark size={48} />
+      </div>
+    </div>
+  );
+}
+
+function GalaxyPlaceholder() {
+  return (
+    <div className={styles.stage} aria-hidden="true">
+      <div className={styles.halo} />
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none" className={styles.orbits}>
+        <ellipse cx="50" cy="50" rx="32" ry="32" className={styles.orbit} vectorEffect="non-scaling-stroke" />
+      </svg>
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none" className={styles.mobileOrbits}>
+        <ellipse cx="50" cy="50" rx="37" ry="34" className={styles.orbit} vectorEffect="non-scaling-stroke" />
+      </svg>
+      <GalaxyHub />
+    </div>
+  );
+}
+
+function TechnologyLogo({ name }: { name: string }) {
+  const normalized = name.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const slug = Object.hasOwn(logoAliases, normalized) ? logoAliases[normalized] : normalized;
+  const path = Object.hasOwn(technologyLogoPaths, slug) ? technologyLogoPaths[slug] : null;
+  return path ? (
+    <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d={path} /></svg>
+  ) : (
+    <Code2 aria-hidden="true" />
   );
 }

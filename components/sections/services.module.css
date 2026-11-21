@@ -6,7 +6,7 @@
   --service-border: color-mix(in srgb, var(--chart-1) 22%, var(--border));
   --service-focus: var(--ring);
   --service-shadow: color-mix(in srgb, var(--foreground) 58%, transparent);
-  padding-block: clamp(3rem, 7vw, 6.75rem);
+  padding-block: clamp(2.5rem, 4.5vw, 4rem);
   color: var(--foreground);
   background:
     radial-gradient(ellipse at 90% 55%, color-mix(in srgb, var(--service-halo) 8%, transparent), transparent 58%),
@@ -31,11 +31,11 @@
 .layout {
   display: grid;
   width: 100%;
-  max-width: 77rem;
+  max-width: 100rem;
   align-items: center;
-  gap: clamp(1.75rem, 4vw, 4rem);
+  gap: clamp(1.25rem, 3.5vw, 3.5rem);
   margin-inline: auto;
-  padding-inline: clamp(1rem, 4vw, 3.5rem);
+  padding-inline: clamp(1rem, 4vw, 4.25rem);
 }
 
 .eyebrow {
@@ -58,7 +58,8 @@
 
 .heading {
   margin-block-start: 0.75rem;
-  font-size: clamp(2rem, 4.2vw, 3.75rem);
+  max-width: 23ch;
+  font-size: clamp(1.875rem, 3.5vw, 3rem);
   font-weight: 650;
   line-height: 1.07;
   text-wrap: balance;
@@ -70,7 +71,7 @@
 
 .intro {
   max-width: 47ch;
-  margin-block-start: 0.9rem;
+  margin-block-start: 0.75rem;
   color: var(--muted-foreground);
   font-size: clamp(0.91rem, 1.35vw, 1.06rem);
   line-height: 1.65;
@@ -82,7 +83,7 @@
   width: fit-content;
   align-items: center;
   gap: 0.55rem;
-  margin-block-start: 1.35rem;
+  margin-block-start: 1.15rem;
   padding: 0.68rem 1rem;
   border: 1px solid var(--service-border);
   border-radius: var(--radius);
@@ -127,10 +128,10 @@
 .card {
   position: relative;
   display: flex;
-  min-height: 14rem;
+  min-height: 12.5rem;
   height: 100%;
   flex-direction: column;
-  padding: clamp(1rem, 2.3vw, 1.6rem);
+  padding: clamp(0.9rem, 1.8vw, 1.35rem);
   overflow: clip;
   isolation: isolate;
   border: 1px solid var(--service-border);
@@ -258,7 +259,7 @@
 }
 
 .skeleton {
-  min-height: 17rem;
+  min-height: 15.5rem;
   justify-content: center;
   gap: 0.75rem;
 }
@@ -271,31 +272,37 @@
 
 @media (min-width: 1024px) {
   .layout {
-    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.25fr);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+  }
+
+  .showcase {
+    width: 100%;
+    max-width: 47rem;
+    justify-self: end;
   }
 
   .stack {
-    padding-block: 0.65rem 2.2rem;
+    padding-block: 0.5rem 2rem;
     perspective: 1100px;
   }
 
   .entry {
     z-index: var(--layer);
     grid-area: 1 / 1;
-    width: min(75%, 27rem);
-    min-height: 17rem;
+    width: min(75%, 25.5rem);
+    min-height: 15.5rem;
     justify-self: center;
     transform-style: preserve-3d;
     transform: translate3d(
       calc(var(--side) * clamp(2.5rem, 4.3vw, 3.65rem) * var(--fan, 1)),
-      calc(var(--depth) * 0.85rem * var(--fan, 1)),
+      calc(var(--depth) * 0.7rem * var(--fan, 1)),
       calc(var(--depth) * -10px)
     ) rotateY(calc(var(--side) * -9deg * var(--fan, 1)))
       rotateZ(calc(var(--side) * 4deg * var(--fan, 1))) scale(var(--rest-scale));
   }
 
   .entry:only-child {
-    width: min(100%, 31rem);
+    width: min(100%, 27rem);
   }
 
   .entry[data-service-peek="false"] {
