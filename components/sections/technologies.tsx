@@ -18,7 +18,7 @@ const RINGS_PER_PAGE = 3;
 const NODES_PER_RING = 6;
 const MOBILE_NODES_PER_PAGE = 4;
 const MOBILE_QUERY = "(width < 48rem)";
-const MOBILE_ORBIT = { x: 36, y: 34 };
+const MOBILE_ORBIT = { id: "mobile", x: 35, y: 31, period: 60_000 };
 const MOBILE_ANGLES = [
   [0],
   [0, Math.PI],
@@ -288,11 +288,9 @@ function OrbitDisplay({
   onSelect: (item: Technology) => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const isMobile = mobileItems !== null;
-
   useEffect(() => {
-    if (ref.current && !isMobile) return startGalaxyMotion(ref.current, entrance);
-  }, [entrance, isMobile]);
+    if (ref.current) return startGalaxyMotion(ref.current, entrance);
+  }, [entrance]);
 
   function renderNode(item: Technology, muted: boolean, enableHover = true) {
     return (
@@ -325,7 +323,12 @@ function OrbitDisplay({
   }
 
   return (
-    <div ref={ref} className={styles.stage} data-paused={paused} data-active-ring={pausedCategory ?? ""} data-running={isMobile ? "false" : undefined}>
+    <div
+      ref={ref}
+      className={styles.stage}
+      data-paused={paused}
+      data-active-ring={pausedCategory ? (mobileItems ? MOBILE_ORBIT.id : pausedCategory) : ""}
+    >
       <div className={styles.halo} aria-hidden="true" />
       <svg viewBox="0 0 100 100" preserveAspectRatio="none" className={styles.orbits} aria-hidden="true">
         <path className={styles.axes} d="M50 4v92M3 50h94" vectorEffect="non-scaling-stroke" />
@@ -380,15 +383,26 @@ function OrbitDisplay({
           );
         })}
       </div>
-      <div className={styles.mobileNodes} role="group" aria-label="Technology constellation">
+      <div
+        className={styles.mobileNodes}
+        role="group"
+        aria-label="Technology constellation"
+        data-galaxy-ring={mobileItems ? MOBILE_ORBIT.id : undefined}
+        data-radius={MOBILE_ORBIT.x}
+        data-radius-y={MOBILE_ORBIT.y}
+        data-orbit-period={MOBILE_ORBIT.period}
+      >
         {mobileItems?.map((item, index) => {
           const angle = MOBILE_ANGLES[mobileItems.length - 1][index];
+          const [x, y] = orbitPosition(MOBILE_ORBIT.x, angle, MOBILE_ORBIT.y);
           return (
             <div
               key={item.id}
               className={styles.nodeAnchor}
               data-emphasized={active?.id === item.id}
-              style={{ left: 50 + MOBILE_ORBIT.x * Math.cos(angle) + "%", top: 50 + MOBILE_ORBIT.y * Math.sin(angle) + "%" }}
+              data-angle={angle}
+              data-delay={105 + index * 48}
+              style={{ left: 50 + x + "%", top: 50 + y + "%" }}
             >
               {renderNode(item, false, false)}
             </div>

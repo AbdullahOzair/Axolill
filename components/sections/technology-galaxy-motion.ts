@@ -6,26 +6,34 @@ export function orbitRadius(index: number, count: number) {
   return count === 1 ? 32 : 43 - 14 * (count - 1 - index);
 }
 
-export function orbitPosition(radius: number, angle: number) {
-  return [radius * Math.cos(angle), radius * Math.sin(angle)] as const;
+export function orbitPosition(radius: number, angle: number, radiusY = radius) {
+  return [radius * Math.cos(angle), radiusY * Math.sin(angle)] as const;
 }
 
 export function startGalaxyMotion(stage: HTMLElement, entrance: { current: boolean }) {
-  const desktop = matchMedia("(min-width: 48rem)");
   const reduced = matchMedia("(prefers-reduced-motion: reduce)");
-  const rings = Array.from(stage.querySelectorAll<HTMLElement>("[data-galaxy-ring]"), (ring, index) => ({
-    category: ring.dataset.galaxyRing,
-    radius: Number(ring.dataset.radius),
-    velocity: (index % 2 ? -1 : 1) * TAU / (72_000 + index * 17_000),
-    phase: 0,
-    speed: 1,
-    nodes: Array.from(ring.querySelectorAll<HTMLElement>("[data-angle]"), (node) => ({
-      element: node,
-      angle: Number(node.dataset.angle),
-      delay: Number(node.dataset.delay),
-      origin: orbitPosition(Number(ring.dataset.radius), Number(node.dataset.angle)),
-    })),
-  }));
+  const rings = Array.from(stage.querySelectorAll<HTMLElement>("[data-galaxy-ring]"), (ring, index) => {
+    const radius = Number(ring.dataset.radius);
+    const radiusY = Number(ring.dataset.radiusY ?? radius);
+    const period = Number(ring.dataset.orbitPeriod ?? (72_000 + index * 17_000));
+    return {
+      category: ring.dataset.galaxyRing,
+      radius,
+      radiusY,
+      velocity: (index % 2 ? -1 : 1) * TAU / period,
+      phase: 0,
+      speed: 1,
+      nodes: Array.from(ring.querySelectorAll<HTMLElement>("[data-angle]"), (node) => {
+        const angle = Number(node.dataset.angle);
+        return {
+          element: node,
+          angle,
+          delay: Number(node.dataset.delay),
+          origin: orbitPosition(radius, angle, radiusY),
+        };
+      }),
+    };
+  });
 
   let width = stage.clientWidth;
   let height = stage.clientHeight;
@@ -39,7 +47,7 @@ export function startGalaxyMotion(stage: HTMLElement, entrance: { current: boole
     for (const ring of rings) {
       for (const { element, angle, delay, origin: [startX, startY] } of ring.nodes) {
         const progress = settled ? 1 : easeOut(Math.min(1, Math.max(0, (elapsed - delay) / 990)));
-        const [x, y] = orbitPosition(ring.radius, angle + ring.phase);
+        const [x, y] = orbitPosition(ring.radius, angle + ring.phase, ring.radiusY);
         const dx = (x * progress - startX) * width / 100;
         const dy = (y * progress - startY) * height / 100;
         element.style.transform = `translate3d(${dx}px,${dy}px,0) scale(${0.7 + progress * 0.3})`;
@@ -68,7 +76,7 @@ export function startGalaxyMotion(stage: HTMLElement, entrance: { current: boole
   function sync() {
     cancelAnimationFrame(frame);
     previous = 0;
-    const staticLayout = !desktop.matches || reduced.matches;
+    const staticLayout = reduced.matches;
     const paused = stage.dataset.paused === "true";
     const running = visible && !document.hidden && !staticLayout && !paused;
     if (running && elapsed < DURATION && !entrance.current) {
@@ -98,7 +106,6 @@ export function startGalaxyMotion(stage: HTMLElement, entrance: { current: boole
   visibility.observe(stage);
   const controls = new MutationObserver(sync);
   controls.observe(stage, { attributes: true, attributeFilter: ["data-paused"] });
-  desktop.addEventListener("change", sync);
   reduced.addEventListener("change", sync);
   document.addEventListener("visibilitychange", sync);
   sync();
@@ -108,7 +115,6 @@ export function startGalaxyMotion(stage: HTMLElement, entrance: { current: boole
     visibility.disconnect();
     resize.disconnect();
     controls.disconnect();
-    desktop.removeEventListener("change", sync);
     reduced.removeEventListener("change", sync);
     document.removeEventListener("visibilitychange", sync);
   };

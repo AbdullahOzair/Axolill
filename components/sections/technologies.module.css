@@ -370,12 +370,13 @@
   .controlRow { margin: 0; }
 
   .filters button, .controls .directoryToggle, .pagination button { min-height: 2.75rem; }
+  .controls .motionToggle { display: inline-flex; width: 2.75rem; min-height: 2.75rem; }
   .controls .directoryToggle { text-align: end; }
 
   .stage {
     --node-size: 3rem;
     --node-logo: 1.625rem;
-    height: clamp(12.5rem, 54vw, 14.25rem);
+    height: clamp(15.5rem, 58vw, 16rem);
   }
 
   .mobileNodes .node { position: relative; }
