@@ -3,7 +3,7 @@ const TAU = Math.PI * 2;
 const easeOut = (value: number) => 1 - (1 - value) ** 3;
 
 export function orbitRadius(index: number, count: number) {
-  return count === 1 ? 32 : 44 - 13 * (count - 1 - index);
+  return count === 1 ? 32 : 43 - 14 * (count - 1 - index);
 }
 
 export function orbitPosition(radius: number, angle: number) {
@@ -16,7 +16,7 @@ export function startGalaxyMotion(stage: HTMLElement, entrance: { current: boole
   const rings = Array.from(stage.querySelectorAll<HTMLElement>("[data-galaxy-ring]"), (ring, index) => ({
     category: ring.dataset.galaxyRing,
     radius: Number(ring.dataset.radius),
-    velocity: (index % 2 ? -1 : 1) * TAU / (52_000 + index * 14_000),
+    velocity: (index % 2 ? -1 : 1) * TAU / (72_000 + index * 17_000),
     phase: 0,
     speed: 1,
     nodes: Array.from(ring.querySelectorAll<HTMLElement>("[data-angle]"), (node) => ({
@@ -35,14 +35,16 @@ export function startGalaxyMotion(stage: HTMLElement, entrance: { current: boole
   let elapsed = entrance.current ? DURATION : 0;
 
   function paint() {
+    const settled = elapsed === DURATION;
     for (const ring of rings) {
       for (const { element, angle, delay, origin: [startX, startY] } of ring.nodes) {
-        const progress = easeOut(Math.min(1, Math.max(0, (elapsed - delay) / 990)));
+        const progress = settled ? 1 : easeOut(Math.min(1, Math.max(0, (elapsed - delay) / 990)));
         const [x, y] = orbitPosition(ring.radius, angle + ring.phase);
         const dx = (x * progress - startX) * width / 100;
         const dy = (y * progress - startY) * height / 100;
         element.style.transform = `translate3d(${dx}px,${dy}px,0) scale(${0.7 + progress * 0.3})`;
-        element.style.opacity = String(Math.min(1, progress * 2.5));
+        if (progress < 1) element.style.opacity = String(Math.min(1, progress * 2.5));
+        else if (element.style.opacity) element.style.removeProperty("opacity");
       }
     }
   }

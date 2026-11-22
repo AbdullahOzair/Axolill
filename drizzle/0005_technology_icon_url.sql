@@ -1,0 +1,1 @@
+ALTER TABLE `technology` ADD `iconUrl` text;

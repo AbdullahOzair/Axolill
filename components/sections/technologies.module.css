@@ -115,9 +115,19 @@
 .count { color: var(--muted-foreground); font-size: 0.78rem; overflow-wrap: anywhere; }
 .count span { color: var(--stack-accent); }
 .controls .motionToggle { display: none; padding: 0; width: 2.25rem; flex: none; }
-.controls .directoryToggle { display: none; border-color: transparent; background: transparent; padding-inline: 0; color: var(--stack-accent); }
+.controls .directoryToggle {
+  border-color: transparent;
+  background: transparent;
+  padding-inline: 0;
+  color: var(--stack-accent);
+}
+
+.directoryToggle svg { transition: transform 220ms ease; }
+.directoryToggle[aria-expanded="true"] svg { transform: rotate(180deg); }
 
 .stage {
+  --node-size: 2.75rem;
+  --node-logo: 1.5rem;
   position: relative;
   isolation: isolate;
   height: clamp(11rem, 50vw, 13.5rem);
@@ -161,12 +171,16 @@
 .stage [data-tone="1"] { --orbit-ink: color-mix(in srgb, var(--stack-line) 75%, var(--stack-accent)); }
 .stage [data-tone="2"] { --orbit-ink: color-mix(in srgb, var(--stack-line) 60%, var(--muted-foreground)); }
 
-:global(.dark) .stage [data-tone="1"] {
-  --orbit-ink: color-mix(in srgb, var(--brand-magenta) 42%, var(--border));
+:global(.dark) .orbit {
+  --orbit-ink: color-mix(in srgb, #09aace 40%, #304761);
 }
 
-:global(.dark) .stage [data-tone="2"] {
-  --orbit-ink: color-mix(in srgb, var(--brand-purple) 58%, var(--border));
+:global(.dark) .orbit[data-tone="1"] {
+  --orbit-ink: color-mix(in srgb, var(--brand-purple) 55%, #7187af);
+}
+
+:global(.dark) .orbit[data-tone="2"] {
+  --orbit-ink: color-mix(in srgb, #09aace 25%, #455276);
 }
 
 .orbit[data-muted="true"] { opacity: 0.32; }
@@ -183,7 +197,7 @@
 .hub {
   position: relative;
   display: grid;
-  width: clamp(4rem, 7.1vw, 5.25rem);
+  width: clamp(3.5rem, 6.5vw, 4.5rem);
   aspect-ratio: 1;
   place-items: center;
   border: 1px solid var(--stack-line);
@@ -208,8 +222,8 @@
   position: absolute;
   z-index: 3;
   display: grid;
-  width: 2.75rem;
-  height: 2.75rem;
+  width: var(--node-size);
+  height: var(--node-size);
   translate: -50% -50%;
   place-items: center;
 }
@@ -225,21 +239,44 @@
   cursor: pointer;
   border: 1px solid var(--orbit-ink, var(--stack-line));
   border-radius: 50%;
-  background: var(--card);
+  background: color-mix(in srgb, var(--card) 96%, var(--stack-accent));
   color: var(--foreground);
   box-shadow: 0 0.3rem 0.9rem color-mix(in srgb, var(--foreground) 9%, transparent);
   transition: transform 280ms cubic-bezier(0.2, 0.7, 0.25, 1), border-color 240ms, opacity 240ms, box-shadow 240ms;
 }
 
-.node svg, .cluster li svg { width: 1.2rem; height: 1.2rem; flex: none; }
+.nodeIcon { width: var(--node-logo); height: var(--node-logo); }
+
+:global(.dark) .node {
+  background: #17243a;
+  border-color: #304761;
+}
+
+/* The loaded image is alone in the icon slot. Fallback glyphs use the node surface. */
+:global(.dark) .nodeIconOnLight:has(> img:only-child)::before {
+  position: absolute;
+  inset: -0.25rem;
+  border-radius: 0.375rem;
+  background: #f8fafc;
+  content: "";
+}
 
 .node[data-muted="true"] { opacity: 0.62; }
 
-button.node:hover, button.node:focus-visible, button.node[aria-pressed="true"] {
+.nodeAnchor[data-emphasized="true"] .node,
+.node:focus-visible,
+.node[aria-pressed="true"] {
   transform: scale(1.08);
   border-color: var(--stack-accent);
   box-shadow: 0 0 1.1rem color-mix(in srgb, var(--stack-accent) 22%, transparent);
   opacity: 1;
+}
+
+:global(.dark) .nodeAnchor[data-emphasized="true"] .node,
+:global(.dark) .node:focus-visible,
+:global(.dark) .node[aria-pressed="true"] {
+  border-color: #09aace;
+  box-shadow: 0 0.25rem 0.75rem rgb(9 170 206 / 14%);
 }
 
 .section button:focus-visible {
@@ -267,6 +304,11 @@ button.node:hover, button.node:focus-visible, button.node[aria-pressed="true"] {
 }
 
 .readout strong { color: var(--foreground); font-weight: 650; }
+.readout strong + span {
+  padding: 0.13rem 0.4rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--stack-accent) 9%, var(--card));
+}
 
 .pagination { display: none; white-space: nowrap; font-size: 0.75rem; color: var(--muted-foreground); }
 .pagination button { width: 2.25rem; padding: 0; }
@@ -275,8 +317,11 @@ button.node:hover, button.node:focus-visible, button.node[aria-pressed="true"] {
 .directory {
   grid-area: directory;
   display: grid;
-  gap: 0.65rem 1.6rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(15rem, 100%), 1fr));
+  gap: 0.75rem 1.4rem;
 }
+
+.directory[hidden] { display: none; }
 
 .cluster {
   min-width: 0;
@@ -295,29 +340,35 @@ button.node:hover, button.node:focus-visible, button.node[aria-pressed="true"] {
 .cluster h3 span { margin-inline-start: 0.35rem; color: var(--muted-foreground); }
 .cluster[data-muted="true"] h3 { color: var(--muted-foreground); }
 
-.cluster ul { display: flex; flex-wrap: wrap; gap: 0.35rem 0.9rem; }
+.cluster ul { display: flex; flex-wrap: wrap; gap: 0.35rem 0.45rem; }
 .cluster li {
   display: flex;
   align-items: center;
   gap: 0.35rem;
   max-width: 100%;
+  padding: 0.25rem 0.45rem;
+  border: 1px solid var(--border);
+  border-radius: 0.45rem;
   color: var(--foreground);
   font-size: 0.78rem;
   overflow-wrap: anywhere;
 }
-.cluster li svg { width: 0.95rem; height: 0.95rem; }
+
+.cluster li > span:last-child { min-width: 0; }
 
 @media (min-width: 48rem) {
-  .stage { height: clamp(24rem, 35vw, 27rem); }
+  .stage { --node-size: 3rem; --node-logo: 1.625rem; height: 24rem; }
+  .hub { width: 4rem; }
   .orbits, .desktopNodes { display: block; }
   .mobileOrbits, .mobileNodes { display: none; }
-  .controls .motionToggle, .pagination, .controls .directoryToggle { display: inline-flex; }
+  .controls .motionToggle, .pagination { display: inline-flex; }
   .visualFooter { padding-inline: 5%; }
-  .directory { display: none; }
-  .directory[data-open="true"] { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(13rem, 100%), 1fr)); }
 }
 
 @media (min-width: 68rem) {
+  .stage { --node-size: 3.5rem; --node-logo: 1.875rem; height: 28rem; }
+  .hub { width: 4.5rem; }
+
   .layout {
     grid-template-areas: "header visual" "controls visual" "directory directory";
     grid-template-columns: minmax(0, 0.72fr) minmax(0, 1.28fr);
@@ -351,7 +402,7 @@ button.node:hover, button.node:focus-visible, button.node[aria-pressed="true"] {
 
 @media (prefers-reduced-motion: reduce) {
   .controls .motionToggle { display: none; }
-  .section button, .orbit { transition: none; }
+  .section button, .orbit, .directoryToggle svg { transition: none; }
   .section .node { transform: none; }
 }
 

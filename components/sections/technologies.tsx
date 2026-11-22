@@ -2,25 +2,31 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, RefObject } from "react";
-import { ChevronLeft, ChevronRight, Code2, Pause, Play } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
 
 import { BrandMark } from "@/components/brand-mark";
 import { ScrollReveal } from "@/components/reveal";
+import { TechnologyIcon } from "@/components/technology-icon";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import type { Technology } from "@/lib/data-model";
 import { fetchJson, useLoader } from "@/lib/use-api";
 import { orbitPosition, orbitRadius, startGalaxyMotion } from "./technology-galaxy-motion";
-import { technologyLogoPaths } from "./technology-logo-paths";
 import styles from "./technologies.module.css";
 
 type Group = { category: string; items: Technology[] };
 const RINGS_PER_PAGE = 3;
-const NODES_PER_RING = 7;
-const logoAliases: Record<string, string> = {
-  js: "javascript", ts: "typescript", node: "nodedotjs", nodejs: "nodedotjs",
-  reactjs: "react", next: "nextdotjs", nextjs: "nextdotjs", postgres: "postgresql",
-  tailwind: "tailwindcss", html: "html5", css3: "css", k8s: "kubernetes",
-};
+const NODES_PER_RING = 6;
+
+function usesLightLogoSurface({ name, iconUrl }: Technology) {
+  if (!iconUrl) return false;
+
+  const filename = iconUrl.split(/[?#]/, 1)[0].split("/").at(-1) ?? "";
+  if (/(?:^|[._-])(?:white|on[-_]dark|reversed|inverted)(?=[._-]|$)/i.test(filename)) return false;
+  if (/(?:^|[._-])(?:black|on[-_]light)(?=[._-]|$)/i.test(filename)) return true;
+
+  const brand = name.toLowerCase().replace(/[^a-z0-9]/g, "");
+  return /^(?:vercel|express(?:js)?|node(?:js)?|aws|amazonaws|amazonwebservices(?:aws)?|next(?:js)?)$/.test(brand);
+}
 
 async function loadTechnologies(): Promise<Technology[]> {
   const { technologies } = await fetchJson<{ technologies: Technology[] }>("/api/technologies");
@@ -114,7 +120,8 @@ function TechnologyGalaxy({ technologies }: { technologies: Technology[] }) {
   const currentPage = Math.min(page, pages.length - 1);
   const pageGroups = pages[currentPage];
   const displayedIds = new Set(pageGroups.flatMap(({ items }) => items.map(({ id }) => id)));
-  const active = [hovered, focused, selected].find((item) => item && displayedIds.has(item.id));
+  const inspecting = [hovered, focused].find((item) => item && displayedIds.has(item.id));
+  const active = inspecting ?? (selected && displayedIds.has(selected.id) ? selected : null);
   const currentSelection = active ? technologies.find(({ id }) => id === active.id) : null;
   const categoryTitle = activeCategory || "All technologies";
   const count = categoryGroup?.items.length ?? technologies.length;
@@ -170,7 +177,8 @@ function TechnologyGalaxy({ technologies }: { technologies: Technology[] }) {
           aria-controls="technology-directory"
           onClick={() => setShowDirectory((value) => !value)}
         >
-          {showDirectory ? "Hide technology list" : "View technology list"}
+          {showDirectory ? "Hide technology list" : "View all technologies"}
+          <ChevronDown size={15} aria-hidden="true" />
         </button>
       </div>
 
@@ -180,6 +188,7 @@ function TechnologyGalaxy({ technologies }: { technologies: Technology[] }) {
           groups={pageGroups}
           category={activeCategory}
           active={currentSelection}
+          pausedCategory={inspecting?.category}
           selectedId={selected?.id}
           paused={paused}
           entrance={entrance}
@@ -212,14 +221,14 @@ function TechnologyGalaxy({ technologies }: { technologies: Technology[] }) {
         </div>
       </div>
 
-      <div id="technology-directory" data-open={showDirectory} className={styles.directory} role="group" aria-label="Technology directory">
-        {groups.map(({ category, items }) => (
+      <div id="technology-directory" hidden={!showDirectory} className={styles.directory} role="group" aria-label="Technology directory">
+        {showDirectory && groups.map(({ category, items }) => (
           <div key={category} className={styles.cluster} data-muted={Boolean(activeCategory && activeCategory !== category)}>
             <h3>{category} <span>{items.length}</span></h3>
             <ul>
               {items.map((technology) => (
                 <li key={technology.id}>
-                  <TechnologyLogo name={technology.name} />
+                  <TechnologyIcon name={technology.name} iconUrl={technology.iconUrl} className="size-4" />
                   <span>{technology.name}</span>
                 </li>
               ))}
@@ -232,11 +241,12 @@ function TechnologyGalaxy({ technologies }: { technologies: Technology[] }) {
 }
 
 function OrbitDisplay({
-  groups, category, active, selectedId, paused, entrance, onHover, onFocus, onSelect,
+  groups, category, active, pausedCategory, selectedId, paused, entrance, onHover, onFocus, onSelect,
 }: {
   groups: Group[];
   category: string;
   active: Technology | null | undefined;
+  pausedCategory?: string;
   selectedId?: string;
   paused: boolean;
   entrance: RefObject<boolean>;
@@ -250,7 +260,7 @@ function OrbitDisplay({
     if (ref.current) return startGalaxyMotion(ref.current, entrance);
   }, [entrance]);
 
-  function renderNode(item: Technology, muted: boolean) {
+  function renderNode(item: Technology, muted: boolean, enableHover = true) {
     return (
       <button
         type="button"
@@ -258,9 +268,9 @@ function OrbitDisplay({
         data-muted={muted}
         aria-label={item.name + ", " + item.category}
         aria-pressed={selectedId === item.id}
-        onPointerEnter={(event) => { if (event.pointerType === "mouse" || event.pointerType === "pen") onHover(item); }}
-        onPointerLeave={() => onHover(null)}
-        onFocus={() => onFocus(item)}
+        onPointerEnter={enableHover ? (event) => { if (event.pointerType === "mouse") onHover(item); } : undefined}
+        onPointerLeave={enableHover ? () => onHover(null) : undefined}
+        onFocus={(event) => { if (event.currentTarget.matches(":focus-visible")) onFocus(item); }}
         onBlur={() => onFocus(null)}
         onClick={() => onSelect(item)}
         onKeyDown={(event) => {
@@ -270,13 +280,17 @@ function OrbitDisplay({
           }
         }}
       >
-        <TechnologyLogo name={item.name} />
+        <TechnologyIcon
+          name={item.name}
+          iconUrl={item.iconUrl}
+          className={usesLightLogoSurface(item) ? `${styles.nodeIcon} ${styles.nodeIconOnLight}` : styles.nodeIcon}
+        />
       </button>
     );
   }
 
   return (
-    <div ref={ref} className={styles.stage} data-paused={paused} data-active-ring={active?.category ?? ""}>
+    <div ref={ref} className={styles.stage} data-paused={paused} data-active-ring={pausedCategory ?? ""}>
       <div className={styles.halo} aria-hidden="true" />
       <svg viewBox="0 0 100 100" preserveAspectRatio="none" className={styles.orbits} aria-hidden="true">
         <path className={styles.axes} d="M50 4v92M3 50h94" vectorEffect="non-scaling-stroke" />
@@ -343,7 +357,7 @@ function OrbitDisplay({
               data-tone={index}
               style={{ left: 50 + 37 * Math.cos(angle) + "%", top: 50 + 34 * Math.sin(angle) + "%" }}
             >
-              {renderNode(item, Boolean(category && category !== name && active?.id !== item.id))}
+              {renderNode(item, Boolean(category && category !== name && active?.id !== item.id), false)}
             </div>
           );
         })}
@@ -374,16 +388,5 @@ function GalaxyPlaceholder() {
       </svg>
       <GalaxyHub />
     </div>
-  );
-}
-
-function TechnologyLogo({ name }: { name: string }) {
-  const normalized = name.toLowerCase().replace(/[^a-z0-9]/g, "");
-  const slug = Object.hasOwn(logoAliases, normalized) ? logoAliases[normalized] : normalized;
-  const path = Object.hasOwn(technologyLogoPaths, slug) ? technologyLogoPaths[slug] : null;
-  return path ? (
-    <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d={path} /></svg>
-  ) : (
-    <Code2 aria-hidden="true" />
   );
 }

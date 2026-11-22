@@ -192,6 +192,7 @@ export interface Technology {
   id: string;
   category: TechnologyCategory;
   name: string;
+  iconUrl: string | null;
   order: number;
   published: boolean;
 }

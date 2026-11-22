@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 import {
   TECHNOLOGY_CATEGORIES,
   type Technology,
@@ -16,10 +18,13 @@ import {
 } from "@/components/ui/select";
 import { CmsManager } from "@/components/admin/cms/cms-manager";
 import { Field, type FieldErrors } from "@/components/admin/form-dialog";
+import { TechnologyIcon } from "@/components/technology-icon";
+import { TECHNOLOGY_ICON_URL_LIMIT, technologyIconUrlError } from "@/lib/technology-icon-url";
 
 type Draft = {
   category: TechnologyCategory;
   name: string;
+  iconUrl: string;
   order: number;
   published: boolean;
 };
@@ -27,6 +32,7 @@ type Draft = {
 const EMPTY: Draft = {
   category: "Frontend",
   name: "",
+  iconUrl: "",
   order: 0,
   published: false,
 };
@@ -44,18 +50,26 @@ export function TechnologiesView() {
       toDraft={(t) => ({
         category: t.category,
         name: t.name,
+        iconUrl: t.iconUrl ?? "",
         order: t.order,
         published: t.published,
       })}
       validate={(d) => {
         const e: FieldErrors = {};
         if (!d.name.trim()) e.name = "Name is required.";
+        const iconError = technologyIconUrlError(d.iconUrl);
+        if (iconError) e.iconUrl = iconError;
         return e;
       }}
       columns={[
         {
           header: "Technology",
-          cell: (t) => <span className="font-medium">{t.name}</span>,
+          cell: (t) => (
+            <span className="inline-flex items-center gap-2 font-medium">
+              <TechnologyIcon name={t.name} iconUrl={t.iconUrl} className="size-5" />
+              {t.name}
+            </span>
+          ),
         },
         {
           header: "Category",
@@ -116,6 +130,8 @@ export function TechnologiesView() {
             )}
           </Field>
 
+          <TechnologyIconField name={d.name} value={d.iconUrl} error={errors.iconUrl} onChange={(iconUrl) => patch({ iconUrl })} />
+
           <Field
             id="tech-order"
             label="Order"
@@ -135,5 +151,46 @@ export function TechnologiesView() {
         </>
       )}
     />
+  );
+}
+
+function TechnologyIconField({ name, value, error, onChange }: {
+  name: string;
+  value: string;
+  error?: string;
+  onChange: (value: string) => void;
+}) {
+  const [previewUrl, setPreviewUrl] = useState("");
+  const invalid = technologyIconUrlError(value);
+  const validUrl = invalid ? "" : value.trim();
+
+  useEffect(() => {
+    if (!validUrl) return;
+    const timeout = window.setTimeout(() => setPreviewUrl(validUrl), 250);
+    return () => window.clearTimeout(timeout);
+  }, [validUrl]);
+
+  return (
+    <div className="space-y-2.5">
+      <Field id="tech-icon-url" label="Technology Icon URL" error={error ?? invalid ?? undefined}>
+        {(f) => (
+          <Input
+            {...f}
+            type="url"
+            maxLength={TECHNOLOGY_ICON_URL_LIMIT}
+            value={value}
+            onChange={(event) => onChange(event.target.value)}
+            placeholder="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg"
+          />
+        )}
+      </Field>
+      <TechnologyIcon
+        name={name}
+        iconUrl={validUrl === previewUrl ? previewUrl : null}
+        className="size-10"
+        preview
+        preparing={Boolean(validUrl && validUrl !== previewUrl)}
+      />
+    </div>
   );
 }

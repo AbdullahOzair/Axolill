@@ -439,6 +439,7 @@ export const technology = sqliteTable(
       ],
     }).notNull(),
     name: text("name").notNull(),
+    iconUrl: text("iconUrl"),
     order: integer("order").notNull().default(0),
     published: integer("published", { mode: "boolean" })
       .notNull()

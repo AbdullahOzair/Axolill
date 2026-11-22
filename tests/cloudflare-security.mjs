@@ -214,6 +214,50 @@ const draftId = (await draft.json()).service.id;
 const services = await expectStatus("/api/services", 200);
 assert.ok(!(await services.json()).services.some((item) => item.id === draftId));
 
+const technology = { category: "Frontend", name: "Technology icon test", order: 8 };
+const firstIcon = "https://assets.example.invalid/logo.svg?version=1";
+const secondIcon = "https://assets.example.invalid/logo.webp?version=2";
+const technologyPath = "/api/technologies";
+const createTechnology = (body, status = 201, cookies = admin) =>
+  expectStatus(technologyPath, status, { method: "POST", cookies, body });
+
+await createTechnology({ ...technology, iconUrl: firstIcon }, 403, client);
+for (const iconUrl of ["http://example.com/icon.svg", "data:image/svg+xml,icon", "javascript:void(0)",
+  "file:///icon.svg", "https://user:pass@example.com/icon.svg", "https://example.com/" + "a".repeat(2048)]) {
+  const rejected = await createTechnology({ ...technology, iconUrl }, 400);
+  assert.equal((await rejected.json()).details[0].path[0], "iconUrl");
+}
+const createdTechnology = (await (await createTechnology({ ...technology, iconUrl: ` ${firstIcon} ` })).json()).technology;
+const itemPath = `${technologyPath}/${createdTechnology.id}`;
+assert.equal(createdTechnology.iconUrl, firstIcon);
+await expectStatus(itemPath, 404);
+await expectStatus(itemPath, 404, { cookies: client });
+const adminTechnology = await expectStatus(itemPath, 200, { cookies: admin });
+assert.equal((await adminTechnology.json()).technology.iconUrl, firstIcon);
+const patchTechnology = async (body, status = 200) => {
+  const response = await expectStatus(itemPath, status, { method: "PATCH", cookies: admin, body });
+  return (await response.json()).technology;
+};
+await patchTechnology({ iconUrl: "//example.com/icon.svg" }, 400);
+assert.equal((await patchTechnology({ iconUrl: secondIcon })).iconUrl, secondIcon);
+assert.equal((await patchTechnology({ published: true })).iconUrl, secondIcon);
+const alternateTechnology = (await (await createTechnology({ ...technology, order: 2, published: true })).json()).technology;
+assert.equal(alternateTechnology.iconUrl, null);
+const publishedTechnologies = (await (await expectStatus(technologyPath, 200)).json()).technologies;
+assert.deepEqual(publishedTechnologies.filter((item) => [createdTechnology.id, alternateTechnology.id].includes(item.id))
+  .map((item) => [item.id, item.category, item.iconUrl]), [
+  [alternateTechnology.id, "Frontend", null], [createdTechnology.id, "Frontend", secondIcon],
+]);
+assert.equal((await patchTechnology({ iconUrl: "  " })).iconUrl, null);
+const publicTechnology = await expectStatus(itemPath, 200);
+assert.match(publicTechnology.headers.get("cache-control"), /private.*no-store/);
+assert.equal((await publicTechnology.json()).technology.iconUrl, null);
+assert.equal((await patchTechnology({ iconUrl: null })).iconUrl, null);
+await expectStatus(itemPath, 200, { method: "DELETE", cookies: admin });
+await expectStatus(`${technologyPath}/${alternateTechnology.id}`, 200, { method: "DELETE", cookies: admin });
+await expectStatus(itemPath, 404);
+console.log("Technology icon URL validation, authenticated CRUD, visibility, ordering, and persistence verified.");
+
 const upload = new FormData();
 upload.append("file", new Blob(["plain text"], { type: "image/png" }), "sample.png");
 await expectStatus("/api/media", 400, { method: "POST", cookies: admin, body: upload });
