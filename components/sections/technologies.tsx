@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import type { CSSProperties, RefObject } from "react";
 import { ChevronDown, ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
 
@@ -16,6 +16,24 @@ import styles from "./technologies.module.css";
 type Group = { category: string; items: Technology[] };
 const RINGS_PER_PAGE = 3;
 const NODES_PER_RING = 6;
+const MOBILE_NODES_PER_PAGE = 4;
+const MOBILE_QUERY = "(width < 48rem)";
+const MOBILE_ORBIT = { x: 36, y: 34 };
+const MOBILE_ANGLES = [
+  [0],
+  [0, Math.PI],
+  [-Math.PI / 2, Math.PI / 6, 5 * Math.PI / 6],
+  [-Math.PI / 4, -3 * Math.PI / 4, 3 * Math.PI / 4, Math.PI / 4],
+];
+
+function subscribeToMobile(onChange: () => void) {
+  const query = matchMedia(MOBILE_QUERY);
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+}
+
+const getMobileSnapshot = () => matchMedia(MOBILE_QUERY).matches;
+const getServerMobileSnapshot = () => false;
 
 function usesLightLogoSurface({ name, iconUrl }: Technology) {
   if (!iconUrl) return false;
@@ -93,6 +111,7 @@ function buildPages(groups: Group[]) {
 }
 
 function TechnologyGalaxy({ technologies }: { technologies: Technology[] }) {
+  const isMobile = useSyncExternalStore(subscribeToMobile, getMobileSnapshot, getServerMobileSnapshot);
   const groups = useMemo(() => {
     const byCategory = new Map<string, Technology[]>();
     for (const technology of technologies) {
@@ -105,6 +124,7 @@ function TechnologyGalaxy({ technologies }: { technologies: Technology[] }) {
   const allPages = useMemo(() => buildPages(groups), [groups]);
   const [category, setCategory] = useState("");
   const [page, setPage] = useState(0);
+  const [mobilePage, setMobilePage] = useState(0);
   const [paused, setPaused] = useState(false);
   const [showDirectory, setShowDirectory] = useState(false);
   const [hovered, setHovered] = useState<Technology | null>(null);
@@ -117,9 +137,18 @@ function TechnologyGalaxy({ technologies }: { technologies: Technology[] }) {
   const pages = activeCategory
     ? allPages.filter((groups) => groups.some((group) => group.category === activeCategory))
     : allPages;
-  const currentPage = Math.min(page, pages.length - 1);
-  const pageGroups = pages[currentPage];
-  const displayedIds = new Set(pageGroups.flatMap(({ items }) => items.map(({ id }) => id)));
+  const mobileTechnologies = categoryGroup?.items ?? technologies;
+  const pageCount = isMobile ? Math.ceil(mobileTechnologies.length / MOBILE_NODES_PER_PAGE) : pages.length;
+  const currentPage = Math.min(isMobile ? mobilePage : page, pageCount - 1);
+  const pageGroups = isMobile ? [] : pages[currentPage];
+  const mobileItems = isMobile
+    ? mobileTechnologies.slice(currentPage * MOBILE_NODES_PER_PAGE, (currentPage + 1) * MOBILE_NODES_PER_PAGE)
+    : null;
+  const displayedItems = mobileItems ?? pageGroups.flatMap(({ items }) => items);
+  const displayedIds = new Set(displayedItems.map(({ id }) => id));
+  const orbitKey = mobileItems
+    ? JSON.stringify(["mobile", mobileItems.map(({ id }) => id)])
+    : JSON.stringify(pageGroups.map(({ category, items }) => [category, items.map(({ id }) => id)]));
   const inspecting = [hovered, focused].find((item) => item && displayedIds.has(item.id));
   const active = inspecting ?? (selected && displayedIds.has(selected.id) ? selected : null);
   const currentSelection = active ? technologies.find(({ id }) => id === active.id) : null;
@@ -135,11 +164,13 @@ function TechnologyGalaxy({ technologies }: { technologies: Technology[] }) {
   function chooseCategory(value: string) {
     setCategory(value);
     setPage(0);
+    setMobilePage(0);
     resetNode();
   }
 
   function changePage(value: number) {
-    setPage(value);
+    if (isMobile) setMobilePage(value);
+    else setPage(value);
     resetNode();
   }
 
@@ -184,8 +215,9 @@ function TechnologyGalaxy({ technologies }: { technologies: Technology[] }) {
 
       <div className={styles.visual}>
         <OrbitDisplay
-          key={JSON.stringify(pageGroups.map(({ category, items }) => [category, items.map(({ id }) => id)]))}
+          key={orbitKey}
           groups={pageGroups}
+          mobileItems={mobileItems}
           category={activeCategory}
           active={currentSelection}
           pausedCategory={inspecting?.category}
@@ -207,13 +239,13 @@ function TechnologyGalaxy({ technologies }: { technologies: Technology[] }) {
               <span>Select a logo to explore the stack</span>
             )}
           </div>
-          {pages.length > 1 && (
+          {pageCount > 1 && (
             <div className={styles.pagination} aria-label="Galaxy pages" role="group">
               <button type="button" aria-label="Previous galaxy page" disabled={!currentPage} onClick={() => changePage(currentPage - 1)}>
                 <ChevronLeft size={17} aria-hidden="true" />
               </button>
-              <span aria-live="polite">{currentPage + 1} / {pages.length}</span>
-              <button type="button" aria-label="Next galaxy page" disabled={currentPage === pages.length - 1} onClick={() => changePage(currentPage + 1)}>
+              <span aria-live="polite">{currentPage + 1} / {pageCount}</span>
+              <button type="button" aria-label="Next galaxy page" disabled={currentPage === pageCount - 1} onClick={() => changePage(currentPage + 1)}>
                 <ChevronRight size={17} aria-hidden="true" />
               </button>
             </div>
@@ -241,9 +273,10 @@ function TechnologyGalaxy({ technologies }: { technologies: Technology[] }) {
 }
 
 function OrbitDisplay({
-  groups, category, active, pausedCategory, selectedId, paused, entrance, onHover, onFocus, onSelect,
+  groups, mobileItems, category, active, pausedCategory, selectedId, paused, entrance, onHover, onFocus, onSelect,
 }: {
   groups: Group[];
+  mobileItems: Technology[] | null;
   category: string;
   active: Technology | null | undefined;
   pausedCategory?: string;
@@ -255,10 +288,11 @@ function OrbitDisplay({
   onSelect: (item: Technology) => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  const isMobile = mobileItems !== null;
 
   useEffect(() => {
-    if (ref.current) return startGalaxyMotion(ref.current, entrance);
-  }, [entrance]);
+    if (ref.current && !isMobile) return startGalaxyMotion(ref.current, entrance);
+  }, [entrance, isMobile]);
 
   function renderNode(item: Technology, muted: boolean, enableHover = true) {
     return (
@@ -285,12 +319,13 @@ function OrbitDisplay({
           iconUrl={item.iconUrl}
           className={usesLightLogoSurface(item) ? `${styles.nodeIcon} ${styles.nodeIconOnLight}` : styles.nodeIcon}
         />
+        {!enableHover && <span className={styles.mobileNodeName} aria-hidden="true">{item.name}</span>}
       </button>
     );
   }
 
   return (
-    <div ref={ref} className={styles.stage} data-paused={paused} data-active-ring={pausedCategory ?? ""}>
+    <div ref={ref} className={styles.stage} data-paused={paused} data-active-ring={pausedCategory ?? ""} data-running={isMobile ? "false" : undefined}>
       <div className={styles.halo} aria-hidden="true" />
       <svg viewBox="0 0 100 100" preserveAspectRatio="none" className={styles.orbits} aria-hidden="true">
         <path className={styles.axes} d="M50 4v92M3 50h94" vectorEffect="non-scaling-stroke" />
@@ -316,7 +351,7 @@ function OrbitDisplay({
         ))}
       </svg>
       <svg viewBox="0 0 100 100" preserveAspectRatio="none" className={styles.mobileOrbits} aria-hidden="true">
-        <ellipse cx="50" cy="50" rx="37" ry="34" className={styles.orbit} vectorEffect="non-scaling-stroke" />
+        <ellipse cx="50" cy="50" rx={MOBILE_ORBIT.x} ry={MOBILE_ORBIT.y} className={styles.orbit} vectorEffect="non-scaling-stroke" />
       </svg>
       <GalaxyHub />
       <div className={styles.desktopNodes} role="group" aria-label="Technology orbits">
@@ -346,18 +381,16 @@ function OrbitDisplay({
         })}
       </div>
       <div className={styles.mobileNodes} role="group" aria-label="Technology constellation">
-        {groups.map(({ category: name, items }, index) => {
-          const item = items[0];
-          const angle = [-0.57, -2.54, Math.PI / 2][index];
+        {mobileItems?.map((item, index) => {
+          const angle = MOBILE_ANGLES[mobileItems.length - 1][index];
           return (
             <div
               key={item.id}
               className={styles.nodeAnchor}
               data-emphasized={active?.id === item.id}
-              data-tone={index}
-              style={{ left: 50 + 37 * Math.cos(angle) + "%", top: 50 + 34 * Math.sin(angle) + "%" }}
+              style={{ left: 50 + MOBILE_ORBIT.x * Math.cos(angle) + "%", top: 50 + MOBILE_ORBIT.y * Math.sin(angle) + "%" }}
             >
-              {renderNode(item, Boolean(category && category !== name && active?.id !== item.id), false)}
+              {renderNode(item, false, false)}
             </div>
           );
         })}
@@ -384,7 +417,7 @@ function GalaxyPlaceholder() {
         <ellipse cx="50" cy="50" rx="32" ry="32" className={styles.orbit} vectorEffect="non-scaling-stroke" />
       </svg>
       <svg viewBox="0 0 100 100" preserveAspectRatio="none" className={styles.mobileOrbits}>
-        <ellipse cx="50" cy="50" rx="37" ry="34" className={styles.orbit} vectorEffect="non-scaling-stroke" />
+        <ellipse cx="50" cy="50" rx={MOBILE_ORBIT.x} ry={MOBILE_ORBIT.y} className={styles.orbit} vectorEffect="non-scaling-stroke" />
       </svg>
       <GalaxyHub />
     </div>

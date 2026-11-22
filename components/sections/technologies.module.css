@@ -356,6 +356,51 @@
 
 .cluster li > span:last-child { min-width: 0; }
 
+@media (width < 48rem) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+
+  .controls {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.375rem 0.5rem;
+  }
+
+  .filters { grid-column: 1 / -1; gap: 0.35rem; }
+  .controlRow { margin: 0; }
+
+  .filters button, .controls .directoryToggle, .pagination button { min-height: 2.75rem; }
+  .controls .directoryToggle { text-align: end; }
+
+  .stage {
+    --node-size: 3rem;
+    --node-logo: 1.625rem;
+    height: clamp(12.5rem, 54vw, 14.25rem);
+  }
+
+  .mobileNodes .node { position: relative; }
+
+  .mobileNodeName {
+    position: absolute;
+    top: calc(100% + 0.25rem);
+    left: 50%;
+    translate: -50% 0;
+    max-inline-size: clamp(4rem, 23vw, 6.5rem);
+    overflow: hidden;
+    pointer-events: none;
+    color: var(--foreground);
+    font-size: 0.6875rem;
+    font-weight: 650;
+    line-height: 1.25;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .visualFooter { align-items: center; gap: 0.5rem; }
+  .pagination { display: inline-flex; flex-shrink: 0; gap: 0.35rem; }
+  .pagination button { width: 2.75rem; }
+}
+
 @media (min-width: 48rem) {
   .stage { --node-size: 3rem; --node-logo: 1.625rem; height: 24rem; }
   .hub { width: 4rem; }
