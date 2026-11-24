@@ -1,5 +1,6 @@
 "use client";
 
+import layout from "@/components/site-layout.module.css";
 import * as React from "react";
 import {
   Briefcase,
@@ -200,8 +201,8 @@ export function PortalDashboard({ user }: { user: PortalUser }) {
   }
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:py-14">
-      <div className="grid gap-8 lg:grid-cols-[280px_1fr] lg:gap-10">
+    <div className={`${layout.content} ${layout.section}`}>
+      <div className={cn("grid gap-(--card-gap)", (loading || data?.project) && "lg:grid-cols-[17.5rem_minmax(0,1fr)]")}>
         {/* Sidebar */}
         {loading ? (
           <CardSkeleton className="lg:sticky lg:top-24 lg:h-fit" />
@@ -211,9 +212,7 @@ export function PortalDashboard({ user }: { user: PortalUser }) {
             user={user}
             milestones={data.milestones}
           />
-        ) : (
-          <div />
-        )}
+        ) : null}
 
         <main className="min-w-0 space-y-8">
           {loading ? (

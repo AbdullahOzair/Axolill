@@ -3,6 +3,7 @@ import type { CSSProperties } from "react";
 
 import { ScrollReveal } from "@/components/reveal";
 import { WhyChooseGrid } from "./why-choose-grid";
+import layout from "@/components/site-layout.module.css";
 import styles from "./why-choose.module.css";
 
 const REASONS = [
@@ -40,15 +41,15 @@ const REASONS = [
 
 export function WhyChoose() {
   return (
-    <section id="why-choose" aria-labelledby="why-choose-heading" className={styles.section + " scroll-mt-16 font-sans"}>
-      <div className={styles.content}>
-        <ScrollReveal effect="fade"><p className={styles.eyebrow}>Why choose us?</p></ScrollReveal>
-        <ScrollReveal as="header" effect="text" className={styles.header}>
-          <h2 id="why-choose-heading" className={styles.title + " font-heading"}>
+    <section id="why-choose" aria-labelledby="why-choose-heading" className={`${styles.section} ${layout.section} scroll-mt-16 font-sans`}>
+      <div className={layout.content}>
+        <ScrollReveal effect="fade"><p className={`${styles.eyebrow} ${layout.eyebrow}`}>Why choose us?</p></ScrollReveal>
+        <ScrollReveal as="header" effect="text" className={layout.header}>
+          <h2 id="why-choose-heading" className={`${layout.title} ${layout.stackedTitle} font-heading font-bold`}>
             Why work with us?
-            <span>Because how we build matters.</span>
+            <span className={styles.accent}>Because how we build matters.</span>
           </h2>
-          <p className={styles.intro}>
+          <p className={layout.intro}>
             The right digital partner doesn&apos;t just deliver a product. They understand your vision,
             challenge assumptions, and build with your future in mind.
           </p>

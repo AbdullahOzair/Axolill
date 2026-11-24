@@ -17,15 +17,15 @@ export default function SiteLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <>
+    <div className="flex min-h-dvh flex-col">
       <CursorSpotlightProvider />
       <PageLoader />
       <BookingProvider>
         <Navbar />
-        <main className="min-h-screen">{children}</main>
+        <main className="min-w-0 flex-1">{children}</main>
       </BookingProvider>
       <Footer />
       <BackToTop />
-    </>
+    </div>
   );
 }

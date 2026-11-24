@@ -12,7 +12,7 @@ import type { Testimonial } from "@/lib/data-model";
 import { fetchJson, useLoader } from "@/lib/use-api";
 import { mountTestimonialRail } from "./testimonial-rail";
 import styles from "./testimonials.module.css";
-import editorial from "./why-choose.module.css";
+import layout from "@/components/site-layout.module.css";
 
 async function loadTestimonials(): Promise<Testimonial[]> {
   const { testimonials } = await fetchJson<{ testimonials: Testimonial[] }>("/api/testimonials");
@@ -53,19 +53,19 @@ export function Testimonials() {
   }
 
   return (
-    <section id="testimonials" aria-labelledby="testimonials-heading" aria-busy={loading} className={`${styles.section} scroll-mt-16 font-sans`}>
-      <div className={editorial.content}>
+    <section id="testimonials" aria-labelledby="testimonials-heading" aria-busy={loading} className={`${styles.section} ${layout.section} scroll-mt-16 font-sans`}>
+      <div className={layout.content}>
         <div className={styles.headingRow}>
-          <header className={editorial.header}>
-            <ScrollReveal effect="fade"><p className={styles.eyebrow}>Client stories</p></ScrollReveal>
+          <header className={layout.header}>
+            <ScrollReveal effect="fade"><p className={`${styles.eyebrow} ${layout.eyebrow}`}>Client stories</p></ScrollReveal>
             <ScrollReveal effect="up" index={1}>
-              <h2 id="testimonials-heading" className={`${editorial.title} font-heading`}>
+              <h2 id="testimonials-heading" className={`${layout.title} ${layout.stackedTitle} font-heading font-bold`}>
                 Good work speaks.{" "}
                 <span className={styles.accent}>Our clients speak louder.</span>
               </h2>
             </ScrollReveal>
             <ScrollReveal effect="up" index={2}>
-              <p className={editorial.intro}>Real experiences from the people we&apos;ve had the pleasure of building with.</p>
+              <p className={layout.intro}>Real experiences from the people we&apos;ve had the pleasure of building with.</p>
             </ScrollReveal>
           </header>
           {multiple && (
@@ -89,7 +89,7 @@ export function Testimonials() {
           )}
         </div>
 
-        <div className={styles.body}>
+        <div className={layout.body}>
           {loading && !data ? (
             <div role="status" className={styles.skeleton}>
               <span className="sr-only">Loading testimonials</span>

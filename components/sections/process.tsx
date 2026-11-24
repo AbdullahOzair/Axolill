@@ -13,6 +13,7 @@ import {
   ArrowDown,
 } from "lucide-react";
 import { mountProcessOrbit, ORBIT_PATH } from "./process-orbit";
+import layout from "@/components/site-layout.module.css";
 import styles from "./process.module.css";
 
 type Step = {
@@ -106,7 +107,7 @@ export function Process() {
   }, []);
 
   return (
-    <section id="process" aria-labelledby="process-heading" className={`${styles.section} scroll-mt-16 py-14 font-sans sm:py-18`}>
+    <section id="process" aria-labelledby="process-heading" className={`${styles.section} ${layout.section} scroll-mt-16 font-sans`}>
       <div className={styles.gears} aria-hidden="true">
         <div className={styles.gearField} data-process-gears>
           <Gear className={styles.gearOne} />
@@ -114,13 +115,13 @@ export function Process() {
           <Gear className={styles.gearThree} />
         </div>
       </div>
-      <div className={styles.content}>
-        <ScrollReveal as="header" effect="text" className="max-w-2xl">
-          <p className={styles.eyebrow}>How we work</p>
-          <h2 id="process-heading" className="mt-3 font-heading text-3xl leading-[1.1] font-semibold tracking-tight text-balance sm:text-4xl lg:text-5xl">
+      <div className={layout.content}>
+        <ScrollReveal as="header" effect="text" className={layout.header}>
+          <p className={`${styles.eyebrow} ${layout.eyebrow}`}>How we work</p>
+          <h2 id="process-heading" className={`${layout.title} mt-3 font-heading font-semibold`}>
             A development process <span className={styles.accent}>built for clarity</span>
           </h2>
-          <p className="mt-3 max-w-xl text-sm leading-relaxed text-pretty text-muted-foreground sm:text-base">
+          <p className={layout.intro}>
             Seven deliberate steps take your product from a first conversation
             all the way to a scaling, supported release.
           </p>

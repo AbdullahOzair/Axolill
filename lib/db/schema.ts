@@ -54,6 +54,24 @@ export const user = sqliteTable("user", {
   phone: text("phone"),
 });
 
+export const creativeOrbitImage = sqliteTable("creative_orbit_image", {
+  id: text("id").primaryKey(),
+  imageKey: text("imageKey").notNull(),
+  title: text("title"),
+  alt: text("alt").notNull(),
+  displayOrder: integer("displayOrder").notNull(),
+  active: integer("active", { mode: "boolean" }).notNull().default(true),
+  createdAt: integer("createdAt", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
+  updatedAt: integer("updatedAt", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
+});
+
+export const creativeOrbitSettings = sqliteTable("creative_orbit_settings", {
+  id: text("id").primaryKey(),
+  enabled: integer("enabled", { mode: "boolean" }).notNull().default(true),
+  duration: integer("duration").notNull().default(100),
+  direction: text("direction", { enum: ["clockwise", "anticlockwise"] }).notNull().default("clockwise"),
+});
+
 export const twoFactor = sqliteTable(
   "twoFactor",
   {

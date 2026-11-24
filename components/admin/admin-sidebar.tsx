@@ -15,6 +15,7 @@ import {
   MessageSquareQuote,
   PanelLeftClose,
   PanelLeftOpen,
+  Orbit,
   Server,
   ShieldCheck,
   Sparkles,
@@ -58,6 +59,7 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
       },
       { href: "/admin/content/portfolio", label: "Portfolio", icon: Layers },
       { href: "/admin/content/team", label: "Team", icon: Users },
+      { href: "/admin/content/creative-orbit", label: "Creative Orbit", icon: Orbit },
       {
         href: "/admin/content/testimonials",
         label: "Testimonials",

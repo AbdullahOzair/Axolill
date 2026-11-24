@@ -1,0 +1,29 @@
+.section {
+  --contact-accent: var(--brand-secondary);
+}
+
+:global(.dark) .section {
+  --contact-accent: color-mix(in srgb, #09aace 70%, #fff);
+}
+
+.closing {
+  display: grid;
+  justify-items: center;
+  max-inline-size: 44rem;
+  margin-inline: auto;
+  text-align: center;
+}
+
+.eyebrow {
+  margin-block-end: .875rem;
+  color: var(--contact-accent);
+  font-weight: 650;
+  letter-spacing: .14em;
+}
+
+.accent { color: var(--contact-accent); }
+.cta {
+  min-block-size: 2.75rem;
+  margin-block-start: 1.5rem;
+  padding-inline: 1rem;
+}

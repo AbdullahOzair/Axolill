@@ -1,10 +1,8 @@
 import { badRequest, filesBucket, mutationJson, newId, parseMultipart, requireAdmin } from "@/lib/api";
-import { matchesCmsImageType } from "@/lib/cms-image";
+import { CMS_IMAGE_MAX_BYTES as MAX_BYTES, matchesCmsImageType } from "@/lib/cms-image";
 import { securityEvent, withApiErrors } from "@/lib/http-security";
 
 export const dynamic = "force-dynamic";
-
-const MAX_BYTES = 5 * 1024 * 1024; // 5 MB — these are marketing images
 
 /**
  * POST — admin-only image upload for CMS content (portfolio covers, team photos).

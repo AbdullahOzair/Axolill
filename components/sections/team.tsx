@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Image from "next/image";
 import { ArrowLeft, Globe, Rotate3d } from "lucide-react";
@@ -11,7 +11,7 @@ import { EmptyState, ErrorState } from "@/components/ui/states";
 import type { TeamMember } from "@/lib/data-model";
 import { teamProfileUrl } from "@/lib/team-links";
 import { fetchJson, useLoader } from "@/lib/use-api";
-import layout from "./compact-home-sections.module.css";
+import layout from "@/components/site-layout.module.css";
 import styles from "./team.module.css";
 
 async function loadTeam(): Promise<TeamMember[]> {
@@ -26,8 +26,8 @@ export function Team() {
     <section id="team" aria-labelledby="team-heading" aria-busy={loading} className={`${styles.section} ${layout.section} scroll-mt-16 font-sans`}>
       <div className={layout.content}>
         <ScrollReveal as="header" effect="up" className={layout.header}>
-          <p className={styles.eyebrow}>Meet the team</p>
-          <h2 id="team-heading" className={layout.title + " font-heading"}>
+          <p className={`${styles.eyebrow} ${layout.eyebrow}`}>Meet the team</p>
+          <h2 id="team-heading" className={`${layout.title} ${layout.stackedTitle} font-heading font-bold`}>
             Different minds. <span className={styles.accent}>One shared vision.</span>
           </h2>
           <p className={layout.intro}>

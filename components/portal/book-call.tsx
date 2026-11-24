@@ -1,5 +1,6 @@
 "use client";
 
+import layout from "@/components/site-layout.module.css";
 import * as React from "react";
 import Link from "next/link";
 import Cal, { getCalApi } from "@calcom/embed-react";
@@ -57,7 +58,7 @@ export function BookCall() {
   }, [mounted, calTheme]);
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 lg:py-14">
+    <div className={`${layout.content} ${layout.section}`}>
       {/* Header */}
       <Link
         href="/portal"
@@ -69,13 +70,13 @@ export function BookCall() {
 
       <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-xs font-medium tracking-wider text-brand-secondary uppercase dark:text-blue-400">
+          <p className={`${layout.eyebrow} font-medium tracking-wider text-brand-secondary uppercase dark:text-blue-400`}>
             Scheduling
           </p>
-          <h1 className="mt-2 font-heading text-3xl font-bold tracking-tight sm:text-4xl">
+          <h1 className={`${layout.title} mt-2 font-heading font-bold`}>
             Book a call
           </h1>
-          <p className="mt-2 max-w-xl text-pretty text-muted-foreground">
+          <p className={layout.intro}>
             Pick a time that works for you and we&apos;ll send over a calendar
             invite with the meeting link.
           </p>

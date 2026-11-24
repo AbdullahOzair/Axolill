@@ -6,7 +6,6 @@
   --service-border: color-mix(in srgb, var(--chart-1) 22%, var(--border));
   --service-focus: var(--ring);
   --service-shadow: color-mix(in srgb, var(--foreground) 58%, transparent);
-  padding-block: clamp(2.5rem, 4.5vw, 4rem);
   color: var(--foreground);
   background:
     radial-gradient(ellipse at 90% 55%, color-mix(in srgb, var(--service-halo) 8%, transparent), transparent 58%),
@@ -30,12 +29,9 @@
 
 .layout {
   display: grid;
-  width: 100%;
-  max-width: 100rem;
   align-items: center;
-  gap: clamp(1.25rem, 3.5vw, 3.5rem);
-  margin-inline: auto;
-  padding-inline: clamp(1rem, 4vw, 4.25rem);
+  gap: var(--heading-gap);
+  row-gap: var(--section-content-gap);
 }
 
 .eyebrow {
@@ -43,7 +39,6 @@
   align-items: center;
   gap: 0.6rem;
   color: var(--service-accent);
-  font-size: 0.6875rem;
   font-weight: 650;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -59,23 +54,11 @@
 .heading {
   margin-block-start: 0.75rem;
   max-width: 23ch;
-  font-size: clamp(1.875rem, 3.5vw, 3rem);
   font-weight: 650;
-  line-height: 1.07;
-  text-wrap: balance;
 }
 
 .heading span {
   color: var(--service-accent);
-}
-
-.intro {
-  max-width: 47ch;
-  margin-block-start: 0.75rem;
-  color: var(--muted-foreground);
-  font-size: clamp(0.91rem, 1.35vw, 1.06rem);
-  line-height: 1.65;
-  text-wrap: pretty;
 }
 
 .explore {
@@ -177,7 +160,7 @@
 
 .cardTitle {
   max-width: 28ch;
-  font-size: clamp(1.15rem, 2vw, 1.55rem);
+  font-size: clamp(1.25rem, 2vw, 1.55rem);
   font-weight: 650;
   line-height: 1.2;
   overflow-wrap: anywhere;

@@ -9,19 +9,11 @@
   --work-blue: color-mix(in srgb, var(--brand-cyan) 70%, var(--foreground));
 }
 
-.content {
-  width: 100%;
-  max-width: 100rem;
-  margin-inline: auto;
-  padding-inline: clamp(1rem, 4vw, 4.25rem);
-}
-
 .eyebrow {
   display: flex;
   align-items: center;
   gap: 0.55rem;
   color: var(--work-blue);
-  font-size: 0.6875rem;
   font-weight: 650;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -41,7 +33,7 @@
 .gallery {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: clamp(0.8rem, 2vw, 1.4rem);
+  gap: var(--card-gap);
 }
 
 .galleryItem {
@@ -206,7 +198,6 @@
 .category,
 .detailLabel {
   color: var(--work-blue);
-  font-size: 0.6875rem;
   font-weight: 650;
   letter-spacing: 0.09em;
   overflow-wrap: anywhere;
@@ -216,7 +207,7 @@
 .cardTitle {
   color: var(--foreground);
   font-family: var(--font-poppins), sans-serif;
-  font-size: clamp(1.125rem, 2.8vw, 1.5rem);
+  font-size: clamp(1.25rem, 2.8vw, 1.5rem);
   font-weight: 600;
   line-height: 1.2;
   letter-spacing: -0.035em;
@@ -252,7 +243,6 @@
   border-radius: 999px;
   color: var(--card-foreground);
   background: color-mix(in srgb, var(--card) 66%, var(--secondary));
-  font-size: 0.6875rem;
   line-height: 1.4;
   overflow-wrap: anywhere;
 }
@@ -298,8 +288,6 @@
   outline-offset: 2px;
 }
 
-.detail { padding-block: clamp(1.6rem, 5vw, 4rem); }
-
 .backLink {
   display: inline-flex;
   min-height: 2.75rem;
@@ -315,21 +303,20 @@
 .caseLayout {
   display: grid;
   align-items: start;
-  gap: clamp(1.4rem, 4vw, 4rem);
+  gap: var(--heading-gap);
   margin-block-start: clamp(0.8rem, 3vw, 1.8rem);
 }
 
 .casePreview, .caseCopy { min-width: 0; }
 .casePreview .previewArea { padding: 0; }
 .casePreview .frame {
-  height: clamp(14rem, 57dvh, 35rem);
+  height: clamp(14rem, 55dvh, 32rem);
   box-shadow: 0 20px 44px -34px color-mix(in srgb, var(--work-blue) 35%, var(--brand-primary));
 }
 .caseCopy { display: grid; gap: clamp(1.2rem, 2vw, 2rem); overflow-wrap: anywhere; }
 .caseTitle {
   color: var(--foreground);
   font-family: var(--font-poppins), sans-serif;
-  font-size: clamp(1.9rem, 4vw, 3.8rem);
   font-weight: 650;
   line-height: 1.08;
   letter-spacing: -0.045em;

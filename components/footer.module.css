@@ -1,0 +1,182 @@
+.footer {
+  --footer-surface: #e8edf3;
+  --footer-copy: color-mix(in srgb, var(--muted-foreground) 84%, var(--foreground));
+  --footer-accent: color-mix(in srgb, var(--brand-secondary) 88%, var(--foreground));
+  --footer-line: color-mix(in srgb, var(--footer-copy) 24%, transparent);
+  --footer-reflection: rgb(255 255 255 / 22%);
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    linear-gradient(to bottom, var(--background), transparent 2.5rem),
+    radial-gradient(ellipse at 18% 30%, var(--footer-reflection), transparent 65%),
+    var(--footer-surface);
+  color: var(--foreground);
+}
+
+:global(html.dark) .footer {
+  --footer-surface: #0b1423;
+  --footer-copy: var(--muted-foreground);
+  --footer-accent: var(--brand-cyan);
+  --footer-reflection: rgb(148 163 184 / 5%);
+}
+
+.content { position: relative; }
+
+.main {
+  display: grid;
+  grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr);
+  align-items: start;
+  gap: 1.5rem clamp(1rem, 3vw, 2.5rem);
+  padding-block: clamp(2rem, 3vw, 2.5rem) 1.5rem;
+}
+
+.brand, .location { grid-column: 1 / -1; }
+
+.brand {
+  position: relative;
+  isolation: isolate;
+  min-inline-size: 0;
+}
+
+.watermark {
+  position: absolute;
+  z-index: -1;
+  inset: -.5rem 0 0 auto;
+  inline-size: min(100%, 9rem);
+  background: url("/brand/mark.png") center / contain no-repeat;
+  filter: grayscale(1) brightness(.64);
+  opacity: .045;
+  pointer-events: none;
+}
+
+:global(html.dark) .watermark {
+  filter: grayscale(1) brightness(1.55) sepia(.24) hue-rotate(165deg);
+  opacity: .05;
+}
+
+.brandLink {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  font-size: 1.0625rem;
+  font-weight: 600;
+}
+
+.brand p, .location address, .copyright {
+  color: var(--footer-copy);
+  font-size: .8125rem;
+  line-height: 1.55;
+}
+
+.brand p { margin-block-start: .25rem; }
+
+.groupHeading {
+  margin-block-end: .625rem;
+  font-size: .875rem;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: normal;
+}
+
+.explore, .contacts {
+  display: grid;
+  gap: .5rem;
+  font-size: .875rem;
+  line-height: 1.4;
+}
+
+.explore a, .contacts a {
+  display: inline-flex;
+  align-items: center;
+  gap: .375rem;
+  max-inline-size: 100%;
+  color: var(--footer-copy);
+  text-decoration: underline;
+  text-decoration-color: transparent;
+}
+
+.contacts span { overflow-wrap: anywhere; }
+
+.footer a {
+  transition: color 200ms ease, text-decoration-color 200ms ease;
+  text-underline-offset: .22em;
+}
+
+.footer a:focus-visible { outline: 2px solid var(--footer-accent); outline-offset: 3px; }
+
+.explore a:is(:hover, :focus-visible), .contacts a:is(:hover, :focus-visible) {
+  color: var(--footer-accent);
+  text-decoration-color: currentColor;
+}
+
+.contacts svg, .socials svg {
+  inline-size: .9375rem;
+  block-size: .9375rem;
+  flex: none;
+}
+
+.socials {
+  display: flex;
+  gap: .375rem;
+  margin-block-start: .5rem;
+  margin-inline-start: -.375rem;
+}
+
+.socials a {
+  display: grid;
+  place-items: center;
+  inline-size: 1.875rem;
+  block-size: 1.875rem;
+  border-radius: .375rem;
+  color: var(--footer-copy);
+}
+
+.socials a:is(:hover, :focus-visible) { color: var(--footer-accent); }
+
+.location { min-inline-size: 0; }
+
+.location address {
+  max-inline-size: 20rem;
+  margin-block-start: .5rem;
+  font-style: normal;
+}
+
+.mapFrame {
+  inline-size: 100%;
+  max-inline-size: 20rem;
+  block-size: 11rem;
+  overflow: hidden;
+  border: 1px solid var(--footer-line);
+  border-radius: var(--radius);
+}
+
+.map {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  border: 0;
+  background-color: var(--footer-surface);
+}
+
+.copyright {
+  padding-block: .875rem clamp(2rem, 3vw, 2.5rem);
+  border-block-start: 1px solid var(--footer-line);
+}
+
+@media (min-width: 36rem) {
+  .main { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .brand, .location { grid-column: auto; }
+}
+
+@media (min-width: 60rem) {
+  .main { grid-template-columns: minmax(11rem, 1.25fr) minmax(6rem, .75fr) minmax(10rem, 1fr); }
+
+  .main:has(.location) {
+    grid-template-columns: minmax(11rem, 1.25fr) minmax(6rem, .75fr) minmax(10rem, 1fr) minmax(17.5rem, 20rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .footer a { transition: none; }
+}

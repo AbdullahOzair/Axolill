@@ -7,7 +7,7 @@ import { ScrollReveal } from "@/components/reveal";
 import type { InquiryType } from "@/lib/inquiries";
 import { InquiryDialog } from "./inquiry-dialog";
 import { useInquiryTracking } from "./inquiry-tracking";
-import layout from "./compact-home-sections.module.css";
+import layout from "@/components/site-layout.module.css";
 import styles from "./pricing.module.css";
 
 const PATHS = [
@@ -31,8 +31,8 @@ export function Pricing() {
       <span className={styles.legacyAnchor} id="pricing" aria-hidden />
       <div className={layout.content}>
         <ScrollReveal as="header" effect="text" className={layout.header}>
-          <p className={styles.eyebrow}>Let&apos;s work together</p>
-          <h2 id="work-with-us-heading" className={layout.title + " font-heading"}>
+          <p className={`${styles.eyebrow} ${layout.eyebrow}`}>Let&apos;s work together</p>
+          <h2 id="work-with-us-heading" className={`${layout.title} ${layout.stackedTitle} font-heading font-bold`}>
             Great things begin <span className={styles.accent}>with a conversation.</span>
           </h2>
           <p className={layout.intro}>Whatever stage you&apos;re at, we&apos;re here to help you take the next step.</p>

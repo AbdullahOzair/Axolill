@@ -1,0 +1,137 @@
+.orbit {
+  --orbit-wash: color-mix(in srgb, var(--brand-secondary) 10%, transparent);
+  --orbit-edge: rgb(255 255 255 / 60%);
+  --orbit-shadow: rgb(16 36 66 / 19%);
+  position: relative;
+  container-type: inline-size;
+  inline-size: min(100%, 66rem);
+  margin-inline: auto;
+  overflow: hidden;
+  background: radial-gradient(ellipse at 50% 95%, var(--orbit-wash), transparent 68%);
+}
+
+:global(.dark) .orbit:not([data-preview-theme]), .orbit[data-preview-theme="dark"] {
+  --orbit-wash: rgb(9 170 206 / 11%);
+  --orbit-edge: rgb(165 225 240 / 23%);
+  --orbit-shadow: rgb(0 0 0 / 42%);
+}
+
+.orbit[data-preview-theme="light"] {
+  --orbit-wash: rgb(47 123 228 / 10%);
+  --orbit-edge: rgb(255 255 255 / 70%);
+  --orbit-shadow: rgb(16 36 66 / 19%);
+}
+
+.orbit:not([data-single]) {
+  --radius: min(47cqw, 27rem);
+  --preview-width: clamp(2.625rem, 14cqw, 9rem);
+  aspect-ratio: 100 / 41;
+  min-block-size: 8rem;
+  max-block-size: 22rem;
+  mask-image: linear-gradient(to bottom, #000 85%, transparent),
+    linear-gradient(to right, transparent, #000 4% 96%, transparent);
+  mask-composite: intersect;
+}
+
+.rotor, .slot {
+  position: absolute;
+  inset: auto auto 0 50%;
+  inline-size: 0;
+  block-size: 0;
+}
+
+.orbit:not([data-single]) .rotor {
+  inset-block-end: calc(var(--radius) * -.30);
+  animation: rotate-orbit var(--orbit-duration) linear infinite paused;
+}
+
+.orbit[data-direction="anticlockwise"] .rotor { animation-direction: reverse; }
+.orbit[data-visible="true"] .rotor { animation-play-state: running; }
+.orbit:has(.frame:focus-visible) .rotor { animation-play-state: paused; }
+
+.slot {
+  pointer-events: none;
+  transform: rotate(var(--slot-angle)) translateY(calc(-1 * var(--radius)));
+}
+
+.frame {
+  position: absolute;
+  inset: 0 auto auto 0;
+  translate: -50% -50%;
+  inline-size: var(--preview-width);
+  aspect-ratio: 1.58;
+  overflow: hidden;
+  isolation: isolate;
+  pointer-events: auto;
+  border: 1px solid var(--orbit-edge);
+  border-radius: clamp(.28rem, .85cqw, .65rem);
+  box-shadow: 0 .5rem 1.25rem var(--orbit-shadow);
+  transition: scale 260ms ease, box-shadow 260ms ease;
+}
+
+.frame:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+}
+
+.image { object-fit: cover; }
+
+@media (hover: hover) and (pointer: fine) {
+  .orbit:has(.frame:hover) .rotor { animation-play-state: paused; }
+  .frame:hover { scale: 1.05; }
+}
+
+.orbit[data-single] .rotor,
+.orbit[data-single] .slot,
+.orbit[data-single] .frame {
+  position: relative;
+  inset: auto;
+  inline-size: auto;
+  block-size: auto;
+  transform: none;
+  translate: none;
+}
+
+.orbit[data-single] .rotor {
+  display: grid;
+  justify-items: center;
+  padding: .75rem 1rem 1.5rem;
+}
+
+.orbit[data-single] .frame { inline-size: clamp(9rem, 27cqw, 17rem); }
+
+@keyframes rotate-orbit {
+  to { transform: rotate(1turn); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orbit:not([data-single]) {
+    aspect-ratio: auto;
+    min-block-size: 0;
+    max-block-size: none;
+    mask-image: none;
+  }
+
+  .orbit:not([data-single]) .rotor,
+  .orbit:not([data-single]) .slot,
+  .orbit:not([data-single]) .frame {
+    position: relative;
+    inset: auto;
+    inline-size: auto;
+    block-size: auto;
+    animation: none;
+    transform: none;
+    translate: none;
+  }
+
+  .orbit:not([data-single]) .rotor {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 4.75rem), 1fr));
+    gap: .75rem;
+    padding: .75rem 1rem 1.5rem;
+  }
+
+  .orbit:not([data-single]) .slot { max-inline-size: 9rem; inline-size: 100%; justify-self: center; }
+  .frame { transition: none; }
+  .frame:hover { scale: 1; }
+}

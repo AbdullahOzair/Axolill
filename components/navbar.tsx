@@ -1,5 +1,6 @@
 "use client";
 
+import layout from "@/components/site-layout.module.css";
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -187,11 +188,11 @@ export function Navbar() {
         scrolled ? "border-border" : "border-transparent"
       )}
     >
-      <nav className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 sm:px-6">
+      <nav className={`${layout.content} flex h-16 items-center justify-between`}>
         <Logo />
 
         {/* Desktop links */}
-        <div className="hidden items-center gap-1 md:flex">
+        <div className="hidden items-center gap-1 lg:flex">
           {NAV_LINKS.map((link) => (
             <DesktopNavLink
               key={link.href}
@@ -202,7 +203,7 @@ export function Navbar() {
         </div>
 
         {/* Desktop actions */}
-        <div className="hidden items-center gap-2 md:flex">
+        <div className="hidden items-center gap-2 lg:flex">
           <ThemeToggle />
           <MagneticButton strength={6} className="hidden lg:block">
             <BookCallButton />
@@ -211,7 +212,7 @@ export function Navbar() {
         </div>
 
         {/* Mobile actions */}
-        <div className="flex items-center gap-1 md:hidden">
+        <div className="flex items-center gap-1 lg:hidden">
           <ThemeToggle />
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger

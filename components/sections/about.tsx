@@ -4,6 +4,7 @@ import { useEffect, useRef, type ComponentType } from "react";
 import { Building2, Clock, Code2, Compass, Eye, PenTool, Rocket, Star, Target } from "lucide-react";
 import { animate, useInView, useReducedMotion } from "framer-motion";
 import { ScrollReveal } from "@/components/reveal";
+import layout from "@/components/site-layout.module.css";
 import styles from "./about.module.css";
 
 type Icon = ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
@@ -72,21 +73,21 @@ function AboutStatement() {
 
 export function About() {
   return (
-    <section id="about" aria-labelledby="about-heading" className="relative scroll-mt-16 py-8 font-sans sm:py-10 lg:py-12">
-      <div className={styles.content}>
-        <div className="grid min-w-0 items-start gap-6 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] lg:gap-[clamp(1.75rem,4vw,4rem)]">
+    <section id="about" aria-labelledby="about-heading" className={`${layout.section} relative scroll-mt-16 font-sans`}>
+      <div className={layout.content}>
+        <div className="grid min-w-0 items-start gap-(--card-gap) lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] lg:gap-(--heading-gap)">
           <div className="min-w-0">
             <ScrollReveal as="header" effect="text">
-              <p className="flex items-center gap-2 text-[0.6875rem] font-semibold tracking-[0.15em] text-brand-secondary dark:text-blue-300 uppercase">
+              <p className={`${layout.eyebrow} flex items-center gap-2 font-semibold tracking-[0.15em] text-brand-secondary uppercase dark:text-blue-300`}>
                 <span aria-hidden="true" className="h-px w-6 bg-current" />
                 About Axonill
               </p>
-              <h2 id="about-heading" className="mt-2.5 max-w-[28ch] font-heading text-[1.7rem] leading-[1.14] font-semibold tracking-tight text-balance lg:text-[clamp(2rem,3vw,2.4rem)]">
+              <h2 id="about-heading" className={`${layout.title} mt-3 max-w-[28ch] font-heading font-semibold`}>
                 Behind every great product is a team that{" "}
                 <span className="text-brand-secondary dark:text-blue-300">refused to settle.</span>
               </h2>
             </ScrollReveal>
-            <ScrollReveal effect="from-left" className="mt-3 max-w-[66ch] space-y-2.5 text-sm leading-relaxed text-muted-foreground">
+            <ScrollReveal effect="from-left" className={`${layout.intro} space-y-2.5`}>
               <p className="font-medium text-foreground">Before Axonill was a company, it was three friends who couldn&apos;t stop building.</p>
               <p>
                 Weekends turned into side projects. Hackathons turned into late-night launches. Every project taught us the same lesson: great software isn&apos;t about adding more features. It&apos;s about getting the details right and never settling for good enough.
@@ -121,7 +122,7 @@ export function About() {
           </div>
         </div>
 
-        <div className="mt-6 grid gap-4 border-t border-border/70 pt-4 lg:grid-cols-2 lg:gap-x-10">
+        <div className={`${layout.body} grid gap-(--card-gap) border-t border-border/70 pt-4 lg:grid-cols-2`}>
           <ScrollReveal effect="from-left">
             <h3 className="flex items-center gap-2 font-heading text-base font-semibold tracking-tight">
               <Target aria-hidden className="size-4 shrink-0 text-brand-secondary dark:text-blue-300" />

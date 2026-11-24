@@ -3,7 +3,6 @@
   --stack-line: color-mix(in srgb, var(--chart-1) 38%, var(--border));
   --stack-halo: var(--chart-1);
   --stack-hub: linear-gradient(135deg, var(--card), color-mix(in srgb, var(--chart-1) 9%, var(--card)));
-  padding-block: clamp(2.5rem, 4.5vw, 4rem);
   color: var(--foreground);
   background: var(--background);
 }
@@ -20,12 +19,12 @@
 
 .layout {
   display: grid;
+  grid-template-areas: "header" "controls" "visual";
+  gap: var(--card-gap);
+}
+
+.layout:has(> .directory:not([hidden])) {
   grid-template-areas: "header" "controls" "visual" "directory";
-  width: 100%;
-  max-width: 100rem;
-  gap: clamp(0.85rem, 2.5vw, 1.5rem);
-  margin-inline: auto;
-  padding-inline: clamp(1rem, 4vw, 4.25rem);
 }
 
 .header { grid-area: header; }
@@ -37,7 +36,6 @@
   align-items: center;
   gap: 0.6rem;
   color: var(--stack-accent);
-  font-size: 0.6875rem;
   font-weight: 650;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -53,22 +51,10 @@
 .heading {
   max-width: 23ch;
   margin-block-start: 0.75rem;
-  font-size: clamp(1.875rem, 3.5vw, 3rem);
   font-weight: 650;
-  line-height: 1.07;
-  text-wrap: balance;
 }
 
 .heading span { color: var(--stack-accent); }
-
-.intro {
-  max-width: 47ch;
-  margin-block-start: 0.75rem;
-  color: var(--muted-foreground);
-  font-size: clamp(0.91rem, 1.35vw, 1.06rem);
-  line-height: 1.65;
-  text-wrap: pretty;
-}
 
 .filters, .controlRow, .visualFooter, .readout, .pagination {
   display: flex;
@@ -390,8 +376,7 @@
     overflow: hidden;
     pointer-events: none;
     color: var(--foreground);
-    font-size: 0.6875rem;
-    font-weight: 650;
+      font-weight: 650;
     line-height: 1.25;
     white-space: nowrap;
     text-overflow: ellipsis;
@@ -403,7 +388,7 @@
 }
 
 @media (min-width: 48rem) {
-  .stage { --node-size: 3rem; --node-logo: 1.625rem; height: 24rem; }
+  .stage { --node-size: 3rem; --node-logo: 1.625rem; height: 22rem; }
   .hub { width: 4rem; }
   .orbits, .desktopNodes { display: block; }
   .mobileOrbits, .mobileNodes { display: none; }
@@ -412,15 +397,20 @@
 }
 
 @media (min-width: 68rem) {
-  .stage { --node-size: 3.5rem; --node-logo: 1.875rem; height: 28rem; }
+  .stage { --node-size: 3.5rem; --node-logo: 1.875rem; height: 26rem; }
   .hub { width: 4.5rem; }
 
   .layout {
-    grid-template-areas: "header visual" "controls visual" "directory directory";
+    grid-template-areas: "header visual" "controls visual";
     grid-template-columns: minmax(0, 0.72fr) minmax(0, 1.28fr);
-    grid-template-rows: 1fr 1fr auto;
-    column-gap: clamp(1.25rem, 3.5vw, 3.5rem);
+    grid-template-rows: 1fr 1fr;
+    column-gap: var(--heading-gap);
     row-gap: 0.9rem;
+  }
+
+  .layout:has(> .directory:not([hidden])) {
+    grid-template-areas: "header visual" "controls visual" "directory directory";
+    grid-template-rows: 1fr 1fr auto;
   }
 
   .header { align-self: end; }

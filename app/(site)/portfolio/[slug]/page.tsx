@@ -7,6 +7,7 @@ import { ArrowLeft, ArrowRight, ArrowUpRight, MapPin } from "lucide-react";
 
 import { ProjectScrollPreview } from "@/components/sections/portfolio-preview";
 import styles from "@/components/sections/portfolio.module.css";
+import layout from "@/components/site-layout.module.css";
 import { db } from "@/lib/api";
 import { portfolioItem } from "@/lib/db/schema";
 import { portfolioCaseStudyPath, portfolioIdFromSlug, portfolioLiveUrl, portfolioProjectPath } from "@/lib/portfolio-links";
@@ -40,8 +41,8 @@ export default async function CaseStudyPage({ params }: Props) {
   const details = project.caseStudyDetails;
 
   return (
-    <article className={`${styles.section} ${styles.detail} font-sans`} aria-labelledby="case-study-title">
-      <div className={styles.content}>
+    <article className={`${styles.section} ${layout.section} font-sans`} aria-labelledby="case-study-title">
+      <div className={layout.content}>
         <Link href="/#work" className={styles.backLink}><ArrowLeft size={17} aria-hidden /> Back to Portfolio</Link>
         <div className={styles.caseLayout}>
           <div className={styles.casePreview}>
@@ -49,8 +50,8 @@ export default async function CaseStudyPage({ params }: Props) {
           </div>
           <div className={styles.caseCopy}>
             <header className={styles.detailSection}>
-              <p className={styles.eyebrow}>{project.category}</p>
-              <h1 id="case-study-title" className={styles.caseTitle}>{project.title}</h1>
+              <p className={`${styles.eyebrow} ${layout.eyebrow}`}>{project.category}</p>
+              <h1 id="case-study-title" className={`${layout.title} ${styles.caseTitle}`}>{project.title}</h1>
               {details?.location && <p className={styles.location}><MapPin size={15} aria-hidden />{details.location}</p>}
               {project.tags.length > 0 && <TagList items={project.tags} />}
             </header>
@@ -58,7 +59,7 @@ export default async function CaseStudyPage({ params }: Props) {
             {project.description && (
               <section className={styles.detailSection}>
                 <h2 className={styles.detailLabel}>Project overview</h2>
-                <p className={styles.fullDescription}>{project.description}</p>
+                <p className={`${layout.intro} whitespace-pre-wrap [overflow-wrap:anywhere]`}>{project.description}</p>
               </section>
             )}
 

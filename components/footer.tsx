@@ -1,174 +1,76 @@
 import Link from "next/link";
 import { Mail, MessageCircle } from "lucide-react";
-import {
-  FacebookIcon,
-  GithubIcon,
-  InstagramIcon,
-  LinkedinIcon,
-  TwitterIcon,
-} from "@/components/brand-icons";
 
+import { FacebookIcon, GithubIcon, InstagramIcon } from "@/components/brand-icons";
 import { BrandMark } from "@/components/brand-mark";
-import { ScrollReveal } from "@/components/reveal";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
+import { FooterDirections, FooterLocation } from "@/components/footer-location";
+import layout from "@/components/site-layout.module.css";
+import styles from "./footer.module.css";
 
-const QUICK_LINKS = [
-  { label: "Process", href: "#process" },
-  { label: "Work", href: "#work" },
-  { label: "Team", href: "#team" },
+const EXPLORE = [
+  { label: "Services", href: "/#services" },
+  { label: "Process", href: "/#process" },
+  { label: "Our Work", href: "/#work" },
+  { label: "Team", href: "/#team" },
   { label: "Work With Us", href: "/#work-with-us" },
-  { label: "FAQ", href: "#faq" },
+  { label: "FAQ", href: "/#faq" },
 ];
 
-const SERVICES = [
-  { label: "Product Strategy", href: "#services" },
-  { label: "UX/UI Design", href: "#services" },
-  { label: "Web Development", href: "#services" },
-  { label: "Mobile Apps", href: "#services" },
-  { label: "Branding", href: "#services" },
-];
-
-const RESOURCES = [
-  { label: "Blog", href: "#" },
-  { label: "Case Studies", href: "#work" },
-  { label: "Documentation", href: "#" },
-  { label: "Support", href: "#contact" },
-  { label: "Privacy Policy", href: "#" },
-];
+const EMAIL = "info.axonill@gmail.com";
+const WHATSAPP_URL = "https://wa.me/923288811677";
 
 const SOCIALS = [
   { label: "GitHub", href: "https://github.com/Axonill", icon: GithubIcon },
-  { label: "LinkedIn", href: "https://linkedin.com/company/YOUR_HANDLE", icon: LinkedinIcon },
-  { label: "Facebook", href: "https://www.facebook.com/profile.php?id=61591623881782", icon: FacebookIcon },
-  { label: "Instagram", href: "https://www.instagram.com/info.axonill/?hl=en", icon: InstagramIcon },
-  { label: "WhatsApp", href: "https://wa.me/+923288811677", icon: MessageCircle },
-  { label: "Email", href: "mailto:info.axonill@gmail.com", icon: Mail },
+  { label: "Facebook", href: "https://www.facebook.com/people/Axonill/61591623881782/", icon: FacebookIcon },
+  { label: "Instagram", href: "https://www.instagram.com/info.axonill/", icon: InstagramIcon },
 ];
-
-function FooterLink({ href, label }: { href: string; label: string }) {
-  return (
-    <li>
-      <Link
-        href={href}
-        className="rounded-sm text-sm text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-      >
-        {label}
-      </Link>
-    </li>
-  );
-}
-
-function FooterColumn({
-  title,
-  links,
-  index,
-}: {
-  title: string;
-  links: { label: string; href: string }[];
-  index: number;
-}) {
-  return (
-    <ScrollReveal index={index}>
-      <h3 className="text-sm font-semibold text-foreground">{title}</h3>
-      <ul className="mt-4 space-y-3">
-        {links.map((link) => (
-          <FooterLink key={link.label} {...link} />
-        ))}
-      </ul>
-    </ScrollReveal>
-  );
-}
 
 export function Footer() {
   return (
-    <footer className="border-t bg-background">
-      <div className="mx-auto w-full max-w-6xl px-4 py-14 sm:px-6">
-        <div className="grid grid-cols-2 gap-8 md:grid-cols-4 lg:grid-cols-5">
-          {/* Brand + newsletter — spans wider on large screens */}
-          <ScrollReveal className="col-span-2 lg:col-span-1">
-            <Link
-              href="/"
-              aria-label="Axonill home"
-              className="group flex items-center gap-2.5 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-            >
-              <BrandMark size={36} interactive />
-              <span className="font-heading text-lg font-semibold tracking-tight text-foreground">
-                Axonill
-              </span>
+    <footer className={`${styles.footer} font-sans`}>
+      <div className={`${layout.content} ${styles.content}`}>
+        <div className={styles.main}>
+          <div className={styles.brand}>
+            <div className={styles.watermark} aria-hidden="true" />
+            <Link href="/" className={styles.brandLink}>
+              <BrandMark size={32} />
+              <span className="font-heading">Axonill</span>
             </Link>
-            <p className="mt-4 max-w-xs text-sm text-muted-foreground">
-              Innovating Digital Experiences.
-            </p>
-          </ScrollReveal>
-
-          <FooterColumn title="Quick Links" links={QUICK_LINKS} index={1} />
-          <FooterColumn title="Services" links={SERVICES} index={2} />
-          <FooterColumn title="Resources" links={RESOURCES} index={3} />
-
-          {/* Social Media column */}
-          <ScrollReveal index={4} className="col-span-2 md:col-span-1">
-            <h3 className="text-sm font-semibold text-foreground">
-              Social Media
-            </h3>
-            <div className="mt-4 flex flex-wrap gap-2">
+            <p>Innovating Digital Experiences.</p>
+            <ul className={styles.socials} aria-label="Social media">
               {SOCIALS.map(({ label, href, icon: Icon }) => (
-                <Link
-                  key={label}
-                  href={href}
-                  aria-label={label}
-                  className="grid size-9 place-items-center rounded-lg border border-border text-muted-foreground transition-colors outline-none hover:border-brand-secondary/40 hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                >
-                  <Icon className="size-4" />
-                </Link>
+                <li key={label}>
+                  <a href={href} target="_blank" rel="noopener noreferrer" aria-label={label}><Icon aria-hidden="true" /></a>
+                </li>
               ))}
-            </div>
-
-            {/* Newsletter */}
-            <p className="mt-6 text-sm font-medium text-foreground">
-              Stay in the loop
-            </p>
-            <form
-              className="mt-3 flex gap-2"
-              // Placeholder — no submission wired up yet.
-              action="#"
-            >
-              <Input
-                type="email"
-                required
-                placeholder="you@company.com"
-                aria-label="Email address"
-                className="h-9"
-              />
-              <Button type="submit" size="lg" className="shrink-0">
-                Subscribe
-              </Button>
-            </form>
-          </ScrollReveal>
-        </div>
-
-        <Separator className="my-8" />
-
-        <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
-          <p className="text-xs text-muted-foreground">
-            &copy; {new Date().getFullYear()} Axonill. All rights reserved.
-          </p>
-          <div className="flex items-center gap-6">
-            <Link
-              href="#"
-              className="rounded-sm text-xs text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-            >
-              Terms
-            </Link>
-            <Link
-              href="#"
-              className="rounded-sm text-xs text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-            >
-              Privacy
-            </Link>
+            </ul>
           </div>
+
+          <nav aria-labelledby="footer-explore">
+            <h2 id="footer-explore" className={styles.groupHeading}>Explore</h2>
+            <ul className={styles.explore}>
+              {EXPLORE.map(({ label, href }) => (
+                <li key={href}><Link href={href}>{label}</Link></li>
+              ))}
+            </ul>
+          </nav>
+
+          <div className={styles.connect}>
+            <h2 className={styles.groupHeading}>Connect</h2>
+            <ul className={styles.contacts}>
+              <li>
+                <a href={`mailto:${EMAIL}`}><Mail aria-hidden="true" /><span>{EMAIL}</span></a>
+              </li>
+              <li>
+                <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer"><MessageCircle aria-hidden="true" />WhatsApp</a>
+              </li>
+              <FooterDirections />
+            </ul>
+          </div>
+          <FooterLocation />
         </div>
+
+        <p className={styles.copyright}>&copy; {new Date().getFullYear()} Axonill. All rights reserved.</p>
       </div>
     </footer>
   );

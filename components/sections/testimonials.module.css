@@ -7,7 +7,6 @@
   --edge-sweep: color-mix(in srgb, var(--chart-2) 22%, var(--card));
   --edge-reflection: color-mix(in srgb, var(--chart-1) 8%, var(--border));
   --card-shadow: rgb(30 61 98 / 7%);
-  padding-block: clamp(3rem, 6vw, 5rem);
   color: var(--foreground);
 }
 
@@ -35,7 +34,6 @@
   gap: 0.55rem;
   margin-block-end: 0.75rem;
   color: var(--testimonial-accent);
-  font-size: 0.6875rem;
   font-weight: 650;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -49,7 +47,6 @@
 }
 
 .section .accent { color: var(--testimonial-accent); }
-.body { margin-block-start: clamp(1.35rem, 3vw, 2.35rem); }
 .carousel { min-width: 0; }
 
 .controls {
@@ -90,7 +87,7 @@
 }
 
 .viewport {
-  --gap: clamp(0.75rem, 1.65vw, 1.5rem);
+  --gap: var(--card-gap);
   position: relative;
   min-width: 0;
   overflow-x: auto;
@@ -221,7 +218,6 @@
 .initials {
   color: var(--testimonial-accent);
   background: color-mix(in srgb, var(--testimonial-accent) 13%, var(--card));
-  font-size: 0.6875rem;
   font-weight: 650;
 }
 

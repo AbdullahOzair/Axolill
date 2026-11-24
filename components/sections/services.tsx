@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import type { Service } from "@/lib/data-model";
 import { fetchJson, useLoader } from "@/lib/use-api";
+import layout from "@/components/site-layout.module.css";
 import styles from "./services.module.css";
 
 async function loadServices(): Promise<Service[]> {
@@ -21,15 +22,15 @@ export function Services() {
   const { data, error, loading, reload } = useLoader(loadServices);
 
   return (
-    <section id="services" aria-labelledby="services-heading" aria-busy={loading} className={`${styles.section} font-sans`}>
-      <div className={styles.layout}>
+    <section id="services" aria-labelledby="services-heading" aria-busy={loading} className={`${styles.section} ${layout.section} scroll-mt-16 font-sans`}>
+      <div className={`${layout.content} ${styles.layout}`}>
         <div>
           <ScrollReveal as="header" effect="text">
-            <p className={styles.eyebrow}>What we do</p>
-            <h2 id="services-heading" className={styles.heading}>
+            <p className={`${styles.eyebrow} ${layout.eyebrow}`}>What we do</p>
+            <h2 id="services-heading" className={`${layout.title} ${styles.heading}`}>
               Services built to <span>ship and scale</span>
             </h2>
-            <p className={styles.intro}>
+            <p className={layout.intro}>
               End-to-end product capability under one roof — pick a single service
               or let us take the whole thing from idea to launch.
             </p>

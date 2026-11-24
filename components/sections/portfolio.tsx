@@ -12,6 +12,7 @@ import { portfolioLiveUrl, portfolioProjectPath } from "@/lib/portfolio-links";
 import { fetchJson, useLoader } from "@/lib/use-api";
 import { CatalogControls } from "./catalog-controls";
 import { ProjectScrollPreview } from "./portfolio-preview";
+import layout from "@/components/site-layout.module.css";
 import styles from "./portfolio.module.css";
 
 /** Keep the existing filter order and append any new CMS categories. */
@@ -49,19 +50,19 @@ export function Portfolio() {
   const visible = matching.slice(currentPage * PROJECTS_PER_PAGE, (currentPage + 1) * PROJECTS_PER_PAGE);
 
   return (
-    <section id="work" aria-labelledby="portfolio-heading" aria-busy={loading} className={`${styles.section} scroll-mt-16 py-14 font-sans sm:py-18`}>
-      <div className={styles.content}>
-        <ScrollReveal as="header" effect="text" className="max-w-2xl">
-          <p className={styles.eyebrow}>Our work</p>
-          <h2 id="portfolio-heading" className="mt-3 font-heading text-3xl leading-[1.1] font-semibold tracking-tight text-balance sm:text-4xl lg:text-5xl">
+    <section id="work" aria-labelledby="portfolio-heading" aria-busy={loading} className={`${styles.section} ${layout.section} scroll-mt-16 font-sans`}>
+      <div className={layout.content}>
+        <ScrollReveal as="header" effect="text" className={layout.header}>
+          <p className={`${styles.eyebrow} ${layout.eyebrow}`}>Our work</p>
+          <h2 id="portfolio-heading" className={`${layout.title} mt-3 font-heading font-semibold`}>
             Selected <span className={styles.accent}>Projects</span>
           </h2>
-          <p className="mt-3 max-w-xl text-sm leading-relaxed text-pretty text-muted-foreground sm:text-base">
+          <p className={layout.intro}>
             Explore the websites, applications, and digital experiences we&apos;ve brought to life.
           </p>
         </ScrollReveal>
 
-        <div className="mt-7">
+        <div className={layout.body}>
           {loading && !data ? (
             <GridSkeleton />
           ) : error ? (

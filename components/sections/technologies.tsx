@@ -11,6 +11,7 @@ import { EmptyState, ErrorState } from "@/components/ui/states";
 import type { Technology } from "@/lib/data-model";
 import { fetchJson, useLoader } from "@/lib/use-api";
 import { orbitPosition, orbitRadius, startGalaxyMotion } from "./technology-galaxy-motion";
+import layout from "@/components/site-layout.module.css";
 import styles from "./technologies.module.css";
 
 type Group = { category: string; items: Technology[] };
@@ -59,15 +60,15 @@ export function Technologies() {
       id="technologies"
       aria-labelledby="technologies-heading"
       aria-busy={loading}
-      className={styles.section + " scroll-mt-16 font-sans"}
+      className={`${styles.section} ${layout.section} scroll-mt-16 font-sans`}
     >
-      <div className={styles.layout}>
+      <div className={`${layout.content} ${styles.layout}`}>
         <ScrollReveal as="header" effect="text" className={styles.header}>
-          <p className={styles.eyebrow}>Our stack</p>
-          <h2 id="technologies-heading" className={styles.heading + " font-heading tracking-tight"}>
+          <p className={`${styles.eyebrow} ${layout.eyebrow}`}>Our stack</p>
+          <h2 id="technologies-heading" className={`${layout.title} ${styles.heading} font-heading`}>
             Technologies <span>we build with</span>
           </h2>
-          <p className={styles.intro}>
+          <p className={layout.intro}>
             A modern, battle-tested toolkit across the whole stack — chosen for
             speed, reliability, and long-term maintainability.
           </p>

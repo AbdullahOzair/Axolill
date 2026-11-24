@@ -14,11 +14,15 @@ import { Button } from "@/components/ui/button";
 export function ImageUpload({
   value,
   onChange,
+  onUploadingChange,
+  prepareFile,
   label = "Image",
   tallPreview = false,
 }: {
   value: string | null;
   onChange: (key: string | null) => void;
+  onUploadingChange?: (uploading: boolean) => void;
+  prepareFile?: (file: File) => Promise<File>;
   label?: string;
   tallPreview?: boolean;
 }) {
@@ -30,9 +34,10 @@ export function ImageUpload({
   async function handleFile(file: File) {
     setError(null);
     setUploading(true);
+    onUploadingChange?.(true);
     try {
       const form = new FormData();
-      form.append("file", file);
+      form.append("file", prepareFile ? await prepareFile(file) : file);
 
       const res = await fetch("/api/media", { method: "POST", body: form });
       const body = (await res.json().catch(() => null)) as {
@@ -48,6 +53,7 @@ export function ImageUpload({
       setError(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setUploading(false);
+      onUploadingChange?.(false);
       if (inputRef.current) inputRef.current.value = "";
     }
   }

@@ -1,5 +1,6 @@
 "use client";
 
+import layout from "@/components/site-layout.module.css";
 import * as React from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -185,7 +186,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
   }
 
   return (
-    <section className="relative isolate flex min-h-[calc(100vh-4rem)] items-center justify-center overflow-hidden px-4 py-16">
+    <section className={`${layout.section} relative isolate flex items-center justify-center overflow-hidden`}>
       {/* Brand background */}
       <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,var(--color-border)_1px,transparent_1px),linear-gradient(to_bottom,var(--color-border)_1px,transparent_1px)] bg-[size:56px_56px] opacity-40 [mask-image:radial-gradient(ellipse_55%_55%_at_50%_45%,black,transparent)] dark:opacity-30" />
@@ -197,7 +198,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
         initial={reduce ? { opacity: 0 } : { opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-        className="w-full max-w-md"
+        className={`${layout.content} ${layout.narrow}`}
       >
         <Link
           href="/"

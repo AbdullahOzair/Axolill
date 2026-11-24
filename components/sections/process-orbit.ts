@@ -116,7 +116,7 @@ export function mountProcessOrbit(track: HTMLElement, stage: HTMLElement, onExpa
 
   function measure() {
     if (compact.matches) return;
-    center = { x: stage.clientWidth / 2, y: stage.clientHeight / 2 };
+    center = { x: stage.clientWidth / 2, y: hub.offsetTop };
     const point = ([x, y]: readonly [number, number]) => ({
       x: diagram.offsetLeft + x / 600 * diagram.clientWidth,
       y: diagram.offsetTop + y / 280 * diagram.clientHeight,

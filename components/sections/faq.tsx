@@ -5,7 +5,7 @@ import { useId, useRef, useState, type CSSProperties } from "react";
 
 import { ScrollReveal } from "@/components/reveal";
 import styles from "./faq.module.css";
-import layout from "./compact-home-sections.module.css";
+import layout from "@/components/site-layout.module.css";
 
 type FaqItem = {
   question: string;
@@ -61,8 +61,8 @@ export function Faq() {
     <section id="faq" aria-labelledby="faq-heading" className={`${styles.section} ${layout.section} scroll-mt-16 font-sans`}>
       <div className={layout.content}>
         <ScrollReveal as="header" className={layout.header}>
-          <p className={styles.eyebrow}>FAQ</p>
-          <h2 id="faq-heading" className={layout.title + " font-heading"}>
+          <p className={`${styles.eyebrow} ${layout.eyebrow}`}>FAQ</p>
+          <h2 id="faq-heading" className={`${layout.title} ${layout.stackedTitle} font-heading font-bold`}>
             Your questions. <span className={styles.accent}>Our answers.</span>
           </h2>
           <p className={layout.intro}>A little clarity before we start building together.</p>
