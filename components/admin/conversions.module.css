@@ -1,0 +1,95 @@
+.workspace, .analytics, .details { display: grid; gap: 1rem; min-width: 0; }
+.panel, .chart {
+  display: grid;
+  min-width: 0;
+  gap: .75rem;
+  align-content: start;
+  padding: clamp(.8rem, 2.5vw, 1.2rem);
+  border: 1px solid var(--border);
+  border-radius: .9rem;
+  color: var(--card-foreground);
+  background: var(--card);
+}
+.panel h2, .panel h3, .chart figcaption { font-weight: 650; }
+.panel h2, .detailHeading h2 { font-size: 1.12rem; }
+.panel h3, .panel summary { font-size: .94rem; font-weight: 650; }
+.panel summary { cursor: pointer; }
+.panel[open] > summary { margin-bottom: .55rem; }
+.panel > p, .chart > p { font-size: .85rem; color: var(--muted-foreground); }
+.toolbar, .pagination, .recordHeading, .detailHeading {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: .55rem;
+  align-items: end;
+}
+.recordHeading { justify-content: space-between; align-items: center; }
+.detailHeading { align-items: center; }
+.detailHeading > div { flex: 1 1 auto; overflow-wrap: anywhere; }
+.detailHeading p { font-size: .84rem; color: var(--muted-foreground); }
+.detailHeading a, .csv, .panel a { color: var(--status-info); text-decoration: underline; text-underline-offset: .15em; font-size: .86rem; }
+.pagination { align-items: center; justify-content: flex-end; }
+.pagination p { margin-inline-end: auto; color: var(--muted-foreground); font-size: .84rem; }
+
+.toolbar label, .formGrid label, .miniForm label { display: grid; gap: .28rem; font-size: .78rem; color: var(--muted-foreground); }
+.workspace :is(input:not([type="checkbox"]),select),
+.drawer :is(input:not([type="checkbox"]),select,textarea) {
+  min-width: 0;
+  min-height: 2rem;
+  max-width: 100%;
+  padding: .32rem .5rem;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: .44rem;
+  color: var(--foreground);
+  font-size: .82rem;
+}
+.workspace :is(input, select, a, button, summary):focus-visible,
+.drawer :is(input, select, textarea, a, button, summary):focus-visible {
+  outline: 2px solid var(--status-info);
+  outline-offset: 2px;
+}
+.hint { color: var(--muted-foreground); font-size: .79rem; }
+.error { color: var(--destructive); font-size: .86rem; }
+.alerts { display: flex; flex-wrap: wrap; gap: .35rem .9rem; color: var(--muted-foreground); font-size: .84rem; }
+.alerts strong { color: var(--foreground); }
+
+.metrics { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%, 8.4rem),1fr)); gap: .5rem; }
+.metrics > div { display: grid; gap: .35rem; align-content: space-between; min-width: 0; padding: .66rem; border: 1px solid var(--border); border-radius: .65rem; background: var(--card); }
+.metrics dt { color: var(--muted-foreground); font-size: .78rem; }
+.metrics dd { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 1.25rem; }
+.chartGrid { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%, 18rem),1fr)); gap: .65rem; }
+.chart :is(ul,ol) { display: grid; gap: .45rem; max-height: 18rem; overflow-y: auto; }
+.chart li { display: grid; gap: .26rem; }
+.chart li div { display: flex; justify-content: space-between; gap: .5rem; font-size: .8rem; overflow-wrap: anywhere; }
+.chart li small { color: var(--muted-foreground); font-size: .72rem; }
+.bar { display: block; height: .32rem; border-radius: 999px; background: var(--secondary); overflow: hidden; }
+.bar > span { display: block; height: 100%; border-radius: inherit; background: var(--status-info); }
+
+.tableWrap, .board { width: 100%; overflow-x: auto; }
+.tableWrap table { width: 100%; min-width: 62rem; text-align: start; font-size: .8rem; border-collapse: collapse; }
+.tableWrap :is(th,td) { padding: .48rem; border-bottom: 1px solid var(--border); text-align: start; }
+.tableWrap thead { color: var(--muted-foreground); }
+.tableWrap th { font-weight: 650; }
+.tableWrap td:nth-child(4) { max-width: 15rem; overflow-wrap: anywhere; }
+.board { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(13rem, 1fr); gap: .55rem; padding-bottom: .45rem; }
+.column { padding: .55rem; min-height: 10.5rem; border: 1px solid var(--border); border-radius: .56rem; background: var(--background); }
+.column[data-target="true"] { border-color: var(--status-info); }
+.column h3 { display: flex; justify-content: space-between; gap: .3rem; padding: .2rem .1rem .5rem; font-size: .8rem; }
+.column article { display: grid; min-width: 0; gap: .3rem; margin-bottom: .4rem; padding: .5rem; border: 1px solid var(--border); border-radius: .5rem; background: var(--card); }
+.column article[draggable="true"] { cursor: grab; }
+.column article button { text-align: start; font-weight: 650; font-size: .82rem; cursor: pointer; overflow-wrap: anywhere; }
+.column article p { color: var(--muted-foreground); font-size: .74rem; }
+
+.drawer { max-height: min(91dvh, 57rem); overflow-y: auto; padding: clamp(.78rem, 3vw, 1.55rem); }
+.formGrid, .summary { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%, 11rem),1fr)); gap: .5rem .7rem; }
+.formGrid label { min-width: 0; }
+.panel > button, .miniForm > button { width: fit-content; }
+.summary dt { font-size: .76rem; color: var(--muted-foreground); }
+.summary dd { margin-top: .18rem; font-size: .85rem; white-space: pre-wrap; overflow-wrap: anywhere; }
+.full { grid-column: 1 / -1; }
+.history, .miniForm { display: grid; gap: .55rem; }
+.history li { padding-block-end: .4rem; border-block-end: 1px solid var(--border); overflow-wrap: anywhere; font-size: .85rem; }
+.history li p { white-space: pre-wrap; }
+.history li small { color: var(--muted-foreground); margin-inline-end: .4rem; }
+.miniForm .check { display: flex; align-items: center; gap: .35rem; }

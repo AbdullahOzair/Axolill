@@ -1,4 +1,6 @@
 import { sql } from "drizzle-orm";
+import type { PortfolioCaseStudyDetails } from "@/lib/data-model";
+import type { InquiryGroup, InquiryPriority, InquiryStage, InquiryType } from "@/lib/inquiries";
 import {
   index,
   integer,
@@ -466,6 +468,10 @@ export const portfolioItem = sqliteTable(
     tags: text("tags", { mode: "json" }).$type<string[]>().notNull().default([]),
     /** R2 object key (same convention as ProjectFile.fileUrl). Nullable. */
     coverImage: text("coverImage"),
+    screenshotImage: text("screenshotImage"),
+    liveUrl: text("liveUrl"),
+    caseStudyUrl: text("caseStudyUrl"),
+    caseStudyDetails: text("caseStudyDetails", { mode: "json" }).$type<PortfolioCaseStudyDetails>(),
     order: integer("order").notNull().default(0),
     published: integer("published", { mode: "boolean" })
       .notNull()
@@ -492,6 +498,8 @@ export const teamMember = sqliteTable("team_member", {
     .default([]),
   /** R2 object key, or null to fall back to initials. */
   photoUrl: text("photoUrl"),
+  linkedinUrl: text("linkedinUrl"),
+  portfolioUrl: text("portfolioUrl"),
   order: integer("order").notNull().default(0),
   published: integer("published", { mode: "boolean" }).notNull().default(false),
   createdAt: integer("createdAt", { mode: "timestamp" })
@@ -513,6 +521,86 @@ export const teamMember = sqliteTable("team_member", {
  * SECURITY: accessToken/refreshToken are stored here in plaintext. They must
  * never leave the server — do not expose this table through a public API.
  */
+export const inquiry = sqliteTable("inquiry", {
+  id: text("id").primaryKey().references(() => lead.id, { onDelete: "cascade" }),
+  reference: text("reference").notNull().unique(),
+  fingerprint: text("fingerprint").notNull().unique(),
+  type: text("type").$type<InquiryType>().notNull(),
+  country: text("country").notNull(),
+  phone: text("phone"),
+  title: text("title"),
+  objectives: text("objectives"),
+  situation: text("situation"),
+  categories: text("categories", { mode: "json" }).$type<string[]>().notNull(),
+  budget: real("budget"),
+  currency: text("currency"),
+  timeline: text("timeline"),
+  website: text("website"),
+  consultation: text("consultation"),
+  sessionId: text("sessionId"),
+  stage: text("stage").$type<InquiryStage>().notNull().default("new"),
+  priority: text("priority").$type<InquiryPriority>().notNull().default("normal"),
+  assigneeId: text("assigneeId").references(() => teamMember.id, { onDelete: "set null" }),
+  followUpAt: integer("followUpAt", { mode: "timestamp" }),
+  convertedClientId: text("convertedClientId").references(() => user.id, { onDelete: "set null" }),
+  convertedProjectId: text("convertedProjectId").references(() => project.id, { onDelete: "set null" }),
+  convertedAt: integer("convertedAt", { mode: "timestamp" }),
+  lostReason: text("lostReason"),
+  version: integer("version").notNull().default(0),
+}, (t) => [
+  index("inquiry_stage_followup_idx").on(t.stage, t.followUpAt),
+  index("inquiry_session_idx").on(t.sessionId),
+]);
+
+export const inquiryService = sqliteTable("inquiry_service", {
+  id: text("id").primaryKey(),
+  inquiryId: text("inquiryId").notNull().references(() => inquiry.id, { onDelete: "cascade" }),
+  serviceId: text("serviceId").references(() => service.id, { onDelete: "set null" }),
+  label: text("label").notNull(),
+  group: text("group").$type<InquiryGroup>().notNull(),
+}, (t) => [index("inquiry_service_inquiry_idx").on(t.inquiryId)]);
+
+export const inquiryActivity = sqliteTable("inquiry_activity", {
+  id: text("id").primaryKey(),
+  inquiryId: text("inquiryId").notNull().references(() => inquiry.id, { onDelete: "cascade" }),
+  kind: text("kind").notNull(),
+  previousStage: text("previousStage").$type<InquiryStage>(),
+  newStage: text("newStage").$type<InquiryStage>(),
+  description: text("description").notNull(),
+  adminId: text("adminId").references(() => user.id, { onDelete: "set null" }),
+  createdAt: integer("createdAt", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
+}, (t) => [index("inquiry_activity_lead_idx").on(t.inquiryId, t.createdAt)]);
+
+export const inquiryNote = sqliteTable("inquiry_note", {
+  id: text("id").primaryKey(),
+  inquiryId: text("inquiryId").notNull().references(() => inquiry.id, { onDelete: "cascade" }),
+  adminId: text("adminId").references(() => user.id, { onDelete: "set null" }),
+  content: text("content").notNull(),
+  createdAt: integer("createdAt", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
+  updatedAt: integer("updatedAt", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
+}, (t) => [index("inquiry_note_lead_idx").on(t.inquiryId, t.createdAt)]);
+
+export const inquiryEvent = sqliteTable("inquiry_event", {
+  id: text("id").primaryKey(),
+  sessionId: text("sessionId").notNull(),
+  event: text("event").notNull(),
+  type: text("type").$type<InquiryType>(),
+  step: integer("step"),
+  inquiryId: text("inquiryId").references(() => inquiry.id, { onDelete: "set null" }),
+  referral: text("referral"),
+  campaign: text("campaign", { mode: "json" }).$type<Record<string, string>>(),
+  createdAt: integer("createdAt", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
+}, (t) => [
+  index("inquiry_event_date_idx").on(t.event, t.createdAt),
+  index("inquiry_event_session_idx").on(t.sessionId),
+]);
+
+export const inquirySettings = sqliteTable("inquiry_settings", {
+  id: text("id").primaryKey(),
+  domesticCountry: text("domesticCountry").notNull().default("PK"),
+  serviceGroups: text("serviceGroups", { mode: "json" }).$type<Record<string, InquiryGroup>>().notNull().default({}),
+});
+
 export const googleCalendarConnection = sqliteTable(
   "google_calendar_connection",
   {

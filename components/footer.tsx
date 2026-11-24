@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Mail } from "lucide-react";
+import { Mail, MessageCircle } from "lucide-react";
 import {
   FacebookIcon,
   GithubIcon,
@@ -18,7 +18,7 @@ const QUICK_LINKS = [
   { label: "Process", href: "#process" },
   { label: "Work", href: "#work" },
   { label: "Team", href: "#team" },
-  { label: "Pricing", href: "#pricing" },
+  { label: "Work With Us", href: "/#work-with-us" },
   { label: "FAQ", href: "#faq" },
 ];
 
@@ -43,8 +43,8 @@ const SOCIALS = [
   { label: "LinkedIn", href: "https://linkedin.com/company/YOUR_HANDLE", icon: LinkedinIcon },
   { label: "Facebook", href: "https://www.facebook.com/profile.php?id=61591623881782", icon: FacebookIcon },
   { label: "Instagram", href: "https://www.instagram.com/info.axonill/?hl=en", icon: InstagramIcon },
-  { label: "Twitter", href: "https://twitter.com/YOUR_HANDLE", icon: TwitterIcon },
-  { label: "Email", href: "mailto:info@axonill.com", icon: Mail },
+  { label: "WhatsApp", href: "https://wa.me/+923288811677", icon: MessageCircle },
+  { label: "Email", href: "mailto:info.axonill@gmail.com", icon: Mail },
 ];
 
 function FooterLink({ href, label }: { href: string; label: string }) {

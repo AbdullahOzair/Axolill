@@ -355,10 +355,10 @@ export function Contact() {
           <ScrollReveal effect="from-right" className="flex flex-col gap-6">
             <div className="grid gap-4 sm:grid-cols-2">
               <ContactLink
-                href="mailto:info@axonill.com"
+                href="mailto:info.axonill@gmail.com"
                 icon={Mail}
                 label="Email us"
-                value="info@axonill.com"
+                value="info.axonill@gmail.com"
               />
               <ContactLink
                 href={`https://wa.me/${+923288811677}`}
@@ -378,16 +378,17 @@ export function Contact() {
                   Our location
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  Air University, Islamabad, Pakistan
+                  Midway Centrum 6th road, rawalpindi,Pakistan
                 </p>
               </div>
             </div>
 
             {/* Google Maps embed */}
             <div className="relative aspect-[16/10] flex-1 overflow-hidden rounded-2xl border border-border/60 shadow-sm">
+
               <iframe
-                title="Axonill location — Air University, Islamabad"
-                src="https://www.google.com/maps?q=Air%20University%20Islamabad&output=embed"
+                title="Axonill location — Midway center 6th road rawalpindi"
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3321.600693182161!2d73.0763461!3d33.6415941!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x38df95262a247423%3A0x5b13039f9da2b71!2sMidway%20Centrum!5e0!3m2!1sen!2s!4v1795524126011!5m2!1sen!2s" 
                 className="absolute inset-0 size-full"
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"

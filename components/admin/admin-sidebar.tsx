@@ -75,7 +75,10 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
   },
   {
     label: "Leads",
-    items: [{ href: "/admin/leads", label: "Leads", icon: Inbox }],
+    items: [
+      { href: "/admin/conversions", label: "Leads & Conversions", icon: Inbox },
+      { href: "/admin/leads", label: "Contact leads", icon: Inbox },
+    ],
   },
   {
     label: "Settings",

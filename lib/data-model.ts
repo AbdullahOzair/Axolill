@@ -197,6 +197,12 @@ export interface Technology {
   published: boolean;
 }
 
+export interface PortfolioCaseStudyDetails {
+  location?: string;
+  highlights?: string[];
+  technologyStack?: string[];
+}
+
 export interface PortfolioItem {
   id: string;
   category: string;
@@ -205,6 +211,10 @@ export interface PortfolioItem {
   tags: string[];
   /** R2 object key — serve via /api/media/<key>. */
   coverImage: string | null;
+  screenshotImage: string | null;
+  liveUrl: string | null;
+  caseStudyUrl: string | null;
+  caseStudyDetails?: PortfolioCaseStudyDetails | null;
   order: number;
   published: boolean;
 }
@@ -217,6 +227,8 @@ export interface TeamMember {
   skills: string[];
   /** R2 object key — serve via /api/media/<key>. */
   photoUrl: string | null;
+  linkedinUrl?: string | null;
+  portfolioUrl?: string | null;
   order: number;
   published: boolean;
 }

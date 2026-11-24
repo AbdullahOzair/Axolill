@@ -266,8 +266,58 @@ image.append("file", new Blob([readFileSync(path.join(root, "app", "icon.png"))]
   type: "image/png",
 }), "sample.png");
 const uploaded = await expectStatus("/api/media", 201, { method: "POST", cookies: admin, body: image });
-const asset = await expectStatus((await uploaded.json()).url, 200);
+const uploadedMedia = await uploaded.json();
+const asset = await expectStatus(uploadedMedia.url, 200);
 assert.equal(asset.headers.get("content-type"), "image/png");
+
+const project = { title: "Portfolio preview test", category: "Web Development", tags: ["Next.js"], order: 2 };
+const portfolioPath = "/api/portfolio";
+await expectStatus(portfolioPath, 403, { method: "POST", cookies: client, body: project });
+for (const fields of [
+  { liveUrl: "javascript:void(0)" },
+  { liveUrl: "https://user:password@example.com/" },
+  { caseStudyUrl: "//example.com/case-study" },
+  { screenshotImage: "projects/private-test.png" },
+]) {
+  await expectStatus(portfolioPath, 400, { method: "POST", cookies: admin, body: { ...project, ...fields } });
+}
+const previewFields = {
+  coverImage: uploadedMedia.key,
+  screenshotImage: uploadedMedia.key,
+  liveUrl: "https://example.com/portfolio",
+  caseStudyUrl: "/work/test-case-study",
+  caseStudyDetails: { location: "Local test location", highlights: ["Verified screenshot viewport"], technologyStack: ["Next.js"] },
+};
+const createdPortfolio = await expectStatus(portfolioPath, 201, {
+  method: "POST", cookies: admin, body: { ...project, ...previewFields },
+});
+const { item: previewProject } = await createdPortfolio.json();
+const projectPath = `${portfolioPath}/${previewProject.id}`;
+for (const [field, value] of Object.entries(previewFields)) assert.deepEqual(previewProject[field], value);
+const publicCaseStudyPath = `/portfolio/portfolio-preview-test~${previewProject.id}`;
+await expectStatus(publicCaseStudyPath, 404);
+const portfolioRows = async () => (await (await expectStatus(portfolioPath, 200)).json()).portfolio;
+assert.ok(!(await portfolioRows()).some((item) => item.id === previewProject.id));
+const publishedProject = await expectStatus(projectPath, 200, { method: "PATCH", cookies: admin, body: { published: true } });
+assert.equal((await publishedProject.json()).item.screenshotImage, uploadedMedia.key);
+const publicProject = (await portfolioRows()).find((item) => item.id === previewProject.id);
+assert.ok(publicProject);
+for (const [field, value] of Object.entries(previewFields)) assert.deepEqual(publicProject[field], value);
+const caseStudyPage = await expectStatus(publicCaseStudyPath, 200);
+const caseStudyHtml = await caseStudyPage.text();
+assert.ok(caseStudyHtml.includes(project.title) && caseStudyHtml.includes("Verified screenshot viewport") && caseStudyHtml.includes("Local test location"));
+await expectStatus(projectPath, 200, { method: "PATCH", cookies: admin, body: { title: "Renamed portfolio project" } });
+assert.ok((await (await expectStatus(publicCaseStudyPath, 200)).text()).includes("Renamed portfolio project"));
+const clearedProject = await expectStatus(projectPath, 200, {
+  method: "PATCH", cookies: admin, body: { screenshotImage: null, liveUrl: "", caseStudyUrl: null },
+});
+const { item: cleared } = await clearedProject.json();
+assert.equal(cleared.coverImage, uploadedMedia.key);
+assert.deepEqual([cleared.screenshotImage, cleared.liveUrl, cleared.caseStudyUrl], [null, null, null]);
+await expectStatus(projectPath, 200, { method: "DELETE", cookies: admin });
+await expectStatus(publicCaseStudyPath, 404);
+assert.ok(!(await portfolioRows()).some((item) => item.id === previewProject.id));
+console.log("Portfolio screenshot and link validation, authenticated CRUD, publication, and legacy cover verified.");
 
 const intake = new FormData();
 for (const [key, value] of Object.entries({

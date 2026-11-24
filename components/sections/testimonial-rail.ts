@@ -16,7 +16,7 @@ export function mountTestimonialRail(carousel: HTMLElement, viewport: HTMLElemen
   let lastTime = 0;
   let manual: { from: number; distance: number; start: number } | undefined;
   let visible = false;
-  let hovering = carousel.matches(":hover") && window.matchMedia("(hover: hover)").matches;
+  let hovering = viewport.matches(":hover") && window.matchMedia("(hover: hover)").matches;
   let keyboardFocus = false;
   let touching = false;
   let drag: { pointerId: number; x: number; from: number } | undefined;
@@ -78,7 +78,7 @@ export function mountTestimonialRail(carousel: HTMLElement, viewport: HTMLElemen
     clearTimeout(scrollTimer);
     scrollTimer = window.setTimeout(() => {
       scrolling = false;
-      if (!touching) write(offset);
+      if (!touching && !keyboardFocus) write(offset);
       refresh();
     }, 180);
     refresh();
@@ -91,6 +91,7 @@ export function mountTestimonialRail(carousel: HTMLElement, viewport: HTMLElemen
   }
   function onLeave() { hovering = false; refresh(); }
   function onDown(event: PointerEvent) {
+    if (event.target instanceof Element && event.target.closest("button")) return;
     if (event.pointerType === "touch") touching = true;
     else if (event.button === 0) drag = { pointerId: event.pointerId, x: event.clientX, from: offset };
     else return;
@@ -113,8 +114,8 @@ export function mountTestimonialRail(carousel: HTMLElement, viewport: HTMLElemen
     }
     refresh();
   }
-  function onFocus(event: FocusEvent) {
-    keyboardFocus = event.target instanceof Element && event.target.matches(":focus-visible");
+  function onFocus() {
+    keyboardFocus = true;
     refresh();
   }
   function onBlur(event: FocusEvent) {
@@ -133,8 +134,8 @@ export function mountTestimonialRail(carousel: HTMLElement, viewport: HTMLElemen
   size.observe(first);
   intersection.observe(viewport);
   measure();
-  carousel.addEventListener("pointerenter", onEnter);
-  carousel.addEventListener("pointerleave", onLeave);
+  viewport.addEventListener("pointerenter", onEnter);
+  viewport.addEventListener("pointerleave", onLeave);
   carousel.addEventListener("focusin", onFocus);
   carousel.addEventListener("focusout", onBlur);
   viewport.addEventListener("pointerdown", onDown);
@@ -157,8 +158,8 @@ export function mountTestimonialRail(carousel: HTMLElement, viewport: HTMLElemen
       clearTimeout(scrollTimer);
       size.disconnect();
       intersection.disconnect();
-      carousel.removeEventListener("pointerenter", onEnter);
-      carousel.removeEventListener("pointerleave", onLeave);
+      viewport.removeEventListener("pointerenter", onEnter);
+      viewport.removeEventListener("pointerleave", onLeave);
       carousel.removeEventListener("focusin", onFocus);
       carousel.removeEventListener("focusout", onBlur);
       viewport.removeEventListener("pointerdown", onDown);

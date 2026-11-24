@@ -43,6 +43,34 @@
       "when": 1795286280498,
       "tag": "0005_technology_icon_url",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1795353686091,
+      "tag": "0006_portfolio_showcase",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1795359457841,
+      "tag": "0007_portfolio_case_study_details",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1795532385738,
+      "tag": "0008_team_profile_links",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1795536003435,
+      "tag": "0009_work_with_us_inquiries",
+      "breakpoints": true
     }
   ]
 }

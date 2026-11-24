@@ -1,0 +1,1 @@
+ALTER TABLE `portfolio_item` ADD `caseStudyDetails` text;

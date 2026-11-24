@@ -2,7 +2,7 @@ import { withApiErrors } from "@/lib/http-security";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 
-import { db, json, mutationJson, notFound, parseBody, requireAdmin } from "@/lib/api";
+import { badRequest, db, json, mutationJson, notFound, parseBody, requireAdmin } from "@/lib/api";
 import * as schema from "@/lib/db/schema";
 
 export const dynamic = "force-dynamic";
@@ -73,6 +73,9 @@ export const PATCH = withApiErrors("PATCH /api/admin/leads/[id]", async function
     status: z.enum(["new", "contacted", "qualified", "won", "lost"]),
   }));
   if (body instanceof Response) return body;
+  if (await db().select({ id: schema.inquiry.id }).from(schema.inquiry).where(eq(schema.inquiry.id, id)).get()) {
+    return badRequest("Manage this inquiry in Leads & Conversions.");
+  }
 
   const rows = await db()
     .update(schema.lead)

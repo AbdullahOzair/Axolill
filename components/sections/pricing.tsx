@@ -1,129 +1,86 @@
 "use client";
 
-import * as React from "react";
-import Link from "next/link";
-import { CheckCircle2, Sparkles } from "lucide-react";
-import { ScrollReveal } from "@/components/reveal";
+import { ArrowRight, Compass, Lightbulb, PanelsTopLeft, Check } from "lucide-react";
+import { useRef, useState, type CSSProperties } from "react";
 
-import { PRICING_TIERS } from "@/lib/pricing-tiers";
-import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { ScrollReveal } from "@/components/reveal";
+import type { InquiryType } from "@/lib/inquiries";
+import { InquiryDialog } from "./inquiry-dialog";
+import { useInquiryTracking } from "./inquiry-tracking";
+import editorial from "./why-choose.module.css";
+import styles from "./pricing.module.css";
+
+const PATHS = [
+  { type: "IDEA", title: "I have an idea.", icon: Lightbulb, description: "Something in mind but not sure how to bring it to life? Let's figure it out together.",
+    features: ["Idea validation", "Product strategy", "Creative exploration", "Technical guidance"], cta: "Explore my idea" },
+  { type: "PROJECT", title: "I have a project.", icon: PanelsTopLeft, description: "Know what you need? Let's turn your requirements into something exceptional.",
+    features: ["Dedicated expertise", "Tailored solutions", "Project planning", "Customized proposal"], cta: "Discuss my project" },
+  { type: "GUIDANCE", title: "I need guidance.", icon: Compass, description: "Facing a challenge or unsure where to start? Let's find the right direction.",
+    features: ["Expert consultation", "Business challenges", "Digital opportunities", "Strategic recommendations"], cta: "Let's talk" },
+] as const satisfies readonly { type: InquiryType; title: string; icon: typeof Compass; description: string; features: readonly string[]; cta: string }[];
 
 export function Pricing() {
+  const section = useRef<HTMLElement>(null);
+  const opener = useRef<HTMLButtonElement>(null);
+  const [dialog, setDialog] = useState<{ type: InquiryType; title: string; origin: CSSProperties; key: string }>();
+  const [open, setOpen] = useState(false);
+  const tracking = useInquiryTracking(section);
+
   return (
-    <section id="pricing" className="relative py-24 sm:py-32">
-      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
-        {/* Header */}
-        <ScrollReveal as="header" effect="text" className="mx-auto max-w-2xl text-center">
-          <p className="text-xs font-medium tracking-wider text-brand-secondary uppercase dark:text-blue-400">
-            Pricing
-          </p>
-          <h2 className="mt-4 font-heading text-3xl font-bold tracking-tight text-balance sm:text-4xl md:text-5xl">
-            Simple, transparent pricing
+    <section id="work-with-us" ref={section} aria-labelledby="work-with-us-heading" className={styles.section}>
+      <span className={styles.legacyAnchor} id="pricing" aria-hidden />
+      <div className={editorial.content}>
+        <ScrollReveal as="header" effect="text" className={editorial.header}>
+          <p className={styles.eyebrow}>Let&apos;s work together</p>
+          <h2 id="work-with-us-heading" className={editorial.title + " font-heading"}>
+            Great things begin <span className={styles.accent}>with a conversation.</span>
           </h2>
-          <p className="mt-4 text-base text-pretty text-muted-foreground sm:text-lg">
-            Pick the engagement that fits where you are — every tier is a fixed,
-            upfront quote with no surprises.
-          </p>
+          <p className={editorial.intro}>Whatever stage you&apos;re at, we&apos;re here to help you take the next step.</p>
         </ScrollReveal>
 
-        {/* Tiers */}
-        <div className="mt-16 grid items-center gap-6 lg:grid-cols-3 lg:gap-8">
-          {PRICING_TIERS.map((tier, index) => (
-            <ScrollReveal key={tier.name} effect={tier.featured ? "scale" : "up"} index={index}>
-              <Card
-                className={cn(
-                  "relative h-full overflow-hidden transition-all duration-300",
-                  tier.featured
-                    ? "border-brand-secondary/60 bg-background shadow-xl shadow-brand-secondary/10 lg:scale-105"
-                    : "border-border/60 bg-background/60 backdrop-blur hover:-translate-y-1 hover:border-brand-secondary/40 hover:shadow-lg"
-                )}
-              >
-                {tier.featured && (
-                  <>
-                    {/* Accent glow for the featured tier */}
-                    <div
-                      aria-hidden
-                      className="pointer-events-none absolute -top-16 left-1/2 -z-10 size-48 -translate-x-1/2 rounded-full bg-brand-secondary/20 blur-3xl"
-                    />
-                    <span className="absolute top-0 right-0 left-0 h-1 brand-gradient" />
-                    <div className="absolute top-4 right-4">
-                      <Badge className="gap-1 rounded-full bg-brand text-white shadow-sm">
-                        <Sparkles className="size-3" />
-                        Most Popular
-                      </Badge>
-                    </div>
-                  </>
-                )}
-
-                <CardHeader className={cn(tier.featured && "pt-7")}>
-                  <CardTitle className="font-heading text-lg">
-                    {tier.name}
-                  </CardTitle>
-                  <CardDescription>{tier.description}</CardDescription>
-                  <div className="mt-4 flex items-baseline gap-1">
-                    <span className="font-heading text-4xl font-bold tracking-tight text-foreground">
-                      {tier.price}
-                    </span>
-                    {tier.cadence && (
-                      <span className="text-sm text-muted-foreground">
-                        {tier.cadence}
-                      </span>
-                    )}
-                  </div>
-                </CardHeader>
-
-                <CardContent>
-                  <ul className="space-y-3">
-                    {tier.features.map((feature) => (
-                      <li key={feature} className="flex items-start gap-2.5">
-                        <CheckCircle2
-                          className={cn(
-                            "mt-0.5 size-4.5 shrink-0",
-                            tier.featured
-                              ? "text-brand-secondary"
-                              : "text-success"
-                          )}
-                        />
-                        <span className="text-sm text-muted-foreground">
-                          {feature}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-
-                <CardFooter className="mt-auto">
-                  {tier.featured ? (
-                    <Link
-                      href="#contact"
-                      className="group relative inline-flex h-11 w-full items-center justify-center gap-2 overflow-hidden rounded-lg bg-primary px-6 text-sm font-medium text-primary-foreground shadow-sm transition-all duration-300 hover:shadow-md hover:shadow-button-accent/25 focus-visible:ring-3 focus-visible:ring-button-accent/50 focus-visible:outline-none"
-                    >
-                      <span className="absolute inset-0 button-hover-gradient opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                      <span className="relative z-10">{tier.cta}</span>
-                    </Link>
-                  ) : (
-                    <Link
-                      href="#contact"
-                      className="inline-flex h-11 w-full items-center justify-center rounded-lg border border-border bg-background px-6 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
-                    >
-                      {tier.cta}
-                    </Link>
-                  )}
-                </CardFooter>
-              </Card>
+        <div className={styles.grid}>
+          {PATHS.map(({ type, title, icon: Icon, description, features, cta }, index) => (
+            <ScrollReveal key={type} index={index}>
+              <article className={styles.card} data-featured={type === "PROJECT"}>
+                <Icon className={styles.pathIcon} size={23} aria-hidden />
+                <h3 className="font-heading">{title}</h3>
+                <p>{description}</p>
+                <ul>
+                  {features.map((feature) => <li key={feature}><Check size={15} aria-hidden />{feature}</li>)}
+                </ul>
+                <button
+                  type="button"
+                  className={styles.cta}
+                  aria-haspopup="dialog"
+                  onClick={(event) => {
+                    opener.current = event.currentTarget;
+                    const rect = event.currentTarget.closest("article")!.getBoundingClientRect();
+                    const origin = {
+                      "--card-x": Math.max(-350, Math.min(350, rect.x + rect.width / 2 - innerWidth / 2)) + "px",
+                      "--card-y": Math.max(-220, Math.min(220, rect.y + rect.height / 2 - innerHeight / 2)) + "px",
+                      "--card-scale": Math.min(0.96, Math.max(0.65, rect.width / 650)),
+                    } as CSSProperties;
+                    setDialog({ type, title, origin, key: crypto.randomUUID() });
+                    setOpen(true);
+                    tracking.select(type);
+                  }}
+                >
+                  {cta}<ArrowRight size={17} aria-hidden />
+                </button>
+              </article>
             </ScrollReveal>
           ))}
         </div>
+
+        <p className={styles.reassurance}>No pressure. No commitments. Just the beginning of something great.</p>
+        <label className={styles.consent}>
+          <input type="checkbox" checked={tracking.consent} onChange={(event) => tracking.setConsent(event.currentTarget.checked)} />
+          Allow anonymous inquiry analytics for this session
+        </label>
       </div>
+      {dialog && (
+        <InquiryDialog key={dialog.key} journey={dialog} open={open} close={() => setOpen(false)} opener={opener} tracking={tracking} />
+      )}
     </section>
   );
 }

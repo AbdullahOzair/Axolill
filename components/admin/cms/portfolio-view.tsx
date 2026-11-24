@@ -3,7 +3,8 @@
 import Image from "next/image";
 import { ImageOff } from "lucide-react";
 
-import type { PortfolioItem } from "@/lib/data-model";
+import type { PortfolioCaseStudyDetails, PortfolioItem } from "@/lib/data-model";
+import { PROJECT_LINK_LIMIT, portfolioCaseStudyPath, portfolioLiveUrl } from "@/lib/portfolio-links";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -18,6 +19,10 @@ type Draft = {
   description: string;
   tags: string[];
   coverImage: string | null;
+  screenshotImage: string | null;
+  liveUrl: string;
+  caseStudyUrl: string;
+  caseStudyDetails: PortfolioCaseStudyDetails;
   order: number;
   published: boolean;
 };
@@ -28,6 +33,10 @@ const EMPTY: Draft = {
   description: "",
   tags: [],
   coverImage: null,
+  screenshotImage: null,
+  liveUrl: "",
+  caseStudyUrl: "",
+  caseStudyDetails: {},
   order: 0,
   published: false,
 };
@@ -59,6 +68,10 @@ export function PortfolioView() {
         description: p.description,
         tags: p.tags,
         coverImage: p.coverImage,
+        screenshotImage: p.screenshotImage,
+        liveUrl: p.liveUrl ?? "",
+        caseStudyUrl: p.caseStudyUrl ?? "",
+        caseStudyDetails: p.caseStudyDetails ?? {},
         order: p.order,
         published: p.published,
       })}
@@ -66,6 +79,8 @@ export function PortfolioView() {
         const e: FieldErrors = {};
         if (!d.title.trim()) e.title = "Give the project a title.";
         if (!d.category.trim()) e.category = "Pick a category.";
+        if (d.liveUrl.trim() && !portfolioLiveUrl(d.liveUrl)) e.liveUrl = "Enter an HTTPS website URL without credentials.";
+        if (d.caseStudyUrl.trim() && !portfolioCaseStudyPath(d.caseStudyUrl)) e.caseStudyUrl = "Enter an internal path that starts with a single slash.";
         return e;
       }}
       columns={[
@@ -128,6 +143,15 @@ export function PortfolioView() {
             )}
           </Field>
 
+          <Field
+            id="pf-screenshot"
+            label="Full-page screenshot"
+            hint="Optional. Upload a tall website screenshot for the scroll preview. WebP or AVIF keeps large screenshots smaller."
+            error={errors.screenshotImage}
+          >
+            {() => <ImageUpload value={d.screenshotImage} onChange={(screenshotImage) => patch({ screenshotImage })} label="screenshot" tallPreview />}
+          </Field>
+
           <Field id="pf-title" label="Title" error={errors.title} required>
             {(f) => (
               <Input
@@ -173,6 +197,26 @@ export function PortfolioView() {
                 onChange={(e) => patch({ description: e.target.value })}
               />
             )}
+          </Field>
+
+          <Field id="pf-live" label="Live website URL" error={errors.liveUrl}>
+            {(f) => <Input {...f} type="url" maxLength={PROJECT_LINK_LIMIT} value={d.liveUrl} onChange={(e) => patch({ liveUrl: e.target.value })} placeholder="https://example.com" />}
+          </Field>
+
+          <Field id="pf-location" label="Project location" error={errors.location}>
+            {(f) => <Input {...f} maxLength={120} value={d.caseStudyDetails.location ?? ""} onChange={(e) => patch({ caseStudyDetails: { ...d.caseStudyDetails, location: e.target.value } })} />}
+          </Field>
+
+          <Field id="pf-highlights" label="Case study highlights" hint="Optional. Enter one highlight per line, up to 24 lines and 240 characters per line.">
+            {(f) => <Textarea {...f} rows={4} value={d.caseStudyDetails.highlights?.join("\n") ?? ""} onChange={(e) => patch({ caseStudyDetails: { ...d.caseStudyDetails, highlights: e.target.value.split("\n") } })} />}
+          </Field>
+
+          <Field id="pf-stack" label="Technology stack" hint="Optional. Enter each technology separately.">
+            {(f) => <ChipInput id={f.id} value={d.caseStudyDetails.technologyStack ?? []} onChange={(technologyStack) => patch({ caseStudyDetails: { ...d.caseStudyDetails, technologyStack } })} />}
+          </Field>
+
+          <Field id="pf-case-study" label="Additional case study link" hint="Optional. Link to another existing Axonill page from the generated case study." error={errors.caseStudyUrl}>
+            {(f) => <Input {...f} maxLength={PROJECT_LINK_LIMIT} value={d.caseStudyUrl} onChange={(e) => patch({ caseStudyUrl: e.target.value })} placeholder="/work/project-name" />}
           </Field>
 
           <Field

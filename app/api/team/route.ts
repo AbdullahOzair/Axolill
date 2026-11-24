@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { collectionRoute } from "@/lib/cms-api";
 import { teamMember } from "@/lib/db/schema";
+import { optionalTeamLink } from "@/lib/team-schema";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +13,8 @@ const createTeamMember = z.object({
   skills: z.array(z.string().min(1).max(40)).max(16).optional(),
   /** R2 object key from POST /api/media. */
   photoUrl: z.string().max(300).nullable().optional(),
+  linkedinUrl: optionalTeamLink.optional(),
+  portfolioUrl: optionalTeamLink.optional(),
   order: z.number().int().min(0).optional(),
   published: z.boolean().optional(),
 });
@@ -27,6 +30,8 @@ export const { GET, POST } = collectionRoute({
     bio: b.bio ?? "",
     skills: b.skills ?? [],
     photoUrl: b.photoUrl ?? null,
+    linkedinUrl: b.linkedinUrl ?? null,
+    portfolioUrl: b.portfolioUrl ?? null,
     order: b.order ?? 0,
     published: b.published ?? false,
   }),

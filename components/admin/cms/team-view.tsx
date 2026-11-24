@@ -8,6 +8,7 @@ import { ChipInput } from "@/components/admin/cms/chip-input";
 import { CmsManager } from "@/components/admin/cms/cms-manager";
 import { Field, type FieldErrors } from "@/components/admin/form-dialog";
 import { ImageUpload } from "@/components/admin/cms/image-upload";
+import { TEAM_LINK_LIMIT, teamProfileUrl } from "@/lib/team-links";
 
 type Draft = {
   name: string;
@@ -15,6 +16,8 @@ type Draft = {
   bio: string;
   skills: string[];
   photoUrl: string | null;
+  linkedinUrl: string;
+  portfolioUrl: string;
   order: number;
   published: boolean;
 };
@@ -25,6 +28,8 @@ const EMPTY: Draft = {
   bio: "",
   skills: [],
   photoUrl: null,
+  linkedinUrl: "",
+  portfolioUrl: "",
   order: 0,
   published: false,
 };
@@ -53,6 +58,8 @@ export function TeamView() {
         bio: m.bio,
         skills: m.skills,
         photoUrl: m.photoUrl,
+        linkedinUrl: m.linkedinUrl ?? "",
+        portfolioUrl: m.portfolioUrl ?? "",
         order: m.order,
         published: m.published,
       })}
@@ -60,6 +67,8 @@ export function TeamView() {
         const e: FieldErrors = {};
         if (!d.name.trim()) e.name = "Name is required.";
         if (!d.role.trim()) e.role = "What's their role?";
+        if (d.linkedinUrl.trim() && !teamProfileUrl(d.linkedinUrl)) e.linkedinUrl = "Enter a valid HTTP or HTTPS URL.";
+        if (d.portfolioUrl.trim() && !teamProfileUrl(d.portfolioUrl)) e.portfolioUrl = "Enter a valid HTTP or HTTPS URL.";
         return e;
       }}
       columns={[
@@ -148,7 +157,7 @@ export function TeamView() {
 
           <Field
             id="tm-skills"
-            label="Skills"
+            label="Skills or expertise"
             hint="Press Enter after each one. Up to 16."
             error={errors.skills}
           >
@@ -160,6 +169,20 @@ export function TeamView() {
                 placeholder="e.g. TypeScript"
                 max={16}
               />
+            )}
+          </Field>
+
+          <Field id="tm-linkedin" label="LinkedIn URL" error={errors.linkedinUrl}>
+            {(f) => (
+              <Input {...f} type="url" maxLength={TEAM_LINK_LIMIT} value={d.linkedinUrl}
+                onChange={(e) => patch({ linkedinUrl: e.target.value })} />
+            )}
+          </Field>
+
+          <Field id="tm-portfolio" label="Portfolio URL" error={errors.portfolioUrl}>
+            {(f) => (
+              <Input {...f} type="url" maxLength={TEAM_LINK_LIMIT} value={d.portfolioUrl}
+                onChange={(e) => patch({ portfolioUrl: e.target.value })} />
             )}
           </Field>
 

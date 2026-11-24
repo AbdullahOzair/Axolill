@@ -4,11 +4,12 @@ import { PRIVATE_CACHE, securityEvent } from "@/lib/http-security";
 
 export async function limitEndpoint(
   request: Request,
-  action: "authentication" | "contact" | "intake" | "meeting_request",
+  action: "authentication" | "contact" | "intake" | "meeting_request" | "inquiry" | "inquiry_events",
   actorId?: string
 ) {
   const { env } = getCloudflareContext();
-  const limiter = action === "authentication" ? env.AUTH_RATE_LIMITER : env.CONTACT_RATE_LIMITER;
+  const limiter = action === "authentication" ? env.AUTH_RATE_LIMITER :
+    action === "inquiry_events" ? env.INQUIRY_ANALYTICS_RATE_LIMITER : env.CONTACT_RATE_LIMITER;
   // Cloudflare sets this at ingress. A shared fallback also supports local Workerd.
   const identity = actorId ?? request.headers.get("cf-connecting-ip") ?? "unknown-client";
   const key = `${action}:${identity}`;

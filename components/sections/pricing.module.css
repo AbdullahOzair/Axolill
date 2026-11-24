@@ -1,0 +1,180 @@
+.section {
+  --work-accent: color-mix(in srgb, var(--chart-1) 88%, var(--foreground));
+  --work-edge: color-mix(in srgb, var(--chart-1) 16%, var(--border));
+  --work-reflection: color-mix(in srgb, var(--chart-2) 24%, var(--card));
+  position: relative;
+  scroll-margin-top: 4.5rem;
+  padding-block: clamp(3rem, 6vw, 5rem);
+  font-family: var(--font-inter), sans-serif;
+}
+
+:global(.dark) .section {
+  --work-accent: color-mix(in srgb, var(--brand-cyan, #09aace) 85%, var(--foreground));
+  --work-edge: color-mix(in srgb, var(--brand-cyan, #09aace) 19%, var(--border));
+  --work-reflection: color-mix(in srgb, var(--brand-cyan, #09aace) 45%, var(--card));
+}
+
+.legacyAnchor { position: absolute; inset-block-start: 0; scroll-margin-top: 4.5rem; }
+.eyebrow { margin-bottom: .75rem; color: var(--work-accent); font-size: .68rem; font-weight: 650; letter-spacing: .16em; text-transform: uppercase; }
+.section .accent { color: var(--work-accent); }
+
+.grid {
+  display: grid;
+  gap: clamp(.85rem, 2vw, 1.6rem);
+  margin-top: clamp(1.4rem, 4vw, 3rem);
+}
+
+.card {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto auto 1fr auto auto;
+  gap: .8rem;
+  height: 100%;
+  padding: clamp(1.1rem, 2vw, 1.8rem);
+  border: 1px solid transparent;
+  border-radius: 1.15rem;
+  background: linear-gradient(var(--card), var(--card)) padding-box,
+    radial-gradient(ellipse at 15% 0%, var(--work-reflection), var(--work-edge) 62%) border-box;
+  box-shadow: 0 9px 24px -18px color-mix(in srgb, var(--foreground) 28%, transparent);
+}
+
+.card::before {
+  position: absolute;
+  inset: -1px;
+  padding: 1px;
+  border-radius: inherit;
+  background: linear-gradient(115deg, transparent 43%, var(--work-reflection) 50%, transparent 57%) 100% 0 / 245% 100%;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  opacity: 0;
+  content: "";
+  pointer-events: none;
+}
+
+.pathIcon,
+.card li svg { color: var(--work-accent); }
+.card h3 { font-size: clamp(1.25rem, 2vw, 1.65rem); letter-spacing: -.035em; font-weight: 700; }
+.card p,
+.card ul { color: var(--muted-foreground); font-size: .9rem; line-height: 1.55; }
+.card ul { display: grid; gap: .42rem; margin: .2rem 0 .65rem; }
+.card li { display: flex; align-items: center; gap: .6rem; }
+.card li svg { flex: none; }
+
+.cta,
+.secondary {
+  --action-accent: color-mix(in srgb, var(--chart-1) 86%, var(--foreground));
+  display: inline-flex;
+  width: fit-content;
+  min-height: 2.65rem;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  padding-inline: .9rem;
+  border: 1px solid var(--border);
+  border-radius: .66rem;
+  font-weight: 620;
+  font-size: .875rem;
+  cursor: pointer;
+}
+
+.cta { color: var(--action-accent); background: var(--secondary); }
+.card[data-featured="true"] .cta,
+.dialog .cta { border-color: var(--action-accent); background: var(--action-accent); color: var(--card); }
+:global(.dark) :is(.cta, .secondary) { --action-accent: color-mix(in srgb, var(--brand-cyan, #09aace) 86%, var(--foreground)); }
+:is(.cta, .secondary):hover { filter: brightness(.95); }
+:is(.cta, .secondary):disabled { opacity: .55; cursor: wait; }
+:is(.cta, .secondary, .inlineButton, .choice):focus-visible { outline: 2px solid var(--brand-cyan, #09aace); outline-offset: 3px; }
+
+.reassurance { margin-top: clamp(1.1rem, 2.6vw, 2rem); text-align: center; font-size: .91rem; color: var(--muted-foreground); }
+.consent { display: flex; align-items: center; justify-content: center; gap: .45rem; margin-top: .75rem; font-size: .77rem; color: var(--muted-foreground); }
+.consent input { accent-color: var(--work-accent); }
+
+.dialog {
+  --work-form-accent: color-mix(in srgb, var(--chart-1) 88%, var(--foreground));
+  font-family: var(--font-inter), sans-serif;
+  max-height: min(88dvh, 49rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  gap: 1rem;
+  padding: clamp(1rem, 3.5vw, 2rem);
+  border: 1px solid var(--border);
+  border-radius: 1.15rem;
+}
+
+:global(.dark) .dialog { --work-form-accent: color-mix(in srgb, var(--brand-cyan, #09aace) 85%, var(--foreground)); }
+.dialogTop { display: flex; justify-content: space-between; gap: .75rem; align-items: flex-start; }
+.inlineButton { color: var(--work-form-accent); text-decoration: underline; text-underline-offset: .18em; cursor: pointer; }
+.form, .step, .fields { display: grid; gap: .85rem; }
+.progress { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .45rem; }
+.progress li { display: flex; flex-wrap: wrap; align-items: center; gap: .38rem; padding-bottom: .52rem; border-bottom: 2px solid var(--border); font-size: .76rem; color: var(--muted-foreground); }
+.progress li span { display: grid; width: 1.45rem; height: 1.45rem; place-items: center; border: 1px solid currentColor; border-radius: 50%; }
+.progress [aria-current="step"], .progress [data-complete="true"] { color: var(--work-form-accent); border-color: currentColor; }
+.step h3, .confirmation h3 { font-size: clamp(1.2rem, 3vw, 1.65rem); font-weight: 680; }
+.step h3:focus, .confirmation h3:focus { outline: none; }
+.fields > label, .two > label { display: grid; gap: .32rem; font-size: .83rem; font-weight: 600; min-width: 0; }
+.fields small { font-size: .77rem; color: var(--muted-foreground); font-weight: 400; }
+.fields :is(input:not([type="checkbox"]), select, textarea) {
+  width: 100%;
+  min-width: 0;
+  min-height: 2.6rem;
+  padding: .55rem .68rem;
+  border: 1px solid var(--border);
+  border-radius: .55rem;
+  background: var(--background);
+  color: var(--foreground);
+  font: inherit;
+  font-weight: 400;
+}
+.fields :is(input, select, textarea):focus-visible { outline: 2px solid var(--work-form-accent); outline-offset: 1px; }
+.groupChoices { display: grid; gap: .55rem; }
+.choice, .checkChoice { display: flex; align-items: center; min-height: 2.65rem; gap: .5rem; padding: .55rem .7rem; border: 1px solid var(--border); border-radius: .65rem; text-align: left; cursor: pointer; }
+.choice[aria-pressed="true"], .checkChoice:has(input:checked) { color: var(--work-form-accent); border-color: var(--work-form-accent); background: var(--secondary); }
+.checkChoice input { accent-color: var(--work-form-accent); }
+.services { min-width: 0; display: grid; gap: .4rem; padding: .55rem; border: 1px solid var(--border); border-radius: .7rem; }
+.services legend { margin-inline: .35rem; padding-inline: .2rem; font-size: .82rem; font-weight: 600; }
+.services p, .help { color: var(--muted-foreground); font-size: .8rem; line-height: 1.5; }
+.two { display: grid; gap: .65rem; }
+.actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: .5rem; }
+.trap { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.error { color: var(--destructive); }
+.confirmation { display: grid; gap: .8rem; line-height: 1.55; }
+.confirmation > svg { color: var(--work-form-accent); }
+
+@media (min-width: 36rem) {
+  .groupChoices, .two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (min-width: 56rem) {
+  .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .card[data-featured="true"] { translate: 0 -.52rem; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .dialog[data-open] { animation: inquiry-open 420ms cubic-bezier(.22,1,.36,1) both; }
+  .dialog[data-closed] { animation: inquiry-close 230ms ease-in both; }
+  .step, .services { animation: inquiry-step 260ms cubic-bezier(.22,1,.36,1) both; }
+  @media (hover: hover) {
+    .card:hover::before { animation: inquiry-shimmer 710ms ease-out; }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dialog:is([data-open], [data-closed]) { animation: none; }
+}
+
+@keyframes inquiry-open {
+  from { transform: translate(var(--card-x, 0), var(--card-y, 0)) scale(var(--card-scale, .85)); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+@keyframes inquiry-close {
+  from { transform: none; opacity: 1; }
+  to { transform: translate(var(--card-x, 0), var(--card-y, 0)) scale(var(--card-scale, .85)); opacity: 0; }
+}
+
+@keyframes inquiry-step { from { opacity: 0; translate: 0 .35rem; } to { opacity: 1; translate: 0 0; } }
+@keyframes inquiry-shimmer {
+  0% { opacity: 0; background-position: 100% 0; }
+  35%, 65% { opacity: .66; }
+  100% { opacity: 0; background-position: 0 0; }
+}

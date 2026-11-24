@@ -1,8 +1,8 @@
 import { z } from "zod";
 
 import { badRequest, db, json, newId, parseBody, requireAdmin } from "@/lib/api";
-import { lead } from "@/lib/db/schema";
-import { desc } from "drizzle-orm";
+import { inquiry, lead } from "@/lib/db/schema";
+import { desc, eq, notExists } from "drizzle-orm";
 import { securityEvent, withApiErrors } from "@/lib/http-security";
 import { limitEndpoint } from "@/lib/rate-limit";
 
@@ -52,9 +52,11 @@ export const GET = withApiErrors("GET /api/contact", async function GET() {
   const auth = await requireAdmin();
   if (auth instanceof Response) return auth;
 
-  const rows = await db()
+  const database = db();
+  const rows = await database
     .select()
     .from(lead)
+    .where(notExists(database.select({ id: inquiry.id }).from(inquiry).where(eq(inquiry.id, lead.id))))
     .orderBy(desc(lead.createdAt));
 
   return json({ leads: rows });

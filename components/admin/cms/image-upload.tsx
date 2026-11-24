@@ -15,14 +15,17 @@ export function ImageUpload({
   value,
   onChange,
   label = "Image",
+  tallPreview = false,
 }: {
   value: string | null;
   onChange: (key: string | null) => void;
   label?: string;
+  tallPreview?: boolean;
 }) {
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [failedPreview, setFailedPreview] = React.useState<string | null>(null);
 
   async function handleFile(file: File) {
     setError(null);
@@ -53,15 +56,16 @@ export function ImageUpload({
     <div className="space-y-2">
       <div className="flex items-center gap-3">
         {/* Preview */}
-        <div className="relative grid size-16 shrink-0 place-items-center overflow-hidden rounded-lg border border-border/60 bg-secondary">
-          {value ? (
+        <div className={`relative grid w-16 shrink-0 place-items-center overflow-hidden rounded-lg border border-border/60 bg-secondary ${tallPreview ? "h-28" : "h-16"}`}>
+          {value && failedPreview !== value ? (
             <Image
               src={`/api/media/${value}`}
-              alt=""
+              alt={tallPreview ? "Full-page screenshot preview" : ""}
               fill
               sizes="64px"
-              className="object-cover"
+              className={tallPreview ? "object-contain" : "object-cover"}
               unoptimized
+              onError={tallPreview ? () => setFailedPreview(value) : undefined}
             />
           ) : (
             <ImageUp className="size-5 text-muted-foreground" />
@@ -124,6 +128,9 @@ export function ImageUpload({
         <p role="alert" className="text-xs text-destructive">
           {error}
         </p>
+      )}
+      {tallPreview && value && failedPreview === value && (
+        <p role="status" className="text-xs text-muted-foreground">This screenshot couldn’t be loaded. Replace it to restore the preview.</p>
       )}
     </div>
   );

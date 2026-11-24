@@ -1,23 +1,17 @@
 "use client";
 
 import * as React from "react";
-import Image from "next/image";
-import { ArrowUpRight, PanelsTopLeft, X } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { ScrollReveal } from "@/components/reveal";
 
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import type { PortfolioItem } from "@/lib/data-model";
+import { portfolioLiveUrl, portfolioProjectPath } from "@/lib/portfolio-links";
 import { fetchJson, useLoader } from "@/lib/use-api";
 import { CatalogControls } from "./catalog-controls";
+import { ProjectScrollPreview } from "./portfolio-preview";
 import styles from "./portfolio.module.css";
 
 /** Keep the existing filter order and append any new CMS categories. */
@@ -56,14 +50,14 @@ export function Portfolio() {
 
   return (
     <section id="work" aria-labelledby="portfolio-heading" aria-busy={loading} className={`${styles.section} scroll-mt-16 py-14 font-sans sm:py-18`}>
-      <div className="mx-auto w-full max-w-5xl px-4 sm:px-6 lg:px-8">
+      <div className={styles.content}>
         <ScrollReveal as="header" effect="text" className="max-w-2xl">
           <p className={styles.eyebrow}>Our work</p>
           <h2 id="portfolio-heading" className="mt-3 font-heading text-3xl leading-[1.1] font-semibold tracking-tight text-balance sm:text-4xl lg:text-5xl">
-            Selected <span className={styles.accent}>projects</span>
+            Selected <span className={styles.accent}>Projects</span>
           </h2>
           <p className="mt-3 max-w-xl text-sm leading-relaxed text-pretty text-muted-foreground sm:text-base">
-            A cross-section of what we&apos;ve shipped. Explore the work by category.
+            Explore the websites, applications, and digital experiences we&apos;ve brought to life.
           </p>
         </ScrollReveal>
 
@@ -90,7 +84,7 @@ export function Portfolio() {
                 onPageChange={setPage}
               />
               <ul className={styles.gallery}>
-                {visible.map((project, index) => <ProjectCard key={project.id} project={project} lead={matching.length === 1} index={index} />)}
+                {visible.map((project, index) => <ProjectCard key={project.id} project={project} index={index} />)}
               </ul>
             </div>
           )}
@@ -100,86 +94,31 @@ export function Portfolio() {
   );
 }
 
-function ProjectCard({ project, lead, index }: { project: PortfolioItem; lead: boolean; index: number }) {
+function ProjectCard({ project, index }: { project: PortfolioItem; index: number }) {
   const { title, category, description, tags, coverImage } = project;
+  const liveUrl = portfolioLiveUrl(project.liveUrl);
+  const caseStudy = portfolioProjectPath(project);
 
   return (
-    <ScrollReveal as="li" effect="scale" index={index} className={styles.galleryItem} data-lead={lead || undefined}>
-      <Dialog>
-        <article className={styles.card}>
-          <ProjectCover key={coverImage} cover={coverImage} />
-          <div className={styles.cardCopy}>
-            <p className={styles.category}>{category}</p>
-            <h3 className={styles.cardTitle}>{title}</h3>
-            {description && <p className={styles.preview}>{description}</p>}
-            {tags.length > 0 && <ProjectTags tags={tags.slice(0, 3)} />}
-            <span aria-hidden className={styles.viewProject}>View project <ArrowUpRight size={16} /></span>
-          </div>
-          <DialogTrigger type="button" aria-label={`View project: ${title}`} className={styles.trigger} />
-        </article>
-
-        <DialogContent
-          showCloseButton={false}
-          className={`${styles.detail} z-[60] flex max-h-[calc(100dvh-1.5rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-4xl motion-reduce:animate-none!`}
-        >
-          <div className={styles.detailHeader}>
-            <div className="min-w-0">
-              <p className={styles.category}>{category}</p>
-              <DialogTitle className={styles.detailTitle}>{title}</DialogTitle>
-            </div>
-            <DialogClose type="button" aria-label="Close project" className={styles.close}>
-              <X aria-hidden size={20} />
-            </DialogClose>
-          </div>
-
-          <div className={styles.detailBody}>
-            {coverImage && <ProjectCover key={coverImage} cover={coverImage} expanded alt={`${title} project cover`} />}
-
-            {description && (
-              <div className={styles.detailSection}>
-                <h3 className={styles.detailLabel}>Overview</h3>
-                <DialogDescription className={styles.fullDescription}>{description}</DialogDescription>
-              </div>
+    <ScrollReveal as="li" effect="up" index={index} className={styles.galleryItem}>
+      <article className={styles.card}>
+        <ProjectScrollPreview key={JSON.stringify([coverImage, project.screenshotImage, category])} project={project} liveUrl={liveUrl} />
+        <div className={styles.cardCopy}>
+          <p className={styles.category}>{category}</p>
+          <h3 className={styles.cardTitle}>{title}</h3>
+          {description && <p className={styles.preview}>{description}</p>}
+          {tags.length > 0 && <ProjectTags tags={tags.slice(0, 3)} />}
+          <div className={styles.actions}>
+            {liveUrl && (
+              <a className={styles.liveLink} href={liveUrl} target="_blank" rel="noopener noreferrer">
+                Live Preview <ArrowUpRight size={15} aria-hidden />
+              </a>
             )}
-
-            {tags.length > 0 && (
-              <div className={styles.detailSection}>
-                <h3 className={styles.detailLabel}>Project tags</h3>
-                <ProjectTags tags={tags} />
-              </div>
-            )}
+            <Link href={caseStudy} prefetch={false}>View Case Study <ArrowRight size={15} aria-hidden /></Link>
           </div>
-        </DialogContent>
-      </Dialog>
-    </ScrollReveal>
-  );
-}
-
-function ProjectCover({ cover, alt = "", expanded = false }: {
-  cover: PortfolioItem["coverImage"];
-  alt?: string;
-  expanded?: boolean;
-}) {
-  const [failed, setFailed] = React.useState(false);
-  if (expanded && failed) return null;
-
-  return (
-    <div className={expanded ? styles.expandedCover : styles.cover}>
-      {cover && !failed ? (
-        <Image
-          src={`/api/media/${cover}`}
-          alt={alt}
-          fill
-          sizes={expanded ? "(max-width: 640px) 100vw, 896px" : "(max-width: 640px) 100vw, 550px"}
-          unoptimized
-          onError={() => setFailed(true)}
-        />
-      ) : (
-        <div aria-hidden className={styles.coverFallback}>
-          <span><PanelsTopLeft size={36} strokeWidth={1.25} /></span>
         </div>
-      )}
-    </div>
+      </article>
+    </ScrollReveal>
   );
 }
 
@@ -195,16 +134,18 @@ function GridSkeleton() {
   return (
     <div role="status" className={styles.gallery}>
       <span className="sr-only">Loading projects…</span>
-      <div aria-hidden className={styles.galleryItem} data-lead>
-        <div className={styles.card}>
-          <Skeleton className="min-h-48 w-full rounded-none" />
-          <div className={styles.cardCopy}>
-            <Skeleton className="h-3 w-24" />
-            <Skeleton className="h-7 w-3/4" />
-            <Skeleton className="h-4 w-5/6" />
+      {Array.from({ length: PROJECTS_PER_PAGE }, (_, index) => (
+        <div key={index} aria-hidden className={styles.galleryItem}>
+          <div className={styles.card}>
+            <Skeleton className={`${styles.viewport} w-full rounded-none motion-reduce:animate-none`} />
+            <div className={styles.cardCopy}>
+              <Skeleton className="h-3 w-24 motion-reduce:animate-none" />
+              <Skeleton className="h-7 w-3/4 motion-reduce:animate-none" />
+              <Skeleton className="h-4 w-5/6 motion-reduce:animate-none" />
+            </div>
           </div>
         </div>
-      </div>
+      ))}
     </div>
   );
 }
