@@ -7,7 +7,7 @@ import { ScrollReveal } from "@/components/reveal";
 import type { InquiryType } from "@/lib/inquiries";
 import { InquiryDialog } from "./inquiry-dialog";
 import { useInquiryTracking } from "./inquiry-tracking";
-import editorial from "./why-choose.module.css";
+import layout from "./compact-home-sections.module.css";
 import styles from "./pricing.module.css";
 
 const PATHS = [
@@ -27,22 +27,22 @@ export function Pricing() {
   const tracking = useInquiryTracking(section);
 
   return (
-    <section id="work-with-us" ref={section} aria-labelledby="work-with-us-heading" className={styles.section}>
+    <section id="work-with-us" ref={section} aria-labelledby="work-with-us-heading" className={`${styles.section} ${layout.section}`}>
       <span className={styles.legacyAnchor} id="pricing" aria-hidden />
-      <div className={editorial.content}>
-        <ScrollReveal as="header" effect="text" className={editorial.header}>
+      <div className={layout.content}>
+        <ScrollReveal as="header" effect="text" className={layout.header}>
           <p className={styles.eyebrow}>Let&apos;s work together</p>
-          <h2 id="work-with-us-heading" className={editorial.title + " font-heading"}>
+          <h2 id="work-with-us-heading" className={layout.title + " font-heading"}>
             Great things begin <span className={styles.accent}>with a conversation.</span>
           </h2>
-          <p className={editorial.intro}>Whatever stage you&apos;re at, we&apos;re here to help you take the next step.</p>
+          <p className={layout.intro}>Whatever stage you&apos;re at, we&apos;re here to help you take the next step.</p>
         </ScrollReveal>
 
         <div className={styles.grid}>
           {PATHS.map(({ type, title, icon: Icon, description, features, cta }, index) => (
             <ScrollReveal key={type} index={index}>
               <article className={styles.card} data-featured={type === "PROJECT"}>
-                <Icon className={styles.pathIcon} size={23} aria-hidden />
+                <Icon className={styles.pathIcon} size={26} aria-hidden />
                 <h3 className="font-heading">{title}</h3>
                 <p>{description}</p>
                 <ul>
@@ -72,10 +72,9 @@ export function Pricing() {
           ))}
         </div>
 
-        <p className={styles.reassurance}>No pressure. No commitments. Just the beginning of something great.</p>
         <label className={styles.consent}>
           <input type="checkbox" checked={tracking.consent} onChange={(event) => tracking.setConsent(event.currentTarget.checked)} />
-          Allow anonymous inquiry analytics for this session
+          Help us improve your experience (optional)
         </label>
       </div>
       {dialog && (

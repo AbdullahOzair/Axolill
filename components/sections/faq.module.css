@@ -1,0 +1,152 @@
+.section {
+  --faq-accent: color-mix(in srgb, var(--chart-1) 88%, var(--foreground));
+  --faq-strip: color-mix(in srgb, var(--chart-1) 60%, var(--border));
+  --faq-edge: color-mix(in srgb, var(--chart-1) 13%, var(--border));
+  --faq-surface: color-mix(in srgb, var(--card) 81%, transparent);
+  --faq-shadow: rgb(34 80 134 / 11%);
+}
+
+:global(.dark) .section {
+  --faq-accent: color-mix(in srgb, var(--brand-cyan) 86%, var(--foreground));
+  --faq-strip: color-mix(in srgb, var(--brand-cyan) 66%, var(--border));
+  --faq-edge: color-mix(in srgb, var(--brand-cyan) 14%, var(--border));
+  --faq-surface: color-mix(in srgb, var(--card) 75%, transparent);
+  --faq-shadow: rgb(0 4 16 / 44%);
+}
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: .55rem;
+  margin-block-end: .75rem;
+  color: var(--faq-accent);
+  font-size: .6875rem;
+  font-weight: 650;
+  letter-spacing: .15em;
+}
+
+.eyebrow::before {
+  width: 1.5rem;
+  height: 1px;
+  background: currentColor;
+  content: "";
+}
+
+.section .accent { color: var(--faq-accent); }
+
+.list {
+  display: grid;
+  max-width: 60rem;
+  gap: clamp(.625rem, 1vw, .75rem);
+  margin-block-start: var(--heading-gap);
+  margin-inline: auto;
+}
+
+.entry {
+  min-width: 0;
+  padding-inline-end: 3px;
+}
+
+.card {
+  --faq-icon-size: 1.125rem;
+  --faq-question-gap: clamp(.625rem, 1.25vw, .875rem);
+  --faq-row-padding: clamp(1rem, 1.6vw, 1.25rem);
+  position: relative;
+  border: 1px solid var(--faq-edge);
+  border-radius: 1.125rem;
+  background: var(--faq-surface);
+  box-shadow: 0 6px 18px -12px var(--faq-shadow);
+  backdrop-filter: blur(6px);
+}
+
+.card::before {
+  position: absolute;
+  inset-block: .58rem;
+  inset-inline-start: 0;
+  width: 2px;
+  border-radius: 999px;
+  background: var(--faq-strip);
+  pointer-events: none;
+  content: "";
+}
+
+.card[data-open="true"] {
+  border-color: color-mix(in srgb, var(--faq-strip) 30%, var(--faq-edge));
+  background: color-mix(in srgb, var(--card) 96%, transparent);
+  box-shadow: 0 9px 22px -13px var(--faq-shadow), inset 0 1px color-mix(in srgb, var(--faq-strip) 22%, transparent);
+}
+
+.card[data-open="true"]::before { background: var(--faq-accent); }
+
+.question {
+  display: flex;
+  width: 100%;
+  min-height: 3.5rem;
+  align-items: center;
+  gap: var(--faq-question-gap);
+  padding: .4rem var(--faq-row-padding);
+  border-radius: inherit;
+  text-align: start;
+  font-size: clamp(1rem, 1.4vw, 1.125rem);
+  font-weight: 620;
+  line-height: 1.38;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+
+.card > h3 { border-radius: inherit; }
+.question:focus-visible { outline: 2px solid var(--faq-accent); outline-offset: -3px; }
+.icon { flex: none; width: var(--faq-icon-size); color: var(--faq-accent); }
+
+.answer {
+  display: grid;
+  grid-template-rows: 0fr;
+  visibility: hidden;
+}
+
+.answerClip { min-height: 0; overflow: hidden; }
+
+.answer p {
+  max-width: 83ch;
+  padding-block-end: .95rem;
+  padding-inline: calc(var(--faq-row-padding) + var(--faq-icon-size) + var(--faq-question-gap)) var(--faq-row-padding);
+  color: var(--muted-foreground);
+  font-size: clamp(.88rem, 1.25vw, .98rem);
+  line-height: 1.62;
+  overflow-wrap: anywhere;
+  opacity: 0;
+}
+
+.card[data-open="true"] .answer { grid-template-rows: 1fr; visibility: visible; }
+.card[data-open="true"] .answer p { opacity: 1; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .section .list .entry[data-scroll-reveal="shown"]:not(:focus-within) {
+    transition-delay: var(--faq-delay);
+  }
+
+  .card {
+    transition: transform 350ms ease, background-color 350ms ease, border-color 350ms ease, box-shadow 350ms ease;
+  }
+
+  .card::before { transition: background-color 350ms ease; }
+  .icon { transition: transform 350ms cubic-bezier(.22, 1, .36, 1); }
+
+  .answer {
+    transition: grid-template-rows 360ms cubic-bezier(.22, 1, .36, 1), visibility 0s 360ms;
+  }
+
+  .card[data-open="true"] .answer { transition-delay: 0s; }
+
+  .answer p {
+    transform: translateY(.28rem);
+    transition: opacity 330ms ease, transform 360ms cubic-bezier(.22, 1, .36, 1);
+  }
+
+  .card[data-open="true"] .answer p { transform: none; }
+
+  @media (any-hover: hover) and (any-pointer: fine) {
+    .entry:hover .card[data-open="true"] { transform: translateX(3px); }
+    .entry:hover .card[data-open="true"] .icon { transform: scale(1.09); }
+  }
+}

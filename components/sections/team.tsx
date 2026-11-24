@@ -11,7 +11,7 @@ import { EmptyState, ErrorState } from "@/components/ui/states";
 import type { TeamMember } from "@/lib/data-model";
 import { teamProfileUrl } from "@/lib/team-links";
 import { fetchJson, useLoader } from "@/lib/use-api";
-import editorial from "./why-choose.module.css";
+import layout from "./compact-home-sections.module.css";
 import styles from "./team.module.css";
 
 async function loadTeam(): Promise<TeamMember[]> {
@@ -23,14 +23,14 @@ export function Team() {
   const { data, error, loading, reload } = useLoader<TeamMember[]>(loadTeam);
 
   return (
-    <section id="team" aria-labelledby="team-heading" aria-busy={loading} className={styles.section + " scroll-mt-16 font-sans"}>
-      <div className={editorial.content}>
-        <ScrollReveal as="header" effect="up" className={editorial.header}>
+    <section id="team" aria-labelledby="team-heading" aria-busy={loading} className={`${styles.section} ${layout.section} scroll-mt-16 font-sans`}>
+      <div className={layout.content}>
+        <ScrollReveal as="header" effect="up" className={layout.header}>
           <p className={styles.eyebrow}>Meet the team</p>
-          <h2 id="team-heading" className={editorial.title + " font-heading"}>
+          <h2 id="team-heading" className={layout.title + " font-heading"}>
             Different minds. <span className={styles.accent}>One shared vision.</span>
           </h2>
-          <p className={editorial.intro}>
+          <p className={layout.intro}>
             Bringing together creativity, technology, and insight to turn ambitious ideas into meaningful digital experiences.
           </p>
         </ScrollReveal>
