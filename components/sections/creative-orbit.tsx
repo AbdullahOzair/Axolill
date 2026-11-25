@@ -6,7 +6,63 @@ import { useEffect, useRef, type CSSProperties } from "react";
 import type { OrbitData } from "@/lib/creative-orbit";
 import styles from "./creative-orbit.module.css";
 
-export function CreativeOrbit({ images, settings, previewTheme }: OrbitData & { previewTheme?: "light" | "dark" }) {
+function positionImmersiveOrbit(element: HTMLElement, frames: NodeListOf<HTMLElement>) {
+  const measurePath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  const resize = new ResizeObserver(() => {
+    const { clientWidth: width, clientHeight: height } = element;
+    const cardWidth = frames[0].offsetWidth;
+    if (!width || !height || !cardWidth) return;
+
+    const narrow = width < 768;
+    const center = width / 2;
+    const sideClearance = narrow ? .7 + Math.max(0, 375 - width) / 190 : .36;
+    const radius = center + cardWidth * sideClearance;
+    const left = center - radius;
+    const right = center + radius;
+    const top = cardWidth * .375 + (narrow ? 8 : 12);
+    const bottom = height + cardWidth * .07;
+    const shoulder = top + (bottom - top) * (narrow ? .12 : .32);
+    const turn = radius * .06;
+    const upper = `M ${left} ${bottom}
+      C ${left} ${shoulder} ${left + turn} ${top} ${center} ${top}
+      C ${right - turn} ${top} ${right} ${shoulder} ${right} ${bottom}`;
+    const makePath = (depth: number) => `${upper} A ${radius} ${depth} 0 0 1 ${left} ${bottom} Z`.replace(/\s+/g, " ");
+    const length = (path: string) => {
+      measurePath.setAttribute("d", path);
+      return measurePath.getTotalLength();
+    };
+
+    // Keep the same spacing along the visible arc. Any extra path needed
+    // for a full catalogue belongs below the section, outside the clip.
+    const upperLength = length(upper);
+    const spacing = cardWidth * 1.28;
+    const minimumLoop = frames.length * spacing;
+    let depth = Math.max(1, bottom - top);
+    if (length(makePath(depth)) < minimumLoop) {
+      let far = minimumLoop / 2;
+      for (let step = 0; step < 12; step++) {
+        const middle = (depth + far) / 2;
+        if (length(makePath(middle)) < minimumLoop) depth = middle;
+        else far = middle;
+      }
+      depth = far;
+    }
+
+    const path = makePath(depth);
+    const first = (upperLength / 2) / length(path);
+    element.style.setProperty("--orbit-path", `path("${path}")`);
+    frames.forEach((frame, index) => {
+      const phase = (1 + first - index / frames.length) % 1;
+      frame.parentElement?.style.setProperty("--orbit-phase", String(phase));
+    });
+    element.dataset.pathReady = "true";
+  });
+  resize.observe(element);
+  resize.observe(frames[0]);
+  return () => resize.disconnect();
+}
+
+export function CreativeOrbit({ images, settings, previewTheme, immersive = false }: OrbitData & { previewTheme?: "light" | "dark"; immersive?: boolean }) {
   const band = useRef<HTMLDivElement>(null);
   const visible = settings.enabled && images.length > 0;
   const rotating = images.length > 1;
@@ -26,8 +82,11 @@ export function CreativeOrbit({ images, settings, previewTheme }: OrbitData & { 
       }
     }, { root: element, threshold: 0.8 });
 
+    let disconnectPath: (() => void) | undefined;
     function syncMotion() {
       focusable.disconnect();
+      disconnectPath?.();
+      disconnectPath = immersive && !motion.matches ? positionImmersiveOrbit(element!, imageFrames) : undefined;
       for (const frame of imageFrames) {
         frame.tabIndex = motion.matches ? 0 : -1;
         if (!motion.matches) focusable.observe(frame);
@@ -40,9 +99,10 @@ export function CreativeOrbit({ images, settings, previewTheme }: OrbitData & { 
     return () => {
       viewport.disconnect();
       focusable.disconnect();
+      disconnectPath?.();
       motion.removeEventListener("change", syncMotion);
     };
-  }, [images, rotating, visible]);
+  }, [images, immersive, rotating, visible]);
 
   if (!visible) return null;
 
@@ -50,6 +110,7 @@ export function CreativeOrbit({ images, settings, previewTheme }: OrbitData & { 
     <div
       ref={band}
       className={styles.orbit}
+      data-immersive={immersive || undefined}
       data-single={!rotating || undefined}
       data-preview-theme={previewTheme}
       data-direction={settings.direction}
@@ -66,7 +127,9 @@ export function CreativeOrbit({ images, settings, previewTheme }: OrbitData & { 
                 alt={alt}
                 fill
                 unoptimized
-                sizes="(min-width: 64rem) 138px, (min-width: 48rem) 100px, 65px"
+                sizes={immersive
+                  ? "(min-width: 64rem) 340px, (min-width: 48rem) 256px, 132px"
+                  : "(min-width: 64rem) 138px, (min-width: 48rem) 100px, 65px"}
                 className={styles.image}
                 draggable={false}
               />

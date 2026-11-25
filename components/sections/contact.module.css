@@ -1,5 +1,9 @@
 .section {
   --contact-accent: var(--brand-secondary);
+  --orbit-card-width: clamp(5.5rem, 24vw, 8.25rem);
+  --orbit-copy-gap: 3rem;
+  position: relative;
+  isolation: isolate;
 }
 
 :global(.dark) .section {
@@ -26,4 +30,32 @@
   min-block-size: 2.75rem;
   margin-block-start: 1.5rem;
   padding-inline: 1rem;
+}
+
+@media (min-width: 48rem) {
+  .section {
+    --orbit-card-width: clamp(9rem, 21vw, 16rem);
+    --orbit-copy-gap: 3.25rem;
+  }
+}
+
+@media (min-width: 64rem) {
+  .section {
+    --orbit-card-width: clamp(17.5rem, 21.5vw, 21.25rem);
+    --orbit-copy-gap: 4.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .section[data-orbit-active] {
+    padding-block-start: calc(var(--orbit-card-width) * .84 + var(--orbit-copy-gap));
+  }
+
+  .section[data-orbit-active] .copy {
+    position: relative;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .section[data-orbit-active] .closing > * { pointer-events: auto; }
 }

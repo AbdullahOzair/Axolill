@@ -135,3 +135,63 @@
   .frame { transition: none; }
   .frame:hover { scale: 1; }
 }
+
+.orbit[data-immersive] { inline-size: 100%; }
+.orbit[data-immersive] .frame { aspect-ratio: 4 / 3; }
+.orbit[data-immersive][data-single] .frame { inline-size: clamp(9rem, 28cqw, 21.25rem); }
+
+@keyframes follow-orbit {
+  from { offset-distance: 0%; }
+  to { offset-distance: 100%; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .orbit[data-immersive]:not([data-single]) {
+    position: absolute;
+    inset: 0;
+    aspect-ratio: auto;
+    min-block-size: 0;
+    max-block-size: none;
+    mask-image: none;
+    pointer-events: none;
+  }
+
+  .orbit[data-immersive]:not([data-single]) .rotor {
+    inset: 0;
+    inline-size: 100%;
+    block-size: 100%;
+    animation: none;
+  }
+
+  .orbit[data-immersive]:not([data-single]) .slot {
+    inset: 0 auto auto 0;
+    transform: none;
+    visibility: hidden;
+  }
+
+  .orbit[data-immersive]:not([data-single]) .frame {
+    inline-size: var(--orbit-card-width);
+    border-radius: clamp(.375rem, .8cqw, .875rem);
+  }
+
+  .orbit[data-immersive][data-path-ready] .slot {
+    visibility: visible;
+    offset-path: var(--orbit-path);
+    offset-rotate: auto;
+    animation: follow-orbit var(--orbit-duration) linear infinite paused;
+    animation-delay: calc(-1 * var(--orbit-duration) * var(--orbit-phase, 0));
+  }
+
+  .orbit[data-immersive][data-path-ready][data-direction="anticlockwise"] .slot {
+    animation-direction: reverse;
+    animation-delay: calc(var(--orbit-duration) * (var(--orbit-phase, 0) - 1));
+  }
+
+  .orbit[data-immersive][data-visible="true"] .slot { animation-play-state: running; }
+  .orbit[data-immersive]:has(.frame:focus-visible) .slot { animation-play-state: paused; }
+
+  @media (hover: hover) and (pointer: fine) {
+    .orbit[data-immersive]:has(.frame:hover) .slot { animation-play-state: paused; }
+    .orbit[data-immersive] .frame:hover { scale: 1; }
+  }
+}

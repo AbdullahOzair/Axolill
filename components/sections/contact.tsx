@@ -14,12 +14,15 @@ export async function Contact() {
     securityEvent("creative_orbit_read_failed", {});
     return null;
   });
-
   return (
-    <section id="contact" aria-labelledby="contact-heading" className={`${layout.section} ${styles.section} scroll-mt-16 font-sans`}>
-      <div className={layout.content}>
-        {data && <CreativeOrbit {...data} />}
-
+    <section
+      id="contact"
+      aria-labelledby="contact-heading"
+      className={`${layout.section} ${styles.section} scroll-mt-16 font-sans`}
+      data-orbit-active={Boolean(data?.settings.enabled && data.images.length > 1) || undefined}
+    >
+      {data && <CreativeOrbit {...data} immersive />}
+      <div className={`${layout.content} ${styles.copy}`}>
         <header className={styles.closing}>
           <p className={`${layout.eyebrow} ${styles.eyebrow}`}>LET&apos;S CONNECT</p>
           <h2 id="contact-heading" className={`${layout.title} font-heading font-bold`}>
@@ -32,7 +35,6 @@ export async function Contact() {
             Start a conversation <ArrowUpRight aria-hidden="true" />
           </a>
         </header>
-
       </div>
     </section>
   );
