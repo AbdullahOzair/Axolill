@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 
 import {
+  badRequest,
   db,
   json,
   mutationJson,
@@ -13,7 +14,7 @@ import {
   requireSession,
   toDate,
 } from "@/lib/api";
-import { invoice } from "@/lib/db/schema";
+import { invoice, quotationInvoice } from "@/lib/db/schema";
 
 export const dynamic = "force-dynamic";
 
@@ -51,7 +52,9 @@ export const GET = withApiErrors("GET /api/invoices/[id]", async function GET(_r
   const project = await loadProject(found.projectId, auth.user);
   if (project instanceof Response) return notFound("Invoice not found");
 
-  return json({ invoice: found });
+  const linked = await db().select({ quotation: quotationInvoice.snapshot }).from(quotationInvoice)
+    .where(eq(quotationInvoice.invoiceId, id)).get();
+  return json({ invoice: found, ...linked });
 });
 
 /** PATCH — admin only (e.g. mark paid). */
@@ -65,6 +68,13 @@ export const PATCH = withApiErrors("PATCH /api/invoices/[id]", async function PA
 
   const body = await parseBody(request, patchInvoice);
   if (body instanceof Response) return body;
+  const linked = await db().select({ id: quotationInvoice.id }).from(quotationInvoice).where(eq(quotationInvoice.invoiceId, id)).get();
+  if (linked && ((body.amount !== undefined && body.amount !== found.amount)
+    || (body.currency !== undefined && body.currency !== found.currency)
+    || (body.number !== undefined && body.number !== found.number)
+    || (body.status === "paid" && found.status !== "paid"))) {
+    return badRequest("Manage quotation-linked terms and payment receipts from the quotation.");
+  }
 
   // Pull the date out of the spread — it arrives as an ISO string, but the
   // column takes a Date.
@@ -91,6 +101,8 @@ export const DELETE = withApiErrors("DELETE /api/invoices/[id]", async function 
   const { id } = await params;
   const found = await findInvoice(id);
   if (!found) return notFound("Invoice not found");
+  const linked = await db().select({ id: quotationInvoice.id }).from(quotationInvoice).where(eq(quotationInvoice.invoiceId, id)).get();
+  if (linked) return badRequest("Quotation-linked invoices are retained with the quotation history.");
 
   await db().delete(invoice).where(eq(invoice.id, id));
   return mutationJson(auth.user, "DELETE /api/invoices/[id]", { deleted: id });

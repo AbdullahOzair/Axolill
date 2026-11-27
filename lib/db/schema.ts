@@ -1,3 +1,7 @@
+import type { AnySQLiteColumn } from "drizzle-orm/sqlite-core";
+import type { z } from "zod";
+import type { QuoteInput, QuoteSettings, QuoteStatus, quotePresetSchema, quoteTemplateSchema } from "@/lib/quotations";
+import type { PublicQuote } from "@/lib/quotation-public";
 import { sql } from "drizzle-orm";
 import type { PortfolioCaseStudyDetails } from "@/lib/data-model";
 import type { InquiryGroup, InquiryPriority, InquiryStage, InquiryType } from "@/lib/inquiries";
@@ -662,3 +666,95 @@ export type PortfolioItem = typeof portfolioItem.$inferSelect;
 export type TeamMember = typeof teamMember.$inferSelect;
 export type GoogleCalendarConnection =
   typeof googleCalendarConnection.$inferSelect;
+
+export const quotation = sqliteTable("quotation", {
+  id: text("id").primaryKey(),
+  number: text("number").notNull(),
+  year: integer("year").notNull(),
+  sequence: integer("sequence").notNull(),
+  revision: integer("revision").notNull().default(1),
+  previousId: text("previousId").references((): AnySQLiteColumn => quotation.id, { onDelete: "restrict" }),
+  clientId: text("clientId").references(() => user.id, { onDelete: "set null" }),
+  leadId: text("leadId").references(() => lead.id, { onDelete: "set null" }),
+  assigneeId: text("assigneeId").references(() => teamMember.id, { onDelete: "set null" }),
+  status: text("status").$type<QuoteStatus>().notNull().default("draft"),
+  issue: text("issue").notNull(),
+  expiry: text("expiry").notNull(),
+  currency: text("currency").notNull(),
+  digits: integer("digits").notNull(),
+  version: integer("version").notNull().default(0),
+  input: text("input", { mode: "json" }).$type<QuoteInput>().notNull(),
+  branding: text("branding", { mode: "json" }).$type<QuoteSettings>().notNull(),
+  oneTime: integer("oneTime").notNull(),
+  monthly: integer("monthly").notNull(),
+  oneTimeProfit: integer("oneTimeProfit").notNull(),
+  monthlyProfit: integer("monthlyProfit").notNull(),
+  archived: integer("archived", { mode: "boolean" }).notNull().default(false),
+  deleted: integer("deleted", { mode: "boolean" }).notNull().default(false),
+  lastActionId: text("lastActionId").notNull(),
+  createdAt: integer("createdAt").notNull().default(sql`(unixepoch())`),
+  updatedAt: integer("updatedAt").notNull().default(sql`(unixepoch())`),
+  sentAt: integer("sentAt"),
+  acceptedAt: integer("acceptedAt"),
+}, (t) => [
+  uniqueIndex("quotation_number_revision_uq").on(t.number, t.revision),
+  uniqueIndex("quotation_year_sequence_revision_uq").on(t.year, t.sequence, t.revision),
+  index("quotation_status_issue_idx").on(t.status, t.issue),
+  index("quotation_currency_issue_idx").on(t.currency, t.issue),
+  index("quotation_lead_idx").on(t.leadId),
+  index("quotation_client_idx").on(t.clientId),
+]);
+
+export const quotationActivity = sqliteTable("quotation_activity", {
+  id: text("id").primaryKey(),
+  quotationId: text("quotationId").notNull().references(() => quotation.id, { onDelete: "restrict" }),
+  actorId: text("actorId").references(() => user.id, { onDelete: "set null" }),
+  kind: text("kind").notNull(),
+  details: text("details").notNull().default(""),
+  createdAt: integer("createdAt").notNull().default(sql`(unixepoch())`),
+}, (t) => [index("quotation_activity_quote_idx").on(t.quotationId, t.createdAt)]);
+
+export const quotationShare = sqliteTable("quotation_share", {
+  id: text("id").primaryKey(),
+  quotationId: text("quotationId").notNull().references(() => quotation.id, { onDelete: "restrict" }),
+  tokenHash: text("tokenHash").notNull().unique(),
+  codeHash: text("codeHash").notNull(),
+  expiresAt: integer("expiresAt").notNull(),
+  revokedAt: integer("revokedAt"),
+  viewedAt: integer("viewedAt"),
+  usedAt: integer("usedAt"),
+  createdAt: integer("createdAt").notNull().default(sql`(unixepoch())`),
+}, (t) => [index("quotation_share_quote_idx").on(t.quotationId)]);
+
+export const quotationSettings = sqliteTable("quotation_settings", {
+  id: text("id").primaryKey(),
+  data: text("data", { mode: "json" }).$type<QuoteSettings>().notNull(),
+});
+
+export const quotationPreset = sqliteTable("quotation_preset", {
+  id: text("id").primaryKey(),
+  serviceId: text("serviceId").notNull().references(() => service.id, { onDelete: "cascade" }),
+  data: text("data", { mode: "json" }).$type<z.infer<typeof quotePresetSchema>>().notNull(),
+}, (t) => [index("quotation_preset_service_idx").on(t.serviceId)]);
+
+export const quotationTemplate = sqliteTable("quotation_template", {
+  id: text("id").primaryKey(),
+  data: text("data", { mode: "json" }).$type<z.infer<typeof quoteTemplateSchema>>().notNull(),
+});
+
+export const quotationInvoice = sqliteTable("quotation_invoice", {
+  id: text("id").primaryKey(),
+  quoteNumber: text("quoteNumber").notNull().unique(),
+  quotationId: text("quotationId").notNull().unique().references(() => quotation.id, { onDelete: "restrict" }),
+  invoiceId: text("invoiceId").unique().references(() => invoice.id, { onDelete: "set null" }),
+  snapshot: text("snapshot", { mode: "json" }).$type<PublicQuote>().notNull(),
+});
+
+export const quotationPayment = sqliteTable("quotation_payment", {
+  id: text("id").primaryKey(),
+  conversionId: text("conversionId").notNull().references(() => quotationInvoice.id, { onDelete: "restrict" }),
+  receipt: text("receipt").notNull(),
+  amount: integer("amount").notNull(),
+  receivedOn: text("receivedOn").notNull(),
+  createdBy: text("createdBy").references(() => user.id, { onDelete: "set null" }),
+}, (t) => [uniqueIndex("quotation_payment_receipt_uq").on(t.conversionId, t.receipt)]);

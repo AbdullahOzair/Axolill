@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
@@ -70,6 +71,7 @@ function InquiryPanels({ data, url, suggestedStage, refresh }: {
       <div className={styles.detailHeading}>
         <div><h2>{lead.name}</h2><p>{lead.type} · {inquiryCountry(lead.country)} · {displayDate(lead.createdAt)}</p></div>
         <a href={"mailto:" + encodeURIComponent(lead.email)}>Email</a>
+        <Link href={"/admin/quotations/new?source=" + encodeURIComponent(lead.id)}>Create Quotation</Link>
         {phoneLink && <a href={phoneLink} target={phone?.startsWith("+") ? "_blank" : undefined} rel="noopener noreferrer">
           {phone?.startsWith("+") ? "WhatsApp" : "Call"}
         </a>}

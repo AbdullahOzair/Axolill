@@ -830,6 +830,8 @@ function LeadDetailPanel({
               >
                 {lead.email}
               </a>
+              <a href={"/admin/quotations/new?source=" + encodeURIComponent(lead.id)}
+                className="mt-1 block text-sm underline underline-offset-4">Create Quotation</a>
             </div>
             <Badge
               className={cn(

@@ -12,6 +12,9 @@ import {
   Inbox,
   Layers,
   LayoutDashboard,
+  FileText,
+  FilePlus2,
+  List,
   MessageSquareQuote,
   PanelLeftClose,
   PanelLeftOpen,
@@ -80,6 +83,18 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
     items: [
       { href: "/admin/conversions", label: "Leads & Conversions", icon: Inbox },
       { href: "/admin/leads", label: "Contact leads", icon: Inbox },
+    ],
+  },
+  {
+    label: "Quotation Management",
+    items: [
+      { href: "/admin/quotations/overview", label: "Overview", icon: LayoutDashboard },
+      { href: "/admin/quotations/new", label: "Create Quotation", icon: FilePlus2 },
+      { href: "/admin/quotations/all", label: "All Quotations", icon: FileText },
+      { href: "/admin/quotations/clients", label: "Clients", icon: Users },
+      { href: "/admin/quotations/catalogue", label: "Service Catalogue", icon: List },
+      { href: "/admin/quotations/templates", label: "Templates", icon: Layers },
+      { href: "/admin/quotations/settings", label: "Settings", icon: Server },
     ],
   },
   {
