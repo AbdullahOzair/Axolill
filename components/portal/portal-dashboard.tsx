@@ -32,7 +32,7 @@ import {
   type Project,
   type ProjectFile,
 } from "@/lib/data-model";
-import { GetStarted } from "@/components/portal/get-started";
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { BookingDialog } from "@/components/portal/booking-dialog";
@@ -114,6 +114,8 @@ const MILESTONE_STATUS: Record<
     className: "bg-success/10 text-success",
     icon: CheckCircle2,
   },
+  blocked: { label: "Blocked", className: "bg-destructive/10 text-destructive", icon: CircleAlert },
+  completed: { label: "Completed", className: "bg-success/10 text-success", icon: CheckCircle2 },
   changes_requested: {
     label: "Changes Requested",
     className: "bg-destructive/10 text-destructive",
@@ -130,14 +132,14 @@ const INVOICE_STATUS: Record<Invoice["status"], string> = {
 
 /* --------------------------------- loader --------------------------------- */
 
-async function loadPortal(): Promise<PortalData> {
+async function loadPortal(projectId?: string): Promise<PortalData> {
   // Meetings aren't project-scoped — a client can have one booked before any
   // project exists, so fetch them regardless.
   const [{ projects }, { meetings }] = await Promise.all([
     fetchJson<{ projects: Project[] }>("/api/projects"),
     fetchJson<{ meetings: Meeting[] }>("/api/meetings"),
   ]);
-  const project = projects[0] ?? null;
+  const project = (projectId ? projects.find((item) => item.id === projectId) : projects[0]) ?? null;
 
   if (!project) {
     return { project: null, milestones: [], files: [], invoices: [], meetings };
@@ -164,9 +166,9 @@ async function loadPortal(): Promise<PortalData> {
 
 /* -------------------------------- dashboard -------------------------------- */
 
-export function PortalDashboard({ user }: { user: PortalUser }) {
+export function PortalDashboard({ user, projectId }: { user: PortalUser; projectId?: string }) {
   const { data, error, loading, reload, setData } =
-    useLoader<PortalData>(loadPortal);
+    useLoader<PortalData>(React.useCallback(() => loadPortal(projectId), [projectId]));
 
   const [pendingId, setPendingId] = React.useState<string | null>(null);
   const [actionError, setActionError] = React.useState<string | null>(null);
@@ -225,7 +227,7 @@ export function PortalDashboard({ user }: { user: PortalUser }) {
             <ErrorState message={error} onRetry={reload} />
           ) : !data?.project ? (
             <>
-              <GetStarted />
+              <Link href="/portal/overview" className="underline">Open your client portal</Link>
               {/* A meeting can be booked before the project starts. */}
               {data && (
                 <MeetingList

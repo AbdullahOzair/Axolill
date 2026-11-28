@@ -85,6 +85,27 @@
       "when": 1795786020704,
       "tag": "0011_quotation_management",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1795789794707,
+      "tag": "0012_client_portal_workspace",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1795790284911,
+      "tag": "0013_portal_meeting_changes",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "6",
+      "when": 1795792153237,
+      "tag": "0014_active_project_workspace",
+      "breakpoints": true
     }
   ]
 }

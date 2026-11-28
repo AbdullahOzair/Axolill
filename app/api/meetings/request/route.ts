@@ -13,12 +13,13 @@ import {
   requireSession,
   toDate,
 } from "@/lib/api";
-import { meeting, project } from "@/lib/db/schema";
+import { meeting, project, portalRequest } from "@/lib/db/schema";
 
 export const dynamic = "force-dynamic";
 
 const requestMeeting = z.object({
   title: z.string().trim().min(1).max(200),
+  requestId: z.uuid().optional(),
   projectId: z.string().min(1).nullable().optional(),
   /** The client's preferred slot — the admin can move it when confirming. */
   preferredAt: z.iso.datetime({ local: true }).or(z.iso.datetime()),
@@ -63,6 +64,10 @@ export const POST = withApiErrors("POST /api/meetings/request", async function P
     }
   }
 
+  const requestBrief = body.requestId ? await database.select().from(portalRequest)
+    .where(and(eq(portalRequest.id, body.requestId), eq(portalRequest.ownerId, auth.user.id))).get() : null;
+  if (body.requestId && (!requestBrief?.leadId || ["draft", "closed", "cancelled"].includes(requestBrief.state)))
+    return badRequest("That request is not available for booking.");
   const projectId = body.projectId ?? null;
   const scheduledAt = Math.floor(start.getTime() / 1000);
   const pending = and(eq(meeting.clientId, auth.user.id), eq(meeting.status, "requested"));
@@ -77,11 +82,14 @@ export const POST = withApiErrors("POST /api/meetings/request", async function P
 
   // D1 evaluates both guards in the same write, including concurrent requests.
   const inserted = await database.get<{ id: string }>(sql`
-    insert into ${meeting} ("id", "clientId", "projectId", "title", "attendeeName",
+    insert into ${meeting} ("id", "clientId", "projectId", "leadId", "title", "attendeeName",
       "attendeeEmail", "scheduledAt", "status", "provider")
-    select ${newId()}, ${auth.user.id}, ${projectId}, ${body.title}, ${auth.user.name},
+    select ${newId()}, ${auth.user.id}, ${projectId}, ${requestBrief?.leadId ?? null}, ${body.title}, ${auth.user.name},
       ${auth.user.email}, ${scheduledAt}, 'requested', 'google_meet'
     where not exists (select 1 from ${meeting} where ${matching})
+      and not exists(select 1 from ${meeting} as existing where existing.clientId=${auth.user.id}
+        and existing.status in ('requested','scheduled') and existing.scheduledAt<${scheduledAt + 1800}
+        and existing.scheduledAt+existing.durationMinutes*60>${scheduledAt})
       and (select count(*) from ${meeting} where ${pending}) < ${MAX_OPEN_REQUESTS}
     returning "id"
   `);
@@ -89,7 +97,7 @@ export const POST = withApiErrors("POST /api/meetings/request", async function P
     const duplicate = await database.select({ id: meeting.id }).from(meeting).where(matching).get();
     if (duplicate) return json({ error: "You already requested a call for this topic and time." }, 409);
     return badRequest(
-      "You already have a few pending requests. We'll confirm those first."
+      "The time overlaps another request or you already have three pending calls."
     );
   }
 

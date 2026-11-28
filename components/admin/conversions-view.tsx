@@ -164,7 +164,7 @@ function InquiryTable({ rows, inspect }: { rows: InquiryRow[]; inspect: (id: str
         )}</tr></thead>
         <tbody>{rows.map((row) => (
           <tr key={row.id}>
-            <th scope="row">{row.reference}</th><td>{row.name}</td><td>{row.type}</td>
+            <th scope="row">{row.reference}</th><td>{row.name}{row.unreadPortalMessages > 0 && <span className="block text-xs font-semibold text-brand-secondary">{row.unreadPortalMessages} unread</span>}</td><td>{row.type}</td>
             <td>{row.services.join(", ") || "—"}</td><td>{inquiryCountry(row.country)}</td>
             <td>{row.budget === null ? "—" : row.budget.toLocaleString() + (row.currency ? " " + row.currency : "")}</td>
             <td>{STAGE_LABELS[row.stage]}</td><td>{row.priority}</td><td>{row.assignee ?? "Unassigned"}</td>
@@ -204,7 +204,7 @@ function InquiryBoard({ rows, inspect, move, moving }: {
                   event.dataTransfer.setData("text/plain", row.id);
                 }} onDragEnd={() => setTarget(undefined)}>
                   <button type="button" onClick={() => inspect(row.id)}>{row.name}</button>
-                  <p>{row.reference} · {row.type}</p>
+                  <p>{row.reference} {" / "} {row.type}{row.unreadPortalMessages > 0 && " / " + row.unreadPortalMessages + " unread"}</p>
                   <p>{inquiryCountry(row.country)} · {row.priority} priority</p>
                   <select aria-label={`Change status for ${row.reference}`} disabled={row.stage === "converted" || !!moving}
                     value={row.stage} onChange={(event) => move(row, event.currentTarget.value as InquiryStage)}>

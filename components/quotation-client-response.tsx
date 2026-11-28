@@ -8,15 +8,15 @@ export function PrintQuotation() {
   return <Button variant="outline" onClick={()=>window.print()}>Print document</Button>;
 }
 
-export function QuotationClientResponse({ token, status }: {token:string;status:QuoteStatus}) {
+export function QuotationClientResponse({ token, endpoint, status, onResponse }: {token?:string;endpoint?:string;status:QuoteStatus;onResponse?:()=>void}) {
   const router = useRouter();
   const [busy,setBusy] = useState(false);
   const [error,setError] = useState("");
   const [saved,setSaved] = useState(false);
-  const url = "/api/quotations/share/" + token;
+  const url = endpoint ?? "/api/quotations/share/" + token;
   useEffect(()=>{
-    if (status==="sent") void fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"view"})}).catch(()=>{});
-  },[url,status]);
+    if (token && status==="sent") void fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"view"})}).catch(()=>{});
+  },[url,status,token]);
 
   async function submit(event:FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -31,7 +31,7 @@ export function QuotationClientResponse({ token, status }: {token:string;status:
         body:JSON.stringify({action,code:data.get("code"),comment:data.get("comment")})});
       const result=await response.json() as {error?:string};
       if (!response.ok) throw new Error(result.error??"Your response could not be recorded.");
-      setSaved(true);router.refresh();
+      setSaved(true);if (onResponse) onResponse(); else router.refresh();
     } catch(e){setError(e instanceof Error?e.message:"Try again.");} finally {setBusy(false);}
   }
   if (saved) return <p role="status" className="quote-panel">Your response has been recorded.</p>;

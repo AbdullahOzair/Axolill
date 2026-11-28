@@ -1,5 +1,5 @@
 import { withApiErrors } from "@/lib/http-security";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 
 import {
   db,
@@ -28,7 +28,7 @@ async function findFile(projectId: string, fileId: string) {
 }
 
 /** GET — stream the object out of R2 (owner or admin). */
-export const GET = withApiErrors("GET /api/projects/[id]/files/[fileId]", async function GET(_request: Request, { params }: Ctx) {
+export const GET = withApiErrors("GET /api/projects/[id]/files/[fileId]", async function GET(request: Request, { params }: Ctx) {
   const auth = await requireSession();
   if (auth instanceof Response) return auth;
 
@@ -37,7 +37,7 @@ export const GET = withApiErrors("GET /api/projects/[id]/files/[fileId]", async 
   if (project instanceof Response) return project;
 
   const record = await findFile(id, fileId);
-  if (!record) return notFound("File not found");
+  if (!record || (!record.clientVisible && auth.user.role !== "admin")) return notFound("File not found");
 
   const object = await filesBucket().get(record.fileUrl);
   if (!object) return notFound("File missing from storage");
@@ -45,12 +45,15 @@ export const GET = withApiErrors("GET /api/projects/[id]/files/[fileId]", async 
   // NOTE: don't use object.writeHttpMetadata(headers) here — it rejects Next's
   // Headers instance (different realm). Set the fields explicitly instead.
   const headers = new Headers();
-  headers.set("content-type", "application/octet-stream");
+  const preview = new URL(request.url).searchParams.get("preview") === "1" &&
+    ["application/pdf", "image/png", "image/jpeg", "image/webp"].includes(record.fileType ?? "");
+  headers.set("content-type", preview ? record.fileType! : "application/octet-stream");
+  if (preview) headers.set("content-security-policy", "sandbox; default-src 'none'");
   headers.set("x-content-type-options", "nosniff");
   headers.set("etag", object.httpEtag);
   headers.set(
     "content-disposition",
-    `attachment; filename="${encodeURIComponent(record.name)}"`
+    `${preview ? "inline" : "attachment"}; filename="${encodeURIComponent(record.name)}"`
   );
   // Private file — never let a shared cache hold it.
   headers.set("cache-control", "private, no-store");
@@ -70,8 +73,11 @@ export const DELETE = withApiErrors("DELETE /api/projects/[id]/files/[fileId]", 
   const record = await findFile(id, fileId);
   if (!record) return notFound("File not found");
 
-  await filesBucket().delete(record.fileUrl);
-  await db().delete(projectFile).where(eq(projectFile.id, fileId));
-
+  const [removed] = await db().delete(projectFile).where(and(eq(projectFile.projectId, id), eq(projectFile.id, fileId),
+    sql`not exists(select 1 from project_file where previousVersionId=${fileId})`,
+    sql`not exists(select 1 from project_workspace_entry where projectId=${id} and (json_extract(data,'$.fileId')=${fileId}
+      or exists(select 1 from json_each(data,'$.files') where value=${fileId})))`)).returning({ key: projectFile.fileUrl });
+  if (!removed) return new Response(JSON.stringify({ error: "This file is part of the project history." }), { status: 409, headers: { "Content-Type": "application/json", "Cache-Control": "private, no-store" } });
+  await filesBucket().delete(removed.key);
   return mutationJson(auth.user, "DELETE /api/projects/[id]/files/[fileId]", { deleted: fileId });
 });

@@ -39,6 +39,8 @@ export const inquiryFields = {
     return safe;
   })(),
   name: lead.name, email: lead.email, company: lead.company, description: lead.message,
+  unreadPortalMessages: sql<number>`(select count(*) from portal_request_event e inner join portal_request p on p.id=e.requestId
+    where p.leadId=${inquiry.id} and e.kind='client_message' and e.readAt is null)`.mapWith(Number),
   source: lead.source, createdAt: lead.createdAt, updatedAt: lead.updatedAt, assignee: teamMember.name,
 };
 

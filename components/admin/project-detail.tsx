@@ -45,6 +45,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { AdminProjectWorkspace } from "./admin-project-workspace";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { ErrorState, PanelSkeleton } from "@/components/ui/states";
@@ -61,6 +62,8 @@ const MILESTONE_STATUSES: MilestoneStatus[] = [
   "awaiting_approval",
   "approved",
   "changes_requested",
+  "blocked",
+  "completed",
 ];
 
 const MILESTONE_STATUS_CLASS: Record<MilestoneStatus, string> = {
@@ -70,6 +73,8 @@ const MILESTONE_STATUS_CLASS: Record<MilestoneStatus, string> = {
   awaiting_approval: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
   approved: "bg-success/10 text-success",
   changes_requested: "bg-destructive/10 text-destructive",
+  blocked: "bg-destructive/10 text-destructive",
+  completed: "bg-success/10 text-success",
 };
 
 const INVOICE_STATUSES: Invoice["status"][] = [
@@ -183,7 +188,7 @@ function DetailBody({
       </SheetHeader>
 
       <Tabs defaultValue="overview" className="p-6">
-        <TabsList className="w-full">
+        <TabsList className="h-auto w-full flex-wrap">
           <TabsTrigger value="overview" className="flex-1">
             Overview
           </TabsTrigger>
@@ -196,6 +201,7 @@ function DetailBody({
           <TabsTrigger value="invoices" className="flex-1">
             Invoices
           </TabsTrigger>
+          <TabsTrigger value="client-workspace" className="flex-1">Client workspace</TabsTrigger>
         </TabsList>
 
         {/*
@@ -240,6 +246,9 @@ function DetailBody({
                 invoices={invoices}
                 onChanged={reload}
               />
+            </TabsContent>
+            <TabsContent value="client-workspace" className="mt-6">
+              <AdminProjectWorkspace id={project.id}/>
             </TabsContent>
           </>
         )}

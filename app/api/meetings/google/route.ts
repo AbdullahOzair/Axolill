@@ -103,6 +103,9 @@ export const POST = withApiErrors("POST /api/meetings/google", async function PO
         meetingUrl: meet.meetingUrl,
         status: "scheduled",
         googleEventId: meet.eventId,
+        calendarOwnerId: auth.user.id,
+        confirmedAt: new Date(),
+        durationMinutes: body.durationMinutes,
         provider: "google_meet",
       })
       .returning();

@@ -198,6 +198,11 @@ export const GET = withApiErrors("GET /api/meetings", async function GET() {
           .orderBy(desc(meeting.scheduledAt));
 
   return json({
-    meetings: rows.map((row) => ({ ...row, meetingUrl: safeMeetingLink(row.meetingUrl) })),
+    meetings: rows.map(({ confirmationLock, confirmationLockedAt, calendarOwnerId, ...row }) => {
+      void confirmationLock;
+      void confirmationLockedAt;
+      void calendarOwnerId;
+      return { ...row, meetingUrl: safeMeetingLink(row.meetingUrl) };
+    }),
   });
 });

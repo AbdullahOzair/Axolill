@@ -22,6 +22,11 @@ declare global {
     CAL_WEBHOOK_SECRET: string;
     /** Optional AES-256 key for Calendar tokens, encoded as 64 hex characters. */
     GOOGLE_CALENDAR_TOKEN_KEY?: string;
+    /** Optional client workspace operating policy and budget options. */
+    PORTAL_RESPONSE_TIME?: string;
+    PORTAL_BUDGET_RANGES?: string;
+    /** Optional JSON availability policy for the connected Google Calendar. */
+    PORTAL_BOOKING_HOURS?: string;
   }
 }
 

@@ -3,6 +3,7 @@ import { desc, eq } from "drizzle-orm";
 import { z } from "zod";
 
 import {
+  badRequest,
   db,
   json,
   mutationJson,
@@ -13,7 +14,7 @@ import {
   requireSession,
   toDate,
 } from "@/lib/api";
-import { invoice, project } from "@/lib/db/schema";
+import { invoice, project, projectWorkspace } from "@/lib/db/schema";
 
 export const dynamic = "force-dynamic";
 
@@ -58,7 +59,7 @@ export const GET = withApiErrors("GET /api/invoices", async function GET(request
 
   const invoices = rows
     .map((r) => r.invoice)
-    .filter((i) => (projectId ? i.projectId === projectId : true));
+    .filter((i) => i.status !== "draft" && (!projectId || i.projectId === projectId));
 
   return json({ invoices });
 });
@@ -74,6 +75,10 @@ export const POST = withApiErrors("POST /api/invoices", async function POST(requ
   // Make sure the project exists before attaching an invoice to it.
   const found = await loadProject(body.projectId, auth.user);
   if (found instanceof Response) return found;
+
+  if (body.status === "paid" && await db().select({ id: projectWorkspace.projectId }).from(projectWorkspace)
+    .where(eq(projectWorkspace.projectId, body.projectId)).get())
+    return badRequest("Issue the invoice first, then record payment verification in the client workspace.");
 
   const [created] = await db()
     .insert(invoice)

@@ -1,5 +1,5 @@
 import { withApiErrors } from "@/lib/http-security";
-import { eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 
 import {
@@ -14,7 +14,7 @@ import {
   requireSession,
   toDate,
 } from "@/lib/api";
-import { invoice, quotationInvoice } from "@/lib/db/schema";
+import { invoice, projectWorkspace, projectWorkspaceEntry, quotationInvoice } from "@/lib/db/schema";
 
 export const dynamic = "force-dynamic";
 
@@ -75,6 +75,17 @@ export const PATCH = withApiErrors("PATCH /api/invoices/[id]", async function PA
     || (body.status === "paid" && found.status !== "paid"))) {
     return badRequest("Manage quotation-linked terms and payment receipts from the quotation.");
   }
+
+  const managed = await db().select({ id: projectWorkspace.projectId }).from(projectWorkspace)
+    .where(eq(projectWorkspace.projectId,found.projectId)).get();
+  const proofs = await db().select({ id: projectWorkspaceEntry.id }).from(projectWorkspaceEntry)
+    .where(and(eq(projectWorkspaceEntry.projectId,found.projectId),eq(projectWorkspaceEntry.kind,"proof"),
+      sql`json_extract(${projectWorkspaceEntry.data}, '$.invoiceId')=${id} and ${projectWorkspaceEntry.state} in ('pending','verified')`)).get();
+  if (managed && body.status === "paid" && found.status !== "paid")
+    return badRequest("Verify the payment in the Client workspace before marking this invoice paid.");
+  if (proofs && (body.amount !== undefined && body.amount !== found.amount || body.currency !== undefined && body.currency !== found.currency ||
+    body.status === "draft" || found.status === "paid" && body.status && body.status !== "paid"))
+    return badRequest("Invoice terms are locked while payment proof or verified receipts exist.");
 
   // Pull the date out of the spread — it arrives as an ISO string, but the
   // column takes a Date.

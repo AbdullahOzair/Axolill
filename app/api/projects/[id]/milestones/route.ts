@@ -29,6 +29,8 @@ const createMilestone = z.object({
       "awaiting_approval",
       "approved",
       "changes_requested",
+      "blocked",
+      "completed",
     ])
     .optional(),
   dueDate: z.iso.datetime().or(z.iso.date()),

@@ -10,6 +10,7 @@ import { GROUP_LABELS, INQUIRY_PRIORITIES, INQUIRY_STAGES, STAGE_LABELS, inquiry
 import { safeMeetingLink } from "@/lib/meeting-link";
 import { inquiryMutation, useInquiryQuery } from "./inquiry-query";
 import styles from "./conversions.module.css";
+import { PortalInquiryThread } from "./portal-inquiry-thread";
 
 type Wire<T> = T extends Date ? string : T extends object ? { [K in keyof T]: Wire<T[K]> } : T;
 export type InquiryDetail = Wire<NonNullable<Awaited<ReturnType<typeof inquireDetail>>>>;
@@ -49,7 +50,7 @@ function InquiryPanels({ data, url, suggestedStage, refresh }: {
   const [stage, setStage] = useState(suggestedStage && suggestedStage !== "converted" ? suggestedStage : lead.stage);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
-  const [includeProject, setIncludeProject] = useState(false);
+  const [includeProject, setIncludeProject] = useState(lead.source === "portal_workspace");
 
   async function run(event: FormEvent<HTMLFormElement>, operation: (data: FormData) => Promise<unknown>) {
     event.preventDefault();
@@ -98,6 +99,8 @@ function InquiryPanels({ data, url, suggestedStage, refresh }: {
           {lead.objectives && <div className={styles.full}><dt>{lead.type === "GUIDANCE" ? "Desired outcome" : "Business objectives"}</dt><dd>{lead.objectives}</dd></div>}
         </dl>
       </section>
+
+      {lead.source === "portal_workspace" && <PortalInquiryThread key={lead.id} leadId={lead.id} />}
 
       <form className={styles.panel} onSubmit={(event) => run(event, (values) => inquiryMutation(url, { action: "update", changes: {
         stage: stage === "converted" ? undefined : stage, priority: field(values, "priority"),
@@ -154,13 +157,13 @@ function InquiryPanels({ data, url, suggestedStage, refresh }: {
         </form>
       </details>
 
-      {lead.convertedAt ? <section className={styles.panel}>
+      {lead.convertedAt && (lead.source !== "portal_workspace" || lead.convertedProjectId) ? <section className={styles.panel}>
         <h3>Conversion recorded</h3>
         <p>{displayDate(lead.convertedAt)} · {lead.convertedProjectId ? "Client and project linked" : "Client linked"}</p>
         <a href="/admin/clients">View clients</a>{" · "}<a href="/admin/projects">View projects</a>
       </section> : (
         <details className={styles.panel} open={suggestedStage === "converted" || undefined}>
-          <summary>Convert to client</summary>
+          <summary>{lead.source === "portal_workspace" ? "Create linked project" : "Convert to client"}</summary>
           <p>Create a client record or link an existing client. Any matching email is checked again when saving.</p>
           <form className={styles.miniForm} onSubmit={(event) => run(event, (values) => inquiryMutation(url + "/convert", {
             clientId: field(values, "client") || undefined,
@@ -182,7 +185,7 @@ function InquiryPanels({ data, url, suggestedStage, refresh }: {
               <label>Start date<input name="projectStart" type="date" required /></label>
               <label>Target date<input name="projectTarget" type="date" required /></label>
             </div>}
-            <Button type="submit" disabled={saving}>Convert to client</Button>
+            <Button type="submit" disabled={saving}>{lead.source === "portal_workspace" ? "Create project" : "Convert to client"}</Button>
           </form>
         </details>
       )}

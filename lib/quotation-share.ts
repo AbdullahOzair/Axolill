@@ -67,3 +67,17 @@ export async function markQuoteViewed(linkId: string) {
     d1.prepare(`update quotation_share set viewedAt=unixepoch() where id=? and viewedAt is null and revokedAt is null and expiresAt>unixepoch()`).bind(linkId),
   ]);
 }
+
+/** Validate a separate recipient code against an active, unused link. */
+export async function verifyQuotationCode(quoteId: string, code: string) {
+  const hash = await hashQuoteSecret(code);
+  const records = await db().select({ id: quotationShare.id, codeHash: quotationShare.codeHash }).from(quotationShare)
+    .where(and(eq(quotationShare.quotationId, quoteId), isNull(quotationShare.revokedAt), isNull(quotationShare.usedAt),
+      gt(quotationShare.expiresAt, Math.floor(Date.now() / 1000))));
+  for (const record of records) {
+    let difference = 0;
+    for (let index = 0; index < hash.length; index++) difference |= hash.charCodeAt(index) ^ record.codeHash.charCodeAt(index);
+    if (!difference) return { shareId: record.id, codeHash: hash };
+  }
+  return null;
+}

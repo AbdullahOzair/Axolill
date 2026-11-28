@@ -82,7 +82,7 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
     label: "Leads",
     items: [
       { href: "/admin/conversions", label: "Leads & Conversions", icon: Inbox },
-      { href: "/admin/leads", label: "Contact leads", icon: Inbox },
+      { href: "/admin/leads", label: "Client Forms", icon: Inbox },
     ],
   },
   {
@@ -91,7 +91,6 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
       { href: "/admin/quotations/overview", label: "Overview", icon: LayoutDashboard },
       { href: "/admin/quotations/new", label: "Create Quotation", icon: FilePlus2 },
       { href: "/admin/quotations/all", label: "All Quotations", icon: FileText },
-      { href: "/admin/quotations/clients", label: "Clients", icon: Users },
       { href: "/admin/quotations/catalogue", label: "Service Catalogue", icon: List },
       { href: "/admin/quotations/templates", label: "Templates", icon: Layers },
       { href: "/admin/quotations/settings", label: "Settings", icon: Server },

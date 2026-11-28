@@ -1,0 +1,24 @@
+﻿.axw-shell .axp-nav a { font-size:.81rem; }
+.axw-shell .axp-main { min-height:380px; }
+.axw-back { display:inline-block; margin-bottom:5px; font-size:.77rem; }
+.axw-profile { max-width:24vw; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.axw-actions a { min-height:44px; display:flex; justify-content:space-between; align-items:center; gap:10px; }
+.axw-actions a small { display:block; font-weight:400; color:var(--muted-foreground); font-size:.8rem; }
+.axw-progress { width:100%; height:8px; border-radius:8px; overflow:hidden; accent-color:var(--axp-accent); }
+.axw-progress::-webkit-progress-bar { background:var(--muted); }
+.axw-progress::-webkit-progress-value { background:var(--axp-accent); }
+.axw-progress::-moz-progress-bar { background:var(--axp-accent); }
+.axw-person { display:flex; gap:10px; align-items:center; }
+.axw-person img { border-radius:50%; object-fit:cover; }
+.axw-tags { display:flex; gap:7px; flex-wrap:wrap; }
+.axw-tags span { border:1px solid var(--axp-line); border-radius:7px; padding:3px 7px; font-size:.75rem; }
+.axw-timeline { padding:0 0 0 18px; border-left:1px solid var(--axp-line); margin-left:6px; list-style:none; display:grid; gap:17px; }
+.axw-timeline li { position:relative; }
+.axw-timeline li::before { content:""; position:absolute; left:-23px; top:5px; height:9px; width:9px; border-radius:50%; background:var(--background); border:1px solid var(--axp-accent); }
+.axw-timeline li[data-status="current"]::before,.axw-timeline li[data-status="completed"]::before { background:var(--axp-accent); }
+.axw-disclosure { border-top:1px solid var(--axp-line); padding-top:8px; }
+.axw-disclosure summary { cursor:pointer; font-weight:650; margin-bottom:8px; }
+.axw-form { max-width:640px; margin-top:4px; }
+.axp-project-panel,.axw-shell li[id] { scroll-margin-top:85px; }
+.axw-shell .axp-badge[data-status="awaiting_approval"],.axw-shell .axp-badge[data-status="overdue"] { border:1px solid color-mix(in srgb,#bf4995 58%,var(--axp-line)); }
+@media(max-width:680px) { .axw-shell .axp-nav a { min-height:44px; } }
