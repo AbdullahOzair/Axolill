@@ -13,7 +13,6 @@ import {
   toDate,
 } from "@/lib/api";
 import { project } from "@/lib/db/schema";
-import { recordLegacyProjectUpdate } from "@/lib/active-project-api";
 
 export const dynamic = "force-dynamic";
 
@@ -76,7 +75,6 @@ export const PATCH = withApiErrors("PATCH /api/projects/[id]", async function PA
     .where(eq(project.id, id))
     .returning();
 
-  await recordLegacyProjectUpdate(found, auth.user.id, body);
   return mutationJson(auth.user, "PATCH /api/projects/[id]", { project: updated });
 });
 

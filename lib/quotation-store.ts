@@ -21,7 +21,7 @@ export function quoteExpiresAt(date: string) {
 }
 
 export const expirable = ["draft", "pending_approval", "approved", "sent", "viewed", "revision_requested"] as const;
-export function effectiveQuoteStatus(row: Pick<QuoteRow, "expiry" | "status">): QuoteStatus {
+export function effectiveQuoteStatus(row: QuoteRow): QuoteStatus {
   return row.expiry < quoteDateToday() && expirable.some(status => status === row.status) ? "expired" : row.status;
 }
 
@@ -168,7 +168,7 @@ export async function changeQuotation(row: QuoteRow, action: string, actor: stri
     ...(["return","cancel"].includes(action) ? [d1.prepare(`update quotation_share set revokedAt=unixepoch()
       where quotationId=? and revokedAt is null and exists(select 1 from quotation where id=? and lastActionId=?)`)
       .bind(row.id,row.id,event)] : []),
-    activity(event, row.id, actor, recipient ? "recipient_" + action : action, note),
+    activity(event, row.id, actor, actor ? action : "recipient_" + action, note),
   ]);
   if (!results[0].meta.changes) throw new QuoteError("This quotation changed. Reload and try again.", 409);
   return (await loadQuotation(row.id))!;

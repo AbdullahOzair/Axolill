@@ -142,11 +142,11 @@ export function MeetingsView() {
   const [rowError, setRowError] = React.useState<string | null>(null);
   const [rowNeedsConnect, setRowNeedsConnect] = React.useState(false);
 
-  const requested = meetings.filter((m) => m.status === "requested" || m.requestedChangeAt);
+  const requested = meetings.filter((m) => m.status === "requested");
 
   /** Prefill with the slot the client asked for — the admin can move it. */
   function openConfirm(m: Meeting) {
-    const d = new Date(m.requestedChangeAt ?? m.scheduledAt);
+    const d = new Date(m.scheduledAt);
     const pad = (n: number) => String(n).padStart(2, "0");
     setConfirmDraft({
       startsAt: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`,
@@ -168,7 +168,7 @@ export function MeetingsView() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "confirm",
-          startsAt: new Date(confirmDraft.startsAt).toISOString(),
+          startsAt: confirmDraft.startsAt,
           durationMinutes: confirmDraft.durationMinutes,
           timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         }),
@@ -331,9 +331,9 @@ export function MeetingsView() {
     {
       icon: Check,
       label: (m) =>
-        m.requestedChangeAt ? `Confirm new time for ${m.title}` : m.status === "requested" ? `Confirm ${m.title}` : `Join ${m.title}`,
+        m.status === "requested" ? `Confirm ${m.title}` : `Join ${m.title}`,
       onClick: (m) => {
-        if (m.status === "requested" || m.requestedChangeAt) openConfirm(m);
+        if (m.status === "requested") openConfirm(m);
         else if (m.meetingUrl) window.open(m.meetingUrl, "_blank", "noopener");
       },
     },
@@ -567,14 +567,15 @@ export function MeetingsView() {
       >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{confirming?.requestedChangeAt ? "Confirm the new meeting time" : "Confirm this request"}</DialogTitle>
+            <DialogTitle>Confirm this request</DialogTitle>
             <DialogDescription>
               {confirming && (
                 <>
                   <span className="font-medium text-foreground">
                     {confirming.attendeeName}
                   </span>{" "}
-                  asked about {confirming.title}. {confirming.requestedChangeAt ? "Confirming updates the calendar invitation and notifies the client." : "Confirming creates the Google Meet, invites the client, and notifies them in the portal."}
+                  asked for “{confirming.title}”. Confirming creates the Google
+                  Meet, invites them, and notifies them in their portal.
                 </>
               )}
             </DialogDescription>
@@ -635,7 +636,7 @@ export function MeetingsView() {
               ) : (
                 <Check className="size-4" />
               )}
-              {rowBusy ? "Confirming..." : confirming?.requestedChangeAt ? "Confirm new time" : "Confirm & create Meet"}
+              {rowBusy ? "Creating Meet…" : "Confirm & create Meet"}
             </Button>
           </DialogFooter>
         </DialogContent>

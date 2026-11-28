@@ -212,14 +212,11 @@ export const milestone = sqliteTable(
         "awaiting_approval",
         "approved",
         "changes_requested",
-        "blocked",
-        "completed",
       ],
     })
       .notNull()
       .default("pending"),
     dueDate: integer("dueDate", { mode: "timestamp" }).notNull(),
-    reviewVersion: integer("reviewVersion").notNull().default(1),
     // `order` is a SQL keyword — Drizzle quotes it in generated DDL.
     order: integer("order").notNull().default(0),
     createdAt: integer("createdAt", { mode: "timestamp" })
@@ -248,11 +245,6 @@ export const projectFile = sqliteTable(
     }), // nullable per DATA_MODEL.md
     name: text("name").notNull(),
     fileUrl: text("fileUrl").notNull(),
-    clientVisible: integer("clientVisible", { mode: "boolean" }).notNull().default(true),
-    folder: text("folder").notNull().default("Project documents"),
-    fileType: text("fileType"),
-    fileSize: integer("fileSize"),
-    previousVersionId: text("previousVersionId").references((): AnySQLiteColumn => projectFile.id, { onDelete: "set null" }),
     uploadedBy: text("uploadedBy")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
@@ -381,11 +373,6 @@ export const meeting = sqliteTable(
       .default("scheduled"),
     /** Google Calendar event id — null for bookings that came from Cal.com. */
     googleEventId: text("googleEventId"),
-    calendarOwnerId: text("calendarOwnerId").references(() => user.id, { onDelete: "set null" }),
-    requestedChangeAt: integer("requestedChangeAt", { mode: "timestamp" }),
-    durationMinutes: integer("durationMinutes").notNull().default(30),
-    confirmationLock: text("confirmationLock"),
-    confirmationLockedAt: integer("confirmationLockedAt"),
     /** Which system owns this booking. */
     provider: text("provider", { enum: ["calcom", "google_meet"] })
       .notNull()
@@ -771,58 +758,3 @@ export const quotationPayment = sqliteTable("quotation_payment", {
   receivedOn: text("receivedOn").notNull(),
   createdBy: text("createdBy").references(() => user.id, { onDelete: "set null" }),
 }, (t) => [uniqueIndex("quotation_payment_receipt_uq").on(t.conversionId, t.receipt)]);
-
-export const portalRequest = sqliteTable("portal_request", {
-  id: text("id").primaryKey(),
-  ownerId: text("ownerId").notNull().references(() => user.id, { onDelete: "cascade" }),
-  leadId: text("leadId").unique().references(() => lead.id, { onDelete: "set null" }),
-  reference: text("reference").notNull().unique(),
-  state: text("state").notNull().default("draft"),
-  input: text("input", { mode: "json" }).$type<import("@/lib/portal-workspace").WorkspaceInput>().notNull(),
-  version: integer("version").notNull().default(0),
-  submittedAt: integer("submittedAt"),
-  updatedAt: integer("updatedAt").notNull().default(sql`(unixepoch())`),
-}, (t) => [index("portal_request_owner_idx").on(t.ownerId, t.updatedAt)]);
-
-export const portalRequestEvent = sqliteTable("portal_request_event", {
-  id: text("id").primaryKey(),
-  requestId: text("requestId").notNull().references(() => portalRequest.id, { onDelete: "cascade" }),
-  actorId: text("actorId").references(() => user.id, { onDelete: "set null" }),
-  kind: text("kind").notNull(),
-  body: text("body").notNull(),
-  readAt: integer("readAt"),
-  createdAt: integer("createdAt").notNull().default(sql`(unixepoch())`),
-}, (t) => [index("portal_request_event_request_idx").on(t.requestId, t.createdAt)]);
-
-export const portalAttachment = sqliteTable("portal_attachment", {
-  id: text("id").primaryKey(),
-  requestId: text("requestId").notNull().references(() => portalRequest.id, { onDelete: "cascade" }),
-  eventId: text("eventId").references(() => portalRequestEvent.id, { onDelete: "cascade" }),
-  name: text("name").notNull(),
-  objectKey: text("objectKey").notNull().unique(),
-  size: integer("size").notNull(),
-  contentType: text("contentType").notNull(),
-}, (t) => [index("portal_attachment_request_idx").on(t.requestId)]);
-
-export const portalNotificationRead = sqliteTable("portal_notification_read", {
-  userId: text("userId").notNull().references(() => user.id, { onDelete: "cascade" }),
-  key: text("key").notNull(),
-}, (t) => [uniqueIndex("portal_notification_read_user_key_uq").on(t.userId, t.key)]);
-
-export const projectWorkspace = sqliteTable("project_workspace", {
-  projectId: text("projectId").primaryKey().references(() => project.id, { onDelete: "cascade" }),
-  config: text("config", { mode: "json" }).$type<import("@/lib/active-project").ActiveProjectConfig>().notNull(),
-  version: integer("version").notNull().default(0),
-});
-
-export const projectWorkspaceEntry = sqliteTable("project_workspace_entry", {
-  id: text("id").primaryKey(),
-  projectId: text("projectId").notNull().references(() => project.id, { onDelete: "cascade" }),
-  actorId: text("actorId").references(() => user.id, { onDelete: "set null" }),
-  kind: text("kind").notNull(),
-  state: text("state").notNull(),
-  data: text("data", { mode: "json" }).$type<import("@/lib/active-project").ActiveEntryInput & { receipt?: string; reviewedAt?: number; amountMinor?: number; currency?: string; digits?: number; files?: string[]; milestoneVersion?: number }>().notNull(),
-  version: integer("version").notNull().default(0),
-  createdAt: integer("createdAt").notNull().default(sql`(unixepoch())`),
-  updatedAt: integer("updatedAt").notNull().default(sql`(unixepoch())`),
-}, (t) => [index("project_workspace_entry_idx").on(t.projectId, t.kind, t.createdAt)]);

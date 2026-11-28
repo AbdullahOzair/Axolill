@@ -5,8 +5,6 @@ import { securityEvent } from "@/lib/http-security";
 import { safeMeetingLink } from "@/lib/meeting-link";
 import {
   createMeetEvent,
-  calendarSlotIsOpen,
-  moveMeetEvent,
   deleteEvent,
   GoogleApiError,
   meetLinkOf,
@@ -71,7 +69,6 @@ export async function createMeet(opts: {
   durationMinutes: number;
   timeZone: string;
   attendeeEmail: string;
-  checkAvailability?: boolean;
 }): Promise<MeetResult> {
   const token = await getAccessToken(opts.adminUserId);
   if (!token.ok) {
@@ -83,8 +80,6 @@ export async function createMeet(opts: {
 
   let event;
   try {
-    if (opts.checkAvailability && !await calendarSlotIsOpen(token.accessToken, opts.start, end))
-      return { ok: false, status: 409, error: "This time overlaps an event on the connected calendar." };
     event = await createMeetEvent({
       accessToken: token.accessToken,
       summary: opts.summary,
@@ -125,18 +120,3 @@ export async function createMeet(opts: {
 
 /** Undo a created event when we fail to persist it locally. */
 export const rollbackMeet = deleteEvent;
-
-export async function rescheduleMeet(adminUserId: string, eventId: string, start: Date, durationMinutes: number, timeZone: string) {
-  const token = await getAccessToken(adminUserId);
-  if (!token.ok) return { ok: false, status: 409, error: token.message, reason: token.reason } as const;
-  const end = new Date(start.getTime() + durationMinutes * 60_000);
-  try {
-    if (!await calendarSlotIsOpen(token.accessToken, start, end, eventId))
-      return { ok: false, status: 409, error: "This time overlaps an event on the connected calendar." } as const;
-    await moveMeetEvent(token.accessToken, eventId, start, end, timeZone);
-    return { ok: true } as const;
-  } catch (error) {
-    securityEvent("calendar_event_move_failed", { actorId: adminUserId });
-    return { ok: false, status: 502, error: explainGoogleFailure(error) } as const;
-  }
-}

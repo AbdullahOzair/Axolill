@@ -1,5 +1,5 @@
 import { withApiErrors } from "@/lib/http-security";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 
 import {
@@ -14,7 +14,7 @@ import {
   requireSession,
   toDate,
 } from "@/lib/api";
-import { milestone, projectWorkspaceEntry } from "@/lib/db/schema";
+import { milestone } from "@/lib/db/schema";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +29,6 @@ const CLIENT_ALLOWED_STATUSES = ["approved", "changes_requested"] as const;
 
 const patchMilestone = z
   .object({
-    reviewVersion: z.number().int().min(1),
     title: z.string().min(1).max(200),
     description: z.string().max(2000),
     status: z.enum([
@@ -38,8 +37,6 @@ const patchMilestone = z
       "awaiting_approval",
       "approved",
       "changes_requested",
-      "blocked",
-      "completed",
     ]),
     dueDate: z.iso.datetime().or(z.iso.date()),
     order: z.number().int().min(0),
@@ -70,7 +67,7 @@ export const PATCH = withApiErrors("PATCH /api/projects/[id]/milestones/[milesto
   // Enforce the client approval rules.
   if (!isAdmin) {
     const keys = Object.keys(body);
-    const onlyStatus = keys.every((field) => ["status", "reviewVersion"].includes(field));
+    const onlyStatus = keys.length === 1 && keys[0] === "status";
     const allowedTarget =
       body.status !== undefined &&
       (CLIENT_ALLOWED_STATUSES as readonly string[]).includes(body.status);
@@ -80,26 +77,17 @@ export const PATCH = withApiErrors("PATCH /api/projects/[id]/milestones/[milesto
         "Clients may only approve or request changes on a milestone"
       );
     }
-    if (existing.reviewVersion > 1 || body.reviewVersion !== undefined) {
-      return json({ error: "Use the project workspace to review this deliverable version." }, 409);
-    }
     if (existing.status !== "awaiting_approval") {
       return forbidden("This milestone is not awaiting your approval");
     }
   }
 
-  if (!isAdmin) {
-    const { changeLegacyMilestone } = await import("@/lib/project-milestone-legacy");
-    return changeLegacyMilestone(auth.user, id, milestoneId, body.status!);
-  }
-  const { dueDate, reviewVersion, ...rest } = body;
-  void reviewVersion;
+  const { dueDate, ...rest } = body;
 
   const [updated] = await db()
     .update(milestone)
     .set({
       ...rest,
-      reviewVersion: sql`${milestone.reviewVersion}+1`,
       ...(dueDate ? { dueDate: toDate(dueDate) } : {}),
       updatedAt: new Date(),
     })
@@ -123,10 +111,6 @@ export const DELETE = withApiErrors("DELETE /api/projects/[id]/milestones/[miles
   const found = await loadProject(id, auth.user);
   if (found instanceof Response) return found;
 
-  const history = await db().select({ id: projectWorkspaceEntry.id }).from(projectWorkspaceEntry)
-    .where(and(eq(projectWorkspaceEntry.projectId, id), eq(projectWorkspaceEntry.kind, "milestone_review"),
-      sql`json_extract(${projectWorkspaceEntry.data}, '$.reference')=${milestoneId}`)).get();
-  if (history) return json({ error: "This milestone has client review history and cannot be deleted." }, 409);
   await db()
     .delete(milestone)
     .where(and(eq(milestone.id, milestoneId), eq(milestone.projectId, id)));

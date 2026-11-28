@@ -62,9 +62,7 @@ export type MilestoneStatus =
   | "in_progress"
   | "awaiting_approval"
   | "approved"
-  | "changes_requested"
-  | "blocked"
-  | "completed";
+  | "changes_requested";
 
 export interface Milestone {
   id: string;
@@ -147,7 +145,6 @@ export interface Meeting {
   title: string;
   attendeeName: string;
   attendeeEmail: string;
-  requestedChangeAt?: string | null;
   scheduledAt: string; // ISO datetime
   meetingUrl: string | null;
   status: MeetingStatus;

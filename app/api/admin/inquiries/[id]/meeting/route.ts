@@ -45,7 +45,6 @@ export const POST = withApiErrors("POST inquiry meeting", async function POST(
     start,
     durationMinutes: body.durationMinutes,
     timeZone: body.timeZone,
-    checkAvailability: current.source === "portal_workspace",
   });
   if (!result.ok) return json({ error: result.error }, result.status);
 
@@ -53,10 +52,10 @@ export const POST = withApiErrors("POST inquiry meeting", async function POST(
     const d1 = getCloudflareContext().env.DB;
     const event = crypto.randomUUID();
     const writes = await d1.batch([
-      d1.prepare(`insert into meeting (id,leadId,clientId,projectId,title,attendeeName,attendeeEmail,scheduledAt,meetingUrl,googleEventId,calendarOwnerId,durationMinutes,confirmedAt,provider,status)
-        select ?,i.id,coalesce(i.convertedClientId,l.clientId),i.convertedProjectId,?,l.name,l.email,?,?,?,?,?,unixepoch(),'google_meet','scheduled'
+      d1.prepare(`insert into meeting (id,leadId,clientId,projectId,title,attendeeName,attendeeEmail,scheduledAt,meetingUrl,googleEventId,provider,status)
+        select ?,i.id,i.convertedClientId,i.convertedProjectId,?,l.name,l.email,?,?,?,'google_meet','scheduled'
         from inquiry i join lead l on l.id=i.id where i.id=?`)
-        .bind(meetingId, body.title, Math.floor(start.getTime() / 1000), result.meetingUrl, result.eventId, auth.user.id, body.durationMinutes, id),
+        .bind(meetingId, body.title, Math.floor(start.getTime() / 1000), result.meetingUrl, result.eventId, id),
       d1.prepare(`insert into inquiry_activity (id,inquiryId,kind,previousStage,newStage,description,adminId)
         select ?,id,'meeting',stage,case when stage in ('new','contacted','qualified') then 'meeting' else stage end,
         'Scheduled a Google Meet consultation.',? from inquiry where id=?`).bind(event, auth.user.id, id),
